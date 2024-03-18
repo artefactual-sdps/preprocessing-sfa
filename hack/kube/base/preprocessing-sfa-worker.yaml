@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: preprocessing-sfa-worker
+  labels:
+    app: preprocessing-sfa-worker
+spec:
+  serviceName: preprocessing-sfa-worker
+  selector:
+    matchLabels:
+      app: preprocessing-sfa-worker
+  template:
+    metadata:
+      labels:
+        app: preprocessing-sfa-worker
+    spec:
+      serviceAccountName: sdps
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: preprocessing-sfa-worker
+          image: preprocessing-sfa-worker:dev
+          volumeMounts:
+            - name: config
+              mountPath: /home/preprocessing-sfa/.config
+              readOnly: true
+          resources: {}
+      volumes:
+        - name: config
+          secret:
+            secretName: preprocessing-sfa-secret

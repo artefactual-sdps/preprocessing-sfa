@@ -1,0 +1,6 @@
+**
+!cmd
+!hack/sampledata/xsd
+!internal
+!go.mod
+!go.sum
