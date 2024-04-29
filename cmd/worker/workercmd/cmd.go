@@ -6,9 +6,9 @@ import (
 	"github.com/go-logr/logr"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
-	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/interceptor"
-	"go.temporal.io/sdk/worker"
+	temporalsdk_client "go.temporal.io/sdk/client"
+	temporalsdk_interceptor "go.temporal.io/sdk/interceptor"
+	temporalsdk_worker "go.temporal.io/sdk/worker"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
@@ -21,8 +21,8 @@ const Name = "preprocessing-worker"
 type Main struct {
 	logger         logr.Logger
 	cfg            config.Configuration
-	temporalWorker worker.Worker
-	temporalClient client.Client
+	temporalWorker temporalsdk_worker.Worker
+	temporalClient temporalsdk_client.Client
 }
 
 func NewMain(logger logr.Logger, cfg config.Configuration) *Main {
@@ -33,7 +33,7 @@ func NewMain(logger logr.Logger, cfg config.Configuration) *Main {
 }
 
 func (m *Main) Run(ctx context.Context) error {
-	c, err := client.Dial(client.Options{
+	c, err := temporalsdk_client.Dial(temporalsdk_client.Options{
 		HostPort:  m.cfg.Temporal.Address,
 		Namespace: m.cfg.Temporal.Namespace,
 		Logger:    temporal.Logger(m.logger.WithName("temporal")),
@@ -44,10 +44,10 @@ func (m *Main) Run(ctx context.Context) error {
 	}
 	m.temporalClient = c
 
-	w := worker.New(m.temporalClient, m.cfg.Temporal.TaskQueue, worker.Options{
+	w := temporalsdk_worker.New(m.temporalClient, m.cfg.Temporal.TaskQueue, temporalsdk_worker.Options{
 		EnableSessionWorker:               true,
 		MaxConcurrentSessionExecutionSize: m.cfg.Worker.MaxConcurrentSessions,
-		Interceptors: []interceptor.WorkerInterceptor{
+		Interceptors: []temporalsdk_interceptor.WorkerInterceptor{
 			temporal.NewLoggerInterceptor(m.logger.WithName("worker")),
 		},
 	})

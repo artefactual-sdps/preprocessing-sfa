@@ -1,0 +1,43 @@
+on:
+  pull_request:
+  push:
+    branches:
+    - main
+name: Mod
+jobs:
+  mod:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Read Go version
+      id: go_version
+      run: echo "go_version=$(cat .go-version)" >> $GITHUB_OUTPUT
+    - name: Install Go (${{ steps.go_version.outputs.go_version }})
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ steps.go_version.outputs.go_version }}
+    - name: Check go.mod
+      run: |
+        go mod download
+        go mod tidy
+        if [ ! -z "$(git status --porcelain go.mod)" ]; then
+          printf "go.mod has modifications\n"
+          git diff go.mod
+          exit 1
+        fi
+        if [ ! -z "$(git status --porcelain go.sum)" ]; then
+          printf "go.sum has modifications\n"
+          git diff go.sum
+          exit 1
+        fi
+        if [ ! -z "$(git status --porcelain go.work)" ]; then
+          printf "go.work has modifications\n"
+          git diff go.work
+          exit 1
+        fi
+        if [ ! -z "$(git status --porcelain go.work.sum)" ]; then
+          printf "go.work.sum has modifications\n"
+          git diff go.work.sum
+          exit 1
+        fi

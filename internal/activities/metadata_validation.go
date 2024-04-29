@@ -23,7 +23,10 @@ type MetadataValidationResult struct {
 	Out string
 }
 
-func (md *MetadataValidationActivity) Execute(ctx context.Context, params *MetadataValidationParams) (*MetadataValidationResult, error) {
+func (md *MetadataValidationActivity) Execute(
+	ctx context.Context,
+	params *MetadataValidationParams,
+) (*MetadataValidationResult, error) {
 	res := &MetadataValidationResult{}
 	e, err := exec.Command("python3",
 		"xsdval.py",

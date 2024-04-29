@@ -6,10 +6,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
+
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 )
 
 type PreprocessingWorkflowParams struct {
@@ -30,7 +31,10 @@ func NewPreprocessingWorkflow(sharedPath string) *PreprocessingWorkflow {
 	}
 }
 
-func (w *PreprocessingWorkflow) Execute(ctx temporalsdk_workflow.Context, params *PreprocessingWorkflowParams) (r *PreprocessingWorkflowResult, e error) {
+func (w *PreprocessingWorkflow) Execute(
+	ctx temporalsdk_workflow.Context,
+	params *PreprocessingWorkflowParams,
+) (r *PreprocessingWorkflowResult, e error) {
 	logger := temporalsdk_workflow.GetLogger(ctx)
 	logger.Debug("PreprocessingWorkflow workflow running!", "params", params)
 
@@ -45,7 +49,8 @@ func (w *PreprocessingWorkflow) Execute(ctx temporalsdk_workflow.Context, params
 		var result activities.RemovePathsResult
 		err := temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.RemovePathsName, &activities.RemovePathsParams{
 			Paths: removePaths,
-		}).Get(ctx, &result)
+		}).
+			Get(ctx, &result)
 		e = errors.Join(e, err)
 
 		logger.Debug("PreprocessingWorkflow workflow finished!", "result", r, "error", e)
@@ -57,7 +62,8 @@ func (w *PreprocessingWorkflow) Execute(ctx temporalsdk_workflow.Context, params
 	var extractPackageRes activities.ExtractPackageResult
 	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.ExtractPackageName, &activities.ExtractPackageParams{
 		Path: localPath,
-	}).Get(ctx, &extractPackageRes)
+	}).
+		Get(ctx, &extractPackageRes)
 	if e != nil {
 		return nil, e
 	}
@@ -69,7 +75,8 @@ func (w *PreprocessingWorkflow) Execute(ctx temporalsdk_workflow.Context, params
 	var checkStructureRes activities.CheckSipStructureResult
 	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.CheckSipStructureName, &activities.CheckSipStructureParams{
 		SipPath: extractPackageRes.Path,
-	}).Get(ctx, &checkStructureRes)
+	}).
+		Get(ctx, &checkStructureRes)
 	if e != nil {
 		return nil, e
 	}
@@ -78,7 +85,8 @@ func (w *PreprocessingWorkflow) Execute(ctx temporalsdk_workflow.Context, params
 	var allowedFileFormats activities.AllowedFileFormatsResult
 	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.AllowedFileFormatsName, &activities.AllowedFileFormatsParams{
 		SipPath: extractPackageRes.Path,
-	}).Get(ctx, &allowedFileFormats)
+	}).
+		Get(ctx, &allowedFileFormats)
 	if e != nil {
 		return nil, e
 	}
@@ -98,7 +106,8 @@ func (w *PreprocessingWorkflow) Execute(ctx temporalsdk_workflow.Context, params
 	var metadataValidation activities.MetadataValidationResult
 	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.MetadataValidationName, &activities.MetadataValidationParams{
 		SipPath: extractPackageRes.Path,
-	}).Get(ctx, &metadataValidation)
+	}).
+		Get(ctx, &metadataValidation)
 	if e != nil {
 		return nil, e
 	}
@@ -107,7 +116,8 @@ func (w *PreprocessingWorkflow) Execute(ctx temporalsdk_workflow.Context, params
 	var sipCreation activities.SipCreationResult
 	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.SipCreationName, &activities.SipCreationParams{
 		SipPath: extractPackageRes.Path,
-	}).Get(ctx, &sipCreation)
+	}).
+		Get(ctx, &sipCreation)
 	if e != nil {
 		return nil, e
 	}

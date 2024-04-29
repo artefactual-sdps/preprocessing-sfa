@@ -29,7 +29,9 @@ func NewExtractPackage() *ExtractPackage {
 func (a *ExtractPackage) Execute(ctx context.Context, params *ExtractPackageParams) (*ExtractPackageResult, error) {
 	iface, err := archiver.ByExtension(params.Path)
 	if err != nil {
-		return nil, temporal.NewNonRetryableError(fmt.Errorf("couldn't find a decompressor for %s: %v", params.Path, err))
+		return nil, temporal.NewNonRetryableError(
+			fmt.Errorf("couldn't find a decompressor for %s: %v", params.Path, err),
+		)
 	}
 
 	unar, ok := iface.(archiver.Unarchiver)

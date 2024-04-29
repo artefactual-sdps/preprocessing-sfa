@@ -26,7 +26,10 @@ type AllowedFileFormatsResult struct {
 	NotAllowed []string
 }
 
-func (md *AllowedFileFormatsActivity) Execute(ctx context.Context, params *AllowedFileFormatsParams) (*AllowedFileFormatsResult, error) {
+func (md *AllowedFileFormatsActivity) Execute(
+	ctx context.Context,
+	params *AllowedFileFormatsParams,
+) (*AllowedFileFormatsResult, error) {
 	res := &AllowedFileFormatsResult{}
 	sf := fformat.NewSiegfriedEmbed()
 	// TODO(daniel): make allowed list configurable.

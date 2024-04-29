@@ -1,0 +1,45 @@
+on:
+  pull_request:
+  push:
+    branches:
+    - main
+name: Test
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Read Go version
+      id: go_version
+      run: echo "go_version=$(cat .go-version)" >> $GITHUB_OUTPUT
+    - name: Install Go (${{ steps.go_version.outputs.go_version }})
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ steps.go_version.outputs.go_version }}
+        cache: true
+    - name: Test
+      run: make test-ci
+    - name: Determine skip-codecov
+      uses: actions/github-script@v7
+      id: skip-codecov
+      with:
+        script: |
+          // Sets `ref` to the SHA of the current pull request's head commit,
+          // or, if not present, to the SHA of the commit that triggered the
+          // event.
+          const ref = '${{ github.event.pull_request.head.sha || github.event.after }}';
+          const { repo, owner } = context.repo;
+          const { data: commit } = await github.rest.repos.getCommit({ owner, repo, ref });
+          const commitMessage = commit.commit.message;
+          const skip = commitMessage.includes("[skip codecov]") || commitMessage.includes("[skip-codecov]");
+          core.setOutput("skip", skip);
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      if: ${{ steps.skip-codecov.outputs.skip != 'true' }}
+      with:
+        file: covreport
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

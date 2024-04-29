@@ -25,7 +25,10 @@ type CheckSipStructureResult struct {
 	Errors []string
 }
 
-func (md *CheckSipStructureActivity) Execute(ctx context.Context, params *CheckSipStructureParams) (*CheckSipStructureResult, error) {
+func (md *CheckSipStructureActivity) Execute(
+	ctx context.Context,
+	params *CheckSipStructureParams,
+) (*CheckSipStructureResult, error) {
 	res := &CheckSipStructureResult{}
 	s, err := sip.NewSFASip(params.SipPath)
 	if err != nil {

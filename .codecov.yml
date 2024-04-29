@@ -1,0 +1,21 @@
+# Validate this file:
+#   curl --data-binary @.codecov.yml https://codecov.io/validate
+
+comment:
+  behavior: default
+
+coverage:
+  precision: 2
+  round: down
+  range: "50...70"
+  status:
+    project:
+      default:
+        threshold: 1.0
+    patch:
+      default:
+        threshold: 1.0
+
+ignore:
+- ".github"
+- "hack"

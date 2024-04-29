@@ -35,7 +35,10 @@ type SendToFailedBucketResult struct {
 	FailedKey string
 }
 
-func (sf *SendToFailedBucketActivity) Execute(ctx context.Context, params *SendToFailedBucketParams) (*SendToFailedBucketResult, error) {
+func (sf *SendToFailedBucketActivity) Execute(
+	ctx context.Context,
+	params *SendToFailedBucketParams,
+) (*SendToFailedBucketResult, error) {
 	res := &SendToFailedBucketResult{}
 	f, err := os.Open(params.Path)
 	if err != nil {
