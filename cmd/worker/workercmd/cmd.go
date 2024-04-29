@@ -78,10 +78,6 @@ func (m *Main) Run(ctx context.Context) error {
 		activities.NewSipCreationActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.SipCreationName},
 	)
-	// w.RegisterActivityWithOptions(
-	// 	   activities.NewSendToFailedBuckeActivity(ft, fs).Execute,
-	// 	   temporalsdk_activity.RegisterOptions{Name: activities.SendToFailedBucketName},
-	// )
 	w.RegisterActivityWithOptions(
 		activities.NewRemovePaths().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.RemovePathsName},
