@@ -1,6 +1,6 @@
 module github.com/artefactual-sdps/preprocessing-sfa
 
-go 1.21.6
+go 1.22.2
 
 require (
 	github.com/go-logr/logr v1.2.4
