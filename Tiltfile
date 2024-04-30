@@ -57,7 +57,7 @@ cmd_button(
     "sh",
     "-c",
     'FILENAME=$(basename -- "$LOCAL_PATH"); \
-    kubectl -n enduro-sdps cp "$LOCAL_PATH" preprocessing-worker-0:/tmp/"$FILENAME"; \
+    kubectl -n enduro-sdps cp "$LOCAL_PATH" preprocessing-worker-0:/home/preprocessing/shared/"$FILENAME"; \
     kubectl -n enduro-sdps delete secret start-workflow-secret --ignore-not-found; \
     kubectl -n enduro-sdps create secret generic start-workflow-secret --from-literal=relative_path="$FILENAME"; \
     tilt trigger start-workflow;',

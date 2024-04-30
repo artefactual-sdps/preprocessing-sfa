@@ -25,7 +25,7 @@ spec:
               mountPath: /home/preprocessing/.config
               readOnly: true
             - name: shared-dir
-              mountPath: /tmp
+              mountPath: /home/preprocessing/shared
           resources: {}
       volumes:
         - name: config
