@@ -9,7 +9,7 @@ COPY --link go.* ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY --link . .
 
-FROM build-go AS build-preprocessing-sfa-worker
+FROM build-go AS build-preprocessing-worker
 ARG VERSION_PATH
 ARG VERSION_LONG
 ARG VERSION_SHORT
@@ -19,24 +19,24 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 	go build \
 	-trimpath \
 	-ldflags="-X '${VERSION_PATH}.Long=${VERSION_LONG}' -X '${VERSION_PATH}.Short=${VERSION_SHORT}' -X '${VERSION_PATH}.GitCommit=${VERSION_GIT_HASH}'" \
-	-o /out/preprocessing-sfa-worker \
+	-o /out/preprocessing-worker \
 	./cmd/worker
 
 FROM alpine:3.18.2 AS base
 ARG USER_ID=1000
 ARG GROUP_ID=1000
-RUN addgroup -g ${GROUP_ID} -S preprocessing-sfa
-RUN adduser -u ${USER_ID} -S -D preprocessing-sfa preprocessing-sfa
-USER preprocessing-sfa
+RUN addgroup -g ${GROUP_ID} -S preprocessing
+RUN adduser -u ${USER_ID} -S -D preprocessing preprocessing
+USER preprocessing
 
-FROM base AS preprocessing-sfa-worker
+FROM base AS preprocessing-worker
 ENV PYTHONUNBUFFERED=1
 USER root
 RUN apk add --update --no-cache python3 && \
 	ln -sf python3 /usr/bin/python && \
 	python3 -m ensurepip
-USER preprocessing-sfa
+USER preprocessing
 RUN pip3 install --no-cache --upgrade pip lxml bagit==v1.8.1
-COPY --from=build-preprocessing-sfa-worker --link /src/hack/sampledata/xsd/* /
-COPY --from=build-preprocessing-sfa-worker --link /out/preprocessing-sfa-worker /home/preprocessing-sfa/bin/preprocessing-sfa-worker
-CMD ["/home/preprocessing-sfa/bin/preprocessing-sfa-worker"]
+COPY --from=build-preprocessing-worker --link /src/hack/sampledata/xsd/* /
+COPY --from=build-preprocessing-worker --link /out/preprocessing-worker /home/preprocessing/bin/preprocessing-worker
+CMD ["/home/preprocessing/bin/preprocessing-worker"]

@@ -1,28 +1,28 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: preprocessing-sfa-worker
+  name: preprocessing-worker
   labels:
-    app: preprocessing-sfa-worker
+    app: preprocessing-worker
 spec:
-  serviceName: preprocessing-sfa-worker
+  serviceName: preprocessing-worker
   selector:
     matchLabels:
-      app: preprocessing-sfa-worker
+      app: preprocessing-worker
   template:
     metadata:
       labels:
-        app: preprocessing-sfa-worker
+        app: preprocessing-worker
     spec:
       serviceAccountName: sdps
       securityContext:
         fsGroup: 1000
       containers:
-        - name: preprocessing-sfa-worker
+        - name: preprocessing-worker
           image: preprocessing-sfa-worker:dev
           volumeMounts:
             - name: config
-              mountPath: /home/preprocessing-sfa/.config
+              mountPath: /home/preprocessing/.config
               readOnly: true
             - name: shared-dir
               mountPath: /tmp
@@ -30,7 +30,7 @@ spec:
       volumes:
         - name: config
           secret:
-            secretName: preprocessing-sfa-secret
+            secretName: preprocessing-secret
         - name: shared-dir
           persistentVolumeClaim:
             claimName: preprocessing-pvc

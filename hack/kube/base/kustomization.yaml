@@ -4,7 +4,7 @@ namespace: enduro-sdps
 resources:
   - mysql.yaml
   - namespace.yaml
-  - preprocessing-sfa-worker.yaml
+  - preprocessing-worker.yaml
   - role.yaml
   - role-binding.yaml
   - service-account.yaml

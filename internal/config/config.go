@@ -38,8 +38,8 @@ func Read(config *Configuration, configFile string) (found bool, configFileUsed 
 	v.AddConfigPath(".")
 	v.AddConfigPath("$HOME/.config/")
 	v.AddConfigPath("/etc")
-	v.SetConfigName("preprocessing_sfa")
-	v.SetEnvPrefix("PREPROCESSING_SFA")
+	v.SetConfigName("preprocessing")
+	v.SetEnvPrefix("PREPROCESSING")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 
