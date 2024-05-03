@@ -75,7 +75,7 @@ non-root user is **different** from running the docker daemon as a non-root user
 
 ### Requirements for development
 
-While we run the services inside a Kubernetes cluster we recomend to install
+While we run the services inside a Kubernetes cluster we recomend installing
 Go and other tools locally to ease the development process.
 
 - [Go] (1.22+)
@@ -117,7 +117,7 @@ tilt up
 
 While the Docker images are built/downloaded and the Kubernetes resources are
 created, hit `space` to open the Tilt UI in your browser. Check the [Tilt UI]
-documentation to know more about it.
+documentation to learn more about it.
 
 ### Live updates
 
@@ -185,7 +185,7 @@ Enables live updates on code changes for the preprocessing worker.
 
 #### Submit
 
-In the Tilt UI header there is a cloud icon/button that allows to trigger the
+In the Tilt UI header there is a cloud icon/button that can trigger the
 preprocessing workflow. Click the caret to set the path to a file/directory in
 the host, then click the cloud icon to trigger the workflow.
 
