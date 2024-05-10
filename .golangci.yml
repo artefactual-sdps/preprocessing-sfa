@@ -1,19 +1,21 @@
 run:
   deadline: 60s
-  skip-dirs:
-    - .github
-    - hack
 
 linters:
   enable:
+    - contextcheck
     - gci
     - gofumpt
     - gosec
     - importas
+    - intrange
     - misspell
+    - tparallel
     - unparam
 
 issues:
+  exclude-dirs:
+    - hack
   exclude-rules:
     - path: _test\.go
       linters:
@@ -45,5 +47,3 @@ linters-settings:
     exclude-generated: false
     severity: low
     confidence: low
-    excludes:
-      - G601 # Implicit memory aliasing of items (only for Go 1.21 or lower)
