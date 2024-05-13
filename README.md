@@ -38,7 +38,7 @@ The preprocessing section for Enduro's configuration:
 ```toml
 [preprocessing]
 enabled = true
-extract = true
+extract = false
 sharedPath = "/home/enduro/preprocessing"
 
 [preprocessing.temporal]

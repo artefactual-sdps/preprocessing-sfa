@@ -58,23 +58,13 @@ func (w *PreprocessingWorkflow) Execute(
 
 	localPath := filepath.Join(w.sharedPath, filepath.Clean(params.RelativePath))
 
-	// Extract package.
-	var extractPackageRes activities.ExtractPackageResult
-	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.ExtractPackageName, &activities.ExtractPackageParams{
-		Path: localPath,
-	}).
-		Get(ctx, &extractPackageRes)
-	if e != nil {
-		return nil, e
-	}
-
-	// Always remove extracted path.
-	removePaths = append(removePaths, extractPackageRes.Path)
+	// Always remove initial SIP.
+	removePaths = append(removePaths, localPath)
 
 	// Validate SIP structure.
 	var checkStructureRes activities.CheckSipStructureResult
 	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.CheckSipStructureName, &activities.CheckSipStructureParams{
-		SipPath: extractPackageRes.Path,
+		SipPath: localPath,
 	}).
 		Get(ctx, &checkStructureRes)
 	if e != nil {
@@ -84,7 +74,7 @@ func (w *PreprocessingWorkflow) Execute(
 	// Check allowed file formats.
 	var allowedFileFormats activities.AllowedFileFormatsResult
 	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.AllowedFileFormatsName, &activities.AllowedFileFormatsParams{
-		SipPath: extractPackageRes.Path,
+		SipPath: localPath,
 	}).
 		Get(ctx, &allowedFileFormats)
 	if e != nil {
@@ -105,7 +95,7 @@ func (w *PreprocessingWorkflow) Execute(
 	// Validate metadata.xsd.
 	var metadataValidation activities.MetadataValidationResult
 	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.MetadataValidationName, &activities.MetadataValidationParams{
-		SipPath: extractPackageRes.Path,
+		SipPath: localPath,
 	}).
 		Get(ctx, &metadataValidation)
 	if e != nil {
@@ -115,7 +105,7 @@ func (w *PreprocessingWorkflow) Execute(
 	// Repackage SFA SIP into a Bag.
 	var sipCreation activities.SipCreationResult
 	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.SipCreationName, &activities.SipCreationParams{
-		SipPath: extractPackageRes.Path,
+		SipPath: localPath,
 	}).
 		Get(ctx, &sipCreation)
 	if e != nil {

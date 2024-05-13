@@ -59,10 +59,6 @@ func (m *Main) Run(ctx context.Context) error {
 	)
 
 	w.RegisterActivityWithOptions(
-		activities.NewExtractPackage().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.ExtractPackageName},
-	)
-	w.RegisterActivityWithOptions(
 		activities.NewCheckSipStructure().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.CheckSipStructureName},
 	)

@@ -30,10 +30,6 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 
 	// Register activities.
 	s.env.RegisterActivityWithOptions(
-		activities.NewExtractPackage().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.ExtractPackageName},
-	)
-	s.env.RegisterActivityWithOptions(
 		activities.NewCheckSipStructure().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.CheckSipStructureName},
 	)
@@ -66,54 +62,46 @@ func TestPreprocessingWorkflow(t *testing.T) {
 }
 
 func (s *PreprocessingTestSuite) TestExecute() {
-	relPath := "fake/path/to/sip.zip"
+	relPath := "fake/path/to/sip"
 	finPath := "fake/path/to/sip_bag"
-	iniPath := sharedPath + relPath
-	extPath := sharedPath + "fake/path/to/sip"
+	sipPath := sharedPath + relPath
 	bagPath := sharedPath + finPath
 	s.SetupTest(config.Configuration{})
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
 	s.env.OnActivity(
-		activities.ExtractPackageName,
-		sessionCtx,
-		&activities.ExtractPackageParams{Path: iniPath},
-	).Return(
-		&activities.ExtractPackageResult{Path: extPath}, nil,
-	)
-	s.env.OnActivity(
 		activities.CheckSipStructureName,
 		sessionCtx,
-		&activities.CheckSipStructureParams{SipPath: extPath},
+		&activities.CheckSipStructureParams{SipPath: sipPath},
 	).Return(
 		&activities.CheckSipStructureResult{Ok: true}, nil,
 	)
 	s.env.OnActivity(
 		activities.AllowedFileFormatsName,
 		sessionCtx,
-		&activities.AllowedFileFormatsParams{SipPath: extPath},
+		&activities.AllowedFileFormatsParams{SipPath: sipPath},
 	).Return(
 		&activities.AllowedFileFormatsResult{Ok: true}, nil,
 	)
 	s.env.OnActivity(
 		activities.MetadataValidationName,
 		sessionCtx,
-		&activities.MetadataValidationParams{SipPath: extPath},
+		&activities.MetadataValidationParams{SipPath: sipPath},
 	).Return(
 		&activities.MetadataValidationResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.SipCreationName,
 		sessionCtx,
-		&activities.SipCreationParams{SipPath: extPath},
+		&activities.SipCreationParams{SipPath: sipPath},
 	).Return(
 		&activities.SipCreationResult{NewSipPath: bagPath}, nil,
 	)
 	s.env.OnActivity(
 		activities.RemovePathsName,
 		sessionCtx,
-		&activities.RemovePathsParams{Paths: []string{extPath}},
+		&activities.RemovePathsParams{Paths: []string{sipPath}},
 	).Return(
 		&activities.RemovePathsResult{}, nil,
 	)
