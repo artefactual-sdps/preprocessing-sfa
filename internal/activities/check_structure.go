@@ -3,6 +3,8 @@ package activities
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
@@ -30,6 +32,17 @@ func (md *CheckSipStructureActivity) Execute(
 	params *CheckSipStructureParams,
 ) (*CheckSipStructureResult, error) {
 	res := &CheckSipStructureResult{}
+
+	// Skip Vecteur AIPs for now.
+	_, err := os.Stat(filepath.Join(params.SipPath, "additional"))
+	if err == nil {
+		res.Ok = true
+		return res, nil
+	}
+	if !os.IsNotExist(err) {
+		return nil, err
+	}
+
 	s, err := sip.NewSFASip(params.SipPath)
 	if err != nil {
 		return nil, err

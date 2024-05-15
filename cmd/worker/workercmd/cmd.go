@@ -3,6 +3,7 @@ package workercmd
 import (
 	"context"
 
+	"github.com/artefactual-sdps/temporal-activities/removefiles"
 	"github.com/go-logr/logr"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -73,6 +74,18 @@ func (m *Main) Run(ctx context.Context) error {
 	w.RegisterActivityWithOptions(
 		activities.NewSipCreationActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.SipCreationName},
+	)
+	w.RegisterActivityWithOptions(
+		activities.NewTransformVecteurAIPActivity().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.TransformVecteurAIPName},
+	)
+	w.RegisterActivityWithOptions(
+		removefiles.NewActivity(removefiles.Config{RemovePatterns: "(?i)_PREMIS.xml$"}).Execute,
+		temporalsdk_activity.RegisterOptions{Name: removefiles.ActivityName},
+	)
+	w.RegisterActivityWithOptions(
+		activities.NewCreateBagActivity().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.CreateBagName},
 	)
 	w.RegisterActivityWithOptions(
 		activities.NewRemovePaths().Execute,

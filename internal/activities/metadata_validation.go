@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"os/exec"
-	"path/filepath"
 )
 
 const MetadataValidationName = "metadata-validation"
@@ -16,7 +15,7 @@ func NewMetadataValidationActivity() *MetadataValidationActivity {
 }
 
 type MetadataValidationParams struct {
-	SipPath string
+	MetadataPath string
 }
 
 type MetadataValidationResult struct {
@@ -28,11 +27,7 @@ func (md *MetadataValidationActivity) Execute(
 	params *MetadataValidationParams,
 ) (*MetadataValidationResult, error) {
 	res := &MetadataValidationResult{}
-	e, err := exec.Command("python3",
-		"xsdval.py",
-		// Arguments.
-		filepath.Join(params.SipPath, "/header/metadata.xml"),
-		"arelda.xsd").CombinedOutput() // #nosec G204
+	e, err := exec.Command("python3", "xsdval.py", params.MetadataPath, "arelda.xsd").CombinedOutput() // #nosec G204
 	if err != nil {
 		return nil, err
 	}

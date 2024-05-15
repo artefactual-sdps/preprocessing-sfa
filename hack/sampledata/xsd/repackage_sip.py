@@ -46,7 +46,8 @@ def writeMD5(files, path):
     metadata_checksum = find_checksum(path+"/data/header/metadata.xml")
     md5file.write(str(metadata_checksum)[2:34] + " data/header/metadata.xml \n")
     for filename, checksum in files.items():
-        md5file.write(checksum + " data" + filename + "\n")
+        if re.search("(?i)_PREMIS.xml$", filename) is None:
+            md5file.write(checksum + " data" + filename + "\n")
     md5file.close()
 
 
