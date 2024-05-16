@@ -162,7 +162,7 @@ func (s *PreprocessingTestSuite) TestVecteurAIP() {
 		activities.MetadataValidationName,
 		sessionCtx,
 		&activities.MetadataValidationParams{
-			MetadataPath: filepath.Join(sipPath, "content", "header", "old", "SIP", "metadata.xml"),
+			MetadataPath: filepath.Join(sipPath, "additional", "UpdatedAreldaMetadata.xml"),
 		},
 	).Return(
 		&activities.MetadataValidationResult{}, nil,

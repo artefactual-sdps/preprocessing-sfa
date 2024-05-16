@@ -42,8 +42,8 @@ func (a *TransformVecteurAIPActivity) Execute(
 			return err
 		}
 		if d.Name() == "Prozess_Digitalisierung_PREMIS.xml" {
-			// Adding the parent dir to the filename ensure uniqueness and
-			// prevents deletion when all PREMIS files are deleted after.
+			// Adding the parent dir to the filename reduces the likelihood of filename
+			// conflicts and prevents deletion when all PREMIS files are deleted after.
 			dir := filepath.Base(filepath.Dir(p))
 			dest := filepath.Join(mdPath, fmt.Sprintf("Prozess_Digitalisierung_PREMIS_%s.xml", dir))
 			err := fsutil.Move(p, dest)

@@ -94,7 +94,7 @@ func (w *PreprocessingWorkflow) Execute(
 	var metadataValidation activities.MetadataValidationResult
 	path := filepath.Join(localPath, "header", "metadata.xml")
 	if checkStructureRes.SIP == nil {
-		path = filepath.Join(localPath, "content", "header", "old", "SIP", "metadata.xml")
+		path = filepath.Join(localPath, "additional", "UpdatedAreldaMetadata.xml")
 	}
 	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.MetadataValidationName, &activities.MetadataValidationParams{
 		MetadataPath: path,
