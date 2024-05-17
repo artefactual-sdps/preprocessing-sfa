@@ -4,6 +4,7 @@ go 1.22.3
 
 require (
 	github.com/artefactual-sdps/temporal-activities v0.0.0-20240513093038-77e9f8382ca9
+	github.com/beevik/etree v1.4.0
 	github.com/go-logr/logr v1.4.1
 	github.com/nyudlts/go-bagit v0.3.0-alpha
 	github.com/otiai10/copy v1.14.0

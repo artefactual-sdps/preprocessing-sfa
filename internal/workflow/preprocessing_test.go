@@ -53,6 +53,10 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformVecteurAIPName},
 	)
 	s.env.RegisterActivityWithOptions(
+		activities.NewCombinePREMISActivity().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.CombinePREMISName},
+	)
+	s.env.RegisterActivityWithOptions(
 		removefiles.NewActivity(removefiles.Config{}).Execute,
 		temporalsdk_activity.RegisterOptions{Name: removefiles.ActivityName},
 	)
@@ -173,6 +177,13 @@ func (s *PreprocessingTestSuite) TestVecteurAIP() {
 		&activities.TransformVecteurAIPParams{Path: sipPath},
 	).Return(
 		&activities.TransformVecteurAIPResult{}, nil,
+	)
+	s.env.OnActivity(
+		activities.CombinePREMISName,
+		sessionCtx,
+		&activities.CombinePREMISParams{Path: sipPath},
+	).Return(
+		&activities.CombinePREMISResult{}, nil,
 	)
 	s.env.OnActivity(
 		removefiles.ActivityName,
