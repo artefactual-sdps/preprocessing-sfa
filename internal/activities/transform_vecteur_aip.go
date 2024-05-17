@@ -57,13 +57,19 @@ func (a *TransformVecteurAIPActivity) Execute(
 		return nil, err
 	}
 
+	// Create objects directory.
+	objectsPath := filepath.Join(params.Path, "objects")
+	if err = os.Mkdir(objectsPath, 0o750); err != nil {
+		return nil, err
+	}
+
 	// Move all entries from content/content to root folder.
 	entries, err := os.ReadDir(contentPath)
 	if err != nil {
 		return nil, err
 	}
 	for _, entry := range entries {
-		err := fsutil.Move(filepath.Join(contentPath, entry.Name()), filepath.Join(params.Path, entry.Name()))
+		err := fsutil.Move(filepath.Join(contentPath, entry.Name()), filepath.Join(objectsPath, entry.Name()))
 		if err != nil {
 			return nil, err
 		}

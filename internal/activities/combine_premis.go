@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/beevik/etree"
@@ -37,7 +38,7 @@ func (md *CombinePREMISActivity) Execute(
 		return nil, err
 	}
 
-        // Copy empty PREMIS file into metadata directory.
+	// Copy empty PREMIS file into metadata directory.
 	source_filepath := "empty_premis.xml"
 	dest_filepath := path.Join(params.Path, "metadata/premis.xml")
 
@@ -51,7 +52,7 @@ func (md *CombinePREMISActivity) Execute(
 
 	for _, file_path := range file_paths {
 		err := CombinePREMISCopy(file_path, combined_premis_filepath)
-                if err != nil {
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -62,7 +63,8 @@ func (md *CombinePREMISActivity) Execute(
 }
 
 func CombinePREMISGetPaths(transfer_dir string) ([]string, error) {
-	dir_items, err := os.ReadDir(transfer_dir)
+	objects_dir := filepath.Join(transfer_dir, "objects")
+	dir_items, err := os.ReadDir(objects_dir)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +72,7 @@ func CombinePREMISGetPaths(transfer_dir string) ([]string, error) {
 	file_paths := []string{}
 	for _, dir_item := range dir_items {
 		if dir_item.IsDir() {
-			subdir := path.Join(transfer_dir, dir_item.Name())
+			subdir := path.Join(objects_dir, dir_item.Name())
 
 			sub_items, err := os.ReadDir(subdir)
 			if err != nil {
@@ -90,7 +92,7 @@ func CombinePREMISGetPaths(transfer_dir string) ([]string, error) {
 	return file_paths, nil
 }
 
-func CombinePREMISCopy(source_filepath string, destination_filepath string) error {
+func CombinePREMISCopy(source_filepath, destination_filepath string) error {
 	// Parse source document and get root PREMIS element.
 	source_doc := etree.NewDocument()
 
@@ -120,10 +122,11 @@ func CombinePREMISCopy(source_filepath string, destination_filepath string) erro
 	}
 
 	// Update PREMIS originalname child elements of PREMIS object elements.
+	dirName := filepath.Base(filepath.Dir(source_filepath))
 	for _, premis_object_element := range source_premis_object_elements {
 		objectname_element := premis_object_element.FindElement("originalName")
 		if objectname_element != nil {
-			objectname_element.SetText("data/" + objectname_element.Text())
+			objectname_element.SetText("objects/" + dirName + "/" + objectname_element.Text())
 		}
 	}
 
