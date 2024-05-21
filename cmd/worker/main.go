@@ -16,14 +16,22 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/version"
 )
 
+const appName = "preprocessing-sfa-worker"
+
 func main() {
 	p := pflag.NewFlagSet(workercmd.Name, pflag.ExitOnError)
 	p.String("config", "", "Configuration file")
+	p.Bool("version", false, "Show version information")
 	if err := p.Parse(os.Args[1:]); err == flag.ErrHelp {
 		os.Exit(1)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+
+	if v, _ := p.GetBool("version"); v {
+		fmt.Println(version.Info(appName))
+		os.Exit(0)
 	}
 
 	var cfg config.Configuration
