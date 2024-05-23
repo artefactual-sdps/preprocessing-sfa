@@ -40,6 +40,18 @@ func (md *CombinePREMISActivity) Execute(
 
 	// Copy empty PREMIS file into metadata directory.
 	source_filepath := "empty_premis.xml"
+
+	_, err = os.Stat(source_filepath)
+	if errors.Is(err, os.ErrNotExist) {
+		ex, err := os.Executable()
+		if err != nil {
+			return nil, err
+		}
+		exPath := filepath.Dir(ex)
+
+		source_filepath = filepath.Join(exPath, "hack/sampledata/xsd/empty_premis.xml")
+	}
+
 	dest_filepath := path.Join(params.Path, "metadata/premis.xml")
 
 	err = copy.Copy(source_filepath, dest_filepath)
