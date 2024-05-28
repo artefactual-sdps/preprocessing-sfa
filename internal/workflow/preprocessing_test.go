@@ -2,6 +2,7 @@ package workflow_test
 
 import (
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/artefactual-sdps/temporal-activities/removefiles"
@@ -18,6 +19,8 @@ import (
 )
 
 const sharedPath = "/shared/path/"
+
+var premisRe *regexp.Regexp = regexp.MustCompile("(?i)_PREMIS.xml$")
 
 type PreprocessingTestSuite struct {
 	suite.Suite
@@ -57,7 +60,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.CombinePREMISName},
 	)
 	s.env.RegisterActivityWithOptions(
-		removefiles.NewActivity(removefiles.Config{}).Execute,
+		removefiles.NewActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: removefiles.ActivityName},
 	)
 	s.env.RegisterActivityWithOptions(
@@ -188,7 +191,10 @@ func (s *PreprocessingTestSuite) TestVecteurAIP() {
 	s.env.OnActivity(
 		removefiles.ActivityName,
 		sessionCtx,
-		&removefiles.ActivityParams{Path: sipPath},
+		&removefiles.ActivityParams{
+			Path:           sipPath,
+			RemovePatterns: []*regexp.Regexp{premisRe},
+		},
 	).Return(
 		&removefiles.ActivityResult{}, nil,
 	)

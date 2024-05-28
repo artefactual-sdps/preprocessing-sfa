@@ -84,7 +84,7 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformVecteurAIPName},
 	)
 	w.RegisterActivityWithOptions(
-		removefiles.NewActivity(removefiles.Config{RemovePatterns: "(?i)_PREMIS.xml$"}).Execute,
+		removefiles.NewActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: removefiles.ActivityName},
 	)
 	w.RegisterActivityWithOptions(

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/removefiles"
@@ -13,6 +14,8 @@ import (
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 )
+
+var premisRe *regexp.Regexp = regexp.MustCompile("(?i)_PREMIS.xml$")
 
 type PreprocessingWorkflowParams struct {
 	RelativePath string
@@ -148,7 +151,10 @@ func (w *PreprocessingWorkflow) Execute(
 		e = temporalsdk_workflow.ExecuteActivity(
 			withLocalActOpts(ctx),
 			removefiles.ActivityName,
-			&removefiles.ActivityParams{Path: localPath},
+			&removefiles.ActivityParams{
+				Path:           localPath,
+				RemovePatterns: []*regexp.Regexp{premisRe},
+			},
 		).Get(ctx, &removeFilesResult)
 		if e != nil {
 			return nil, e
