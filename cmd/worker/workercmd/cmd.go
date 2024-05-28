@@ -60,6 +60,10 @@ func (m *Main) Run(ctx context.Context) error {
 	)
 
 	w.RegisterActivityWithOptions(
+		activities.NewIdentifyTransfer().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.IdentifyTransferName},
+	)
+	w.RegisterActivityWithOptions(
 		activities.NewCheckSipStructure().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.CheckSipStructureName},
 	)

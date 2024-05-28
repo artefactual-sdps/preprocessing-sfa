@@ -14,6 +14,7 @@ import (
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflow"
 )
@@ -35,6 +36,10 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 	s.env.SetWorkerOptions(temporalsdk_worker.Options{EnableSessionWorker: true})
 
 	// Register activities.
+	s.env.RegisterActivityWithOptions(
+		activities.NewIdentifyTransfer().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.IdentifyTransferName},
+	)
 	s.env.RegisterActivityWithOptions(
 		activities.NewCheckSipStructure().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.CheckSipStructureName},
@@ -83,7 +88,7 @@ func TestPreprocessingWorkflow(t *testing.T) {
 	suite.Run(t, new(PreprocessingTestSuite))
 }
 
-func (s *PreprocessingTestSuite) TestSIP() {
+func (s *PreprocessingTestSuite) TestVecteurSIP() {
 	relPath := "fake/path/to/sip"
 	finPath := "fake/path/to/sip_bag"
 	sipPath := sharedPath + relPath
@@ -92,6 +97,13 @@ func (s *PreprocessingTestSuite) TestSIP() {
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
+	s.env.OnActivity(
+		activities.IdentifyTransferName,
+		sessionCtx,
+		&activities.IdentifyTransferParams{Path: sipPath},
+	).Return(
+		&activities.IdentifyTransferResult{Type: enums.TransferTypeVecteurSIP}, nil,
+	)
 	s.env.OnActivity(
 		activities.CheckSipStructureName,
 		sessionCtx,
@@ -152,11 +164,11 @@ func (s *PreprocessingTestSuite) TestVecteurAIP() {
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
 	s.env.OnActivity(
-		activities.CheckSipStructureName,
+		activities.IdentifyTransferName,
 		sessionCtx,
-		&activities.CheckSipStructureParams{SipPath: sipPath},
+		&activities.IdentifyTransferParams{Path: sipPath},
 	).Return(
-		&activities.CheckSipStructureResult{Ok: true}, nil,
+		&activities.IdentifyTransferResult{Type: enums.TransferTypeVecteurAIP}, nil,
 	)
 	s.env.OnActivity(
 		activities.AllowedFileFormatsName,

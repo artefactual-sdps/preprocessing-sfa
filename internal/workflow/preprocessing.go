@@ -13,6 +13,7 @@ import (
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 )
 
 var premisRe *regexp.Regexp = regexp.MustCompile("(?i)_PREMIS.xml$")
@@ -51,10 +52,11 @@ func (w *PreprocessingWorkflow) Execute(
 
 	defer func() {
 		var result activities.RemovePathsResult
-		err := temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.RemovePathsName, &activities.RemovePathsParams{
-			Paths: removePaths,
-		}).
-			Get(ctx, &result)
+		err := temporalsdk_workflow.ExecuteActivity(
+			withLocalActOpts(ctx),
+			activities.RemovePathsName,
+			&activities.RemovePathsParams{Paths: removePaths},
+		).Get(ctx, &result)
 		e = errors.Join(e, err)
 
 		logger.Debug("PreprocessingWorkflow workflow finished!", "result", r, "error", e)
@@ -62,59 +64,78 @@ func (w *PreprocessingWorkflow) Execute(
 
 	localPath := filepath.Join(w.sharedPath, filepath.Clean(params.RelativePath))
 
-	// Validate SIP structure.
-	var checkStructureRes activities.CheckSipStructureResult
-	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.CheckSipStructureName, &activities.CheckSipStructureParams{
-		SipPath: localPath,
-	}).
-		Get(ctx, &checkStructureRes)
+	// Identify transfer.
+	var identifyTransfer activities.IdentifyTransferResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.IdentifyTransferName,
+		&activities.IdentifyTransferParams{Path: localPath},
+	).Get(ctx, &identifyTransfer)
 	if e != nil {
 		return nil, e
+	}
+
+	var valErr error
+
+	// Validate SIP structure.
+	if identifyTransfer.Type == enums.TransferTypeVecteurSIP {
+		var checkStructureRes activities.CheckSipStructureResult
+		e = temporalsdk_workflow.ExecuteActivity(
+			withLocalActOpts(ctx),
+			activities.CheckSipStructureName,
+			&activities.CheckSipStructureParams{SipPath: localPath},
+		).Get(ctx, &checkStructureRes)
+		if e != nil {
+			return nil, e
+		}
+		if !checkStructureRes.Ok {
+			valErr = activities.ErrInvaliSipStructure
+		}
 	}
 
 	// Check allowed file formats.
 	var allowedFileFormats activities.AllowedFileFormatsResult
-	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.AllowedFileFormatsName, &activities.AllowedFileFormatsParams{
-		SipPath: localPath,
-	}).
-		Get(ctx, &allowedFileFormats)
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.AllowedFileFormatsName,
+		&activities.AllowedFileFormatsParams{SipPath: localPath},
+	).Get(ctx, &allowedFileFormats)
 	if e != nil {
 		return nil, e
 	}
-
-	// Return both errors.
-	if !checkStructureRes.Ok {
-		e = activities.ErrInvaliSipStructure
-	}
 	if !allowedFileFormats.Ok {
-		e = errors.Join(e, activities.ErrIlegalFileFormat)
+		valErr = errors.Join(valErr, activities.ErrIlegalFileFormat)
 	}
-	if e != nil {
+
+	if valErr != nil {
+		e = valErr
 		return nil, e
 	}
 
 	// Validate metadata.xsd.
 	var metadataValidation activities.MetadataValidationResult
-	path := filepath.Join(localPath, "header", "metadata.xml")
-	if checkStructureRes.SIP == nil {
-		path = filepath.Join(localPath, "additional", "UpdatedAreldaMetadata.xml")
+	path := filepath.Join(localPath, "additional", "UpdatedAreldaMetadata.xml")
+	if identifyTransfer.Type == enums.TransferTypeVecteurSIP {
+		path = filepath.Join(localPath, "header", "metadata.xml")
 	}
-	e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.MetadataValidationName, &activities.MetadataValidationParams{
-		MetadataPath: path,
-	}).
-		Get(ctx, &metadataValidation)
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.MetadataValidationName,
+		&activities.MetadataValidationParams{MetadataPath: path},
+	).Get(ctx, &metadataValidation)
 	if e != nil {
 		return nil, e
 	}
 
 	var bagPath string
-	if checkStructureRes.SIP != nil {
+	if identifyTransfer.Type == enums.TransferTypeVecteurSIP {
 		// Repackage SFA SIP into a Bag.
 		var sipCreation activities.SipCreationResult
-		e = temporalsdk_workflow.ExecuteActivity(withLocalActOpts(ctx), activities.SipCreationName, &activities.SipCreationParams{
-			SipPath: localPath,
-		}).
-			Get(ctx, &sipCreation)
+		e = temporalsdk_workflow.ExecuteActivity(
+			withLocalActOpts(ctx),
+			activities.SipCreationName,
+			&activities.SipCreationParams{SipPath: localPath},
+		).Get(ctx, &sipCreation)
 		if e != nil {
 			return nil, e
 		}
