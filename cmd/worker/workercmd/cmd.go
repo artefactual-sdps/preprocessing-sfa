@@ -80,10 +80,6 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: activities.CombinePREMISName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewSipCreationActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.SipCreationName},
-	)
-	w.RegisterActivityWithOptions(
 		activities.NewTransformSIP().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
 	)

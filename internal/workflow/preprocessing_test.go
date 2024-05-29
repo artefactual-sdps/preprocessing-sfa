@@ -53,10 +53,6 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.MetadataValidationName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewSipCreationActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.SipCreationName},
-	)
-	s.env.RegisterActivityWithOptions(
 		activities.NewTransformSIP().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
 	)
