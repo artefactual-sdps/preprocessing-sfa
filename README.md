@@ -35,7 +35,7 @@ Optional BagIt bag configuration (default values shown):
 
 ```toml
 [bagit]
-algorithm = "md5"
+checksumAlgorithm = "md5"
 ```
 
 ### Enduro:

@@ -22,7 +22,7 @@ workflowName = "preprocessing"
 [worker]
 maxConcurrentSessions = 1
 [bagit]
-checksumAlgorithm = "sha256"
+checksumAlgorithm = "md5"
 `
 
 func TestConfig(t *testing.T) {
@@ -58,7 +58,7 @@ func TestConfig(t *testing.T) {
 					MaxConcurrentSessions: 1,
 				},
 				Bagit: bagit.Config{
-					ChecksumAlgorithm: "sha256",
+					ChecksumAlgorithm: "md5",
 				},
 			},
 		},
