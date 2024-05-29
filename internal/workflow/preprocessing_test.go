@@ -42,23 +42,23 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.IdentifySIPName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewCheckSIPStructure().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.CheckSIPStructureName},
+		activities.NewValidateStructure().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateStructureName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewAllowedFileFormatsActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.AllowedFileFormatsName},
+		activities.NewValidateFileFormats().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewMetadataValidationActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.MetadataValidationName},
+		activities.NewValidateMetadata().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateMetadataName},
 	)
 	s.env.RegisterActivityWithOptions(
 		activities.NewTransformSIP().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewCombinePREMISActivity().Execute,
+		activities.NewCombinePREMIS().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.CombinePREMISName},
 	)
 	s.env.RegisterActivityWithOptions(
@@ -104,25 +104,25 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.IdentifySIPResult{SIP: expectedSIP}, nil,
 	)
 	s.env.OnActivity(
-		activities.CheckSIPStructureName,
+		activities.ValidateStructureName,
 		sessionCtx,
-		&activities.CheckSIPStructureParams{SIP: expectedSIP},
+		&activities.ValidateStructureParams{SIP: expectedSIP},
 	).Return(
-		&activities.CheckSIPStructureResult{}, nil,
+		&activities.ValidateStructureResult{}, nil,
 	)
 	s.env.OnActivity(
-		activities.AllowedFileFormatsName,
+		activities.ValidateFileFormatsName,
 		sessionCtx,
-		&activities.AllowedFileFormatsParams{ContentPath: expectedSIP.ContentPath},
+		&activities.ValidateFileFormatsParams{ContentPath: expectedSIP.ContentPath},
 	).Return(
-		&activities.AllowedFileFormatsResult{}, nil,
+		&activities.ValidateFileFormatsResult{}, nil,
 	)
 	s.env.OnActivity(
-		activities.MetadataValidationName,
+		activities.ValidateMetadataName,
 		sessionCtx,
-		&activities.MetadataValidationParams{MetadataPath: expectedSIP.MetadataPath},
+		&activities.ValidateMetadataParams{MetadataPath: expectedSIP.MetadataPath},
 	).Return(
-		&activities.MetadataValidationResult{}, nil,
+		&activities.ValidateMetadataResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.TransformSIPName,

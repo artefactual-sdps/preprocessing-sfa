@@ -15,17 +15,17 @@ import (
 
 const TransformSIPName = "transform-sip"
 
-type TransformSIP struct{}
-
-func NewTransformSIP() *TransformSIP {
-	return &TransformSIP{}
-}
-
 type TransformSIPParams struct {
 	SIP sip.SIP
 }
 
 type TransformSIPResult struct{}
+
+type TransformSIP struct{}
+
+func NewTransformSIP() *TransformSIP {
+	return &TransformSIP{}
+}
 
 func (a *TransformSIP) Execute(ctx context.Context, params *TransformSIPParams) (*TransformSIPResult, error) {
 	// Create metadata directory.

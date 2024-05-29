@@ -65,19 +65,19 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: activities.IdentifySIPName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewCheckSIPStructure().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.CheckSIPStructureName},
+		activities.NewValidateStructure().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateStructureName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewAllowedFileFormatsActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.AllowedFileFormatsName},
+		activities.NewValidateFileFormats().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewMetadataValidationActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.MetadataValidationName},
+		activities.NewValidateMetadata().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateMetadataName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewCombinePREMISActivity().Execute,
+		activities.NewCombinePREMIS().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.CombinePREMISName},
 	)
 	w.RegisterActivityWithOptions(

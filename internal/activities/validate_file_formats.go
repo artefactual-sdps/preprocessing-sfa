@@ -10,24 +10,24 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 )
 
-const AllowedFileFormatsName = "allowed-file-formats"
+const ValidateFileFormatsName = "validate-file-formats"
 
-type AllowedFileFormatsActivity struct{}
-
-func NewAllowedFileFormatsActivity() *AllowedFileFormatsActivity {
-	return &AllowedFileFormatsActivity{}
-}
-
-type AllowedFileFormatsParams struct {
+type ValidateFileFormatsParams struct {
 	ContentPath string
 }
 
-type AllowedFileFormatsResult struct{}
+type ValidateFileFormatsResult struct{}
 
-func (md *AllowedFileFormatsActivity) Execute(
+type ValidateFileFormats struct{}
+
+func NewValidateFileFormats() *ValidateFileFormats {
+	return &ValidateFileFormats{}
+}
+
+func (a *ValidateFileFormats) Execute(
 	ctx context.Context,
-	params *AllowedFileFormatsParams,
-) (*AllowedFileFormatsResult, error) {
+	params *ValidateFileFormatsParams,
+) (*ValidateFileFormatsResult, error) {
 	sf := fformat.NewSiegfriedEmbed()
 	// TODO(daniel): make allowed list configurable.
 	allowed := map[string]struct{}{
@@ -95,5 +95,5 @@ func (md *AllowedFileFormatsActivity) Execute(
 		return nil, invalidErrors
 	}
 
-	return &AllowedFileFormatsResult{}, nil
+	return &ValidateFileFormatsResult{}, nil
 }

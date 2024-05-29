@@ -10,24 +10,24 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
-const CheckSIPStructureName = "check-sip-structure"
+const ValidateStructureName = "validate-structure"
 
-type CheckSIPStructure struct{}
-
-func NewCheckSIPStructure() *CheckSIPStructure {
-	return &CheckSIPStructure{}
-}
-
-type CheckSIPStructureParams struct {
+type ValidateStructureParams struct {
 	SIP sip.SIP
 }
 
-type CheckSIPStructureResult struct{}
+type ValidateStructureResult struct{}
 
-func (md *CheckSIPStructure) Execute(
+type ValidateStructure struct{}
+
+func NewValidateStructure() *ValidateStructure {
+	return &ValidateStructure{}
+}
+
+func (a *ValidateStructure) Execute(
 	ctx context.Context,
-	params *CheckSIPStructureParams,
-) (*CheckSIPStructureResult, error) {
+	params *ValidateStructureParams,
+) (*ValidateStructureResult, error) {
 	var e error
 
 	if _, err := os.Stat(params.SIP.ContentPath); err != nil {
@@ -57,5 +57,5 @@ func (md *CheckSIPStructure) Execute(
 		return nil, e
 	}
 
-	return &CheckSIPStructureResult{}, nil
+	return &ValidateStructureResult{}, nil
 }

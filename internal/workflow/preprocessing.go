@@ -43,6 +43,10 @@ func (w *PreprocessingWorkflow) Execute(
 	logger := temporalsdk_workflow.GetLogger(ctx)
 	logger.Debug("PreprocessingWorkflow workflow running!", "params", params)
 
+	defer func() {
+		logger.Debug("PreprocessingWorkflow workflow finished!", "result", r, "error", e)
+	}()
+
 	if params == nil || params.RelativePath == "" {
 		e = temporal.NewNonRetryableError(fmt.Errorf("error calling workflow with unexpected inputs"))
 		return nil, e
@@ -61,32 +65,32 @@ func (w *PreprocessingWorkflow) Execute(
 		return nil, e
 	}
 
-	// Validate SIP structure.
-	var checkSIPStructureRes activities.CheckSIPStructureResult
-	checkSIPStructureErr := temporalsdk_workflow.ExecuteActivity(
+	// Validate structure.
+	var validateStructure activities.ValidateStructureResult
+	validateStructureErr := temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
-		activities.CheckSIPStructureName,
-		&activities.CheckSIPStructureParams{SIP: identifySIP.SIP},
-	).Get(ctx, &checkSIPStructureRes)
+		activities.ValidateStructureName,
+		&activities.ValidateStructureParams{SIP: identifySIP.SIP},
+	).Get(ctx, &validateStructure)
 
 	// Validate file formats.
-	var allowedFileFormats activities.AllowedFileFormatsResult
-	allowedFileFormatsErr := temporalsdk_workflow.ExecuteActivity(
+	var validateFileFormats activities.ValidateFileFormatsResult
+	validateFileFormatsErr := temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
-		activities.AllowedFileFormatsName,
-		&activities.AllowedFileFormatsParams{ContentPath: identifySIP.SIP.ContentPath},
-	).Get(ctx, &allowedFileFormats)
+		activities.ValidateFileFormatsName,
+		&activities.ValidateFileFormatsParams{ContentPath: identifySIP.SIP.ContentPath},
+	).Get(ctx, &validateFileFormats)
 
 	// Validate metadata.
-	var metadataValidation activities.MetadataValidationResult
-	metadataValidationErr := temporalsdk_workflow.ExecuteActivity(
+	var validateMetadata activities.ValidateMetadataResult
+	validateMetadataErr := temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
-		activities.MetadataValidationName,
-		&activities.MetadataValidationParams{MetadataPath: identifySIP.SIP.MetadataPath},
-	).Get(ctx, &metadataValidation)
+		activities.ValidateMetadataName,
+		&activities.ValidateMetadataParams{MetadataPath: identifySIP.SIP.MetadataPath},
+	).Get(ctx, &validateMetadata)
 
 	// Combine and return validation errors.
-	e = errors.Join(checkSIPStructureErr, allowedFileFormatsErr, metadataValidationErr)
+	e = errors.Join(validateStructureErr, validateFileFormatsErr, validateMetadataErr)
 	if e != nil {
 		return nil, e
 	}
@@ -114,7 +118,7 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 
 	// Remove PREMIS files.
-	var removeFilesResult removefiles.ActivityResult
+	var removeFiles removefiles.ActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
 		removefiles.ActivityName,
@@ -122,26 +126,24 @@ func (w *PreprocessingWorkflow) Execute(
 			Path:           localPath,
 			RemovePatterns: []*regexp.Regexp{premisRe},
 		},
-	).Get(ctx, &removeFilesResult)
+	).Get(ctx, &removeFiles)
 	if e != nil {
 		return nil, e
 	}
 
 	// Bag the SIP for Enduro processing.
-	var createBagResult removefiles.ActivityResult
+	var createBag bagit.CreateBagActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
 		bagit.CreateBagActivityName,
 		&bagit.CreateBagActivityParams{SourcePath: localPath},
-	).Get(ctx, &createBagResult)
+	).Get(ctx, &createBag)
 	if e != nil {
 		return nil, e
 	}
 
 	// TODO: validate checksums located in the XML metadata file
 	// against the checksums generated on Bag creation.
-
-	logger.Debug("PreprocessingWorkflow workflow finished!", "result", r, "error", e)
 
 	return &PreprocessingWorkflowResult{RelativePath: params.RelativePath}, e
 }

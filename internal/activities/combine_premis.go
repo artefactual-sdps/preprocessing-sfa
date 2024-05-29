@@ -14,24 +14,19 @@ import (
 
 const CombinePREMISName = "combine-premis"
 
-type CombinePREMISActivity struct{}
-
-func NewCombinePREMISActivity() *CombinePREMISActivity {
-	return &CombinePREMISActivity{}
-}
-
 type CombinePREMISParams struct {
 	Path string
 }
 
-type CombinePREMISResult struct {
-	Out string
+type CombinePREMISResult struct{}
+
+type CombinePREMIS struct{}
+
+func NewCombinePREMIS() *CombinePREMIS {
+	return &CombinePREMIS{}
 }
 
-func (md *CombinePREMISActivity) Execute(
-	ctx context.Context,
-	params *CombinePREMISParams,
-) (*CombinePREMISResult, error) {
+func (a *CombinePREMIS) Execute(ctx context.Context, params *CombinePREMISParams) (*CombinePREMISResult, error) {
 	// Get transfer's PREMIS file paths.
 	file_paths, err := CombinePREMISGetPaths(params.Path)
 	if err != nil {
@@ -57,9 +52,7 @@ func (md *CombinePREMISActivity) Execute(
 		}
 	}
 
-	res := &CombinePREMISResult{}
-	res.Out = "OK"
-	return res, nil
+	return &CombinePREMISResult{}, nil
 }
 
 func CombinePREMISGetPaths(transfer_dir string) ([]string, error) {
