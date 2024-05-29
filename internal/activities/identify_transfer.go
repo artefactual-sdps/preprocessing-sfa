@@ -14,7 +14,7 @@ type IdentifyTransferParams struct {
 	Path string
 }
 type IdentifyTransferResult struct {
-	Type enums.TransferType
+	Type enums.SIPType
 }
 
 type IdentifyTransfer struct{}
@@ -27,9 +27,9 @@ func (a *IdentifyTransfer) Execute(
 	ctx context.Context,
 	params *IdentifyTransferParams,
 ) (*IdentifyTransferResult, error) {
-	res := &IdentifyTransferResult{Type: enums.TransferTypeVecteurAIP}
+	res := &IdentifyTransferResult{Type: enums.SIPTypeVecteurAIP}
 	if _, err := os.Stat(filepath.Join(params.Path, "additional")); os.IsNotExist(err) {
-		res.Type = enums.TransferTypeVecteurSIP
+		res.Type = enums.SIPTypeVecteurSIP
 	}
 
 	return res, nil

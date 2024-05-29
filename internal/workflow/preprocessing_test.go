@@ -102,7 +102,7 @@ func (s *PreprocessingTestSuite) TestVecteurSIP() {
 		sessionCtx,
 		&activities.IdentifyTransferParams{Path: sipPath},
 	).Return(
-		&activities.IdentifyTransferResult{Type: enums.TransferTypeVecteurSIP}, nil,
+		&activities.IdentifyTransferResult{Type: enums.SIPTypeVecteurSIP}, nil,
 	)
 	s.env.OnActivity(
 		activities.CheckSipStructureName,
@@ -168,7 +168,7 @@ func (s *PreprocessingTestSuite) TestVecteurAIP() {
 		sessionCtx,
 		&activities.IdentifyTransferParams{Path: sipPath},
 	).Return(
-		&activities.IdentifyTransferResult{Type: enums.TransferTypeVecteurAIP}, nil,
+		&activities.IdentifyTransferResult{Type: enums.SIPTypeVecteurAIP}, nil,
 	)
 	s.env.OnActivity(
 		activities.AllowedFileFormatsName,

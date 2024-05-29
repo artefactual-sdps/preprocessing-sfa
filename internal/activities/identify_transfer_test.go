@@ -25,14 +25,14 @@ func TestIdentifyTransfer(t *testing.T) {
 			params: activities.IdentifyTransferParams{
 				Path: fs.NewDir(t, "", fs.WithDir("content"), fs.WithDir("additional")).Path(),
 			},
-			result: activities.IdentifyTransferResult{Type: enums.TransferTypeVecteurAIP},
+			result: activities.IdentifyTransferResult{Type: enums.SIPTypeVecteurAIP},
 		},
 		{
 			name: "Identifies a VecteurSIP",
 			params: activities.IdentifyTransferParams{
 				Path: fs.NewDir(t, "", fs.WithDir("content"), fs.WithDir("header")).Path(),
 			},
-			result: activities.IdentifyTransferResult{Type: enums.TransferTypeVecteurSIP},
+			result: activities.IdentifyTransferResult{Type: enums.SIPTypeVecteurSIP},
 		},
 	}
 	for _, tt := range tests {

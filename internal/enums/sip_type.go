@@ -4,4 +4,4 @@ package enums
 // VecteurAIP,
 // VecteurSIP,
 // ).
-type TransferType string
+type SIPType string

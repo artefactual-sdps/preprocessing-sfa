@@ -78,7 +78,7 @@ func (w *PreprocessingWorkflow) Execute(
 	var valErr error
 
 	// Validate SIP structure.
-	if identifyTransfer.Type == enums.TransferTypeVecteurSIP {
+	if identifyTransfer.Type == enums.SIPTypeVecteurSIP {
 		var checkStructureRes activities.CheckSipStructureResult
 		e = temporalsdk_workflow.ExecuteActivity(
 			withLocalActOpts(ctx),
@@ -115,7 +115,7 @@ func (w *PreprocessingWorkflow) Execute(
 	// Validate metadata.xsd.
 	var metadataValidation activities.MetadataValidationResult
 	path := filepath.Join(localPath, "additional", "UpdatedAreldaMetadata.xml")
-	if identifyTransfer.Type == enums.TransferTypeVecteurSIP {
+	if identifyTransfer.Type == enums.SIPTypeVecteurSIP {
 		path = filepath.Join(localPath, "header", "metadata.xml")
 	}
 	e = temporalsdk_workflow.ExecuteActivity(
@@ -128,7 +128,7 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 
 	var bagPath string
-	if identifyTransfer.Type == enums.TransferTypeVecteurSIP {
+	if identifyTransfer.Type == enums.SIPTypeVecteurSIP {
 		// Repackage SFA SIP into a Bag.
 		var sipCreation activities.SipCreationResult
 		e = temporalsdk_workflow.ExecuteActivity(
