@@ -8,7 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
+	"go.artefactual.dev/tools/fsutil"
+
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
