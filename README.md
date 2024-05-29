@@ -31,7 +31,7 @@ workflowName = "preprocessing"
 maxConcurrentSessions = 1
 ```
 
-Optional BagIt bag configuration (default values shown):
+Optional BagIt bag configuration:
 
 ```toml
 [bagit]
