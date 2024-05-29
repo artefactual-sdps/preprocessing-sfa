@@ -84,8 +84,8 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: activities.SipCreationName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewTransformVecteurAIPActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.TransformVecteurAIPName},
+		activities.NewTransformSIP().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
 	)
 	w.RegisterActivityWithOptions(
 		removefiles.NewActivity().Execute,
@@ -94,10 +94,6 @@ func (m *Main) Run(ctx context.Context) error {
 	w.RegisterActivityWithOptions(
 		activities.NewCreateBagActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.CreateBagName},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewRemovePaths().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.RemovePathsName},
 	)
 
 	if err := w.Start(); err != nil {

@@ -57,8 +57,8 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.SipCreationName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewTransformVecteurAIPActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.TransformVecteurAIPName},
+		activities.NewTransformSIP().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
 	)
 	s.env.RegisterActivityWithOptions(
 		activities.NewCombinePREMISActivity().Execute,
@@ -72,10 +72,6 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 		activities.NewCreateBagActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.CreateBagName},
 	)
-	s.env.RegisterActivityWithOptions(
-		activities.NewRemovePaths().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.RemovePathsName},
-	)
 
 	s.workflow = workflow.NewPreprocessingWorkflow(sharedPath)
 }
@@ -88,83 +84,8 @@ func TestPreprocessingWorkflow(t *testing.T) {
 	suite.Run(t, new(PreprocessingTestSuite))
 }
 
-func (s *PreprocessingTestSuite) TestVecteurSIP() {
+func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 	relPath := "fake/path/to/sip"
-	finPath := "fake/path/to/sip_bag"
-	sipPath := sharedPath + relPath
-	bagPath := sharedPath + finPath
-	expectedSIP := sip.SIP{
-		Type:         enums.SIPTypeVecteurSIP,
-		Path:         sipPath,
-		ContentPath:  filepath.Join(sipPath, "content"),
-		MetadataPath: filepath.Join(sipPath, "header", "metadata.xml"),
-		XSDPath:      filepath.Join(sipPath, "header", "xsd", "arelda.xsd"),
-	}
-	s.SetupTest(config.Configuration{})
-
-	// Mock activities.
-	sessionCtx := mock.AnythingOfType("*context.timerCtx")
-	s.env.OnActivity(
-		activities.IdentifySIPName,
-		sessionCtx,
-		&activities.IdentifySIPParams{Path: sipPath},
-	).Return(
-		&activities.IdentifySIPResult{SIP: expectedSIP}, nil,
-	)
-	s.env.OnActivity(
-		activities.CheckSIPStructureName,
-		sessionCtx,
-		&activities.CheckSIPStructureParams{SIP: expectedSIP},
-	).Return(
-		&activities.CheckSIPStructureResult{}, nil,
-	)
-	s.env.OnActivity(
-		activities.AllowedFileFormatsName,
-		sessionCtx,
-		&activities.AllowedFileFormatsParams{ContentPath: expectedSIP.ContentPath},
-	).Return(
-		&activities.AllowedFileFormatsResult{}, nil,
-	)
-	s.env.OnActivity(
-		activities.MetadataValidationName,
-		sessionCtx,
-		&activities.MetadataValidationParams{MetadataPath: filepath.Join(sipPath, "header", "metadata.xml")},
-	).Return(
-		&activities.MetadataValidationResult{}, nil,
-	)
-	s.env.OnActivity(
-		activities.SipCreationName,
-		sessionCtx,
-		&activities.SipCreationParams{SipPath: sipPath},
-	).Return(
-		&activities.SipCreationResult{NewSipPath: bagPath}, nil,
-	)
-	s.env.OnActivity(
-		activities.RemovePathsName,
-		sessionCtx,
-		&activities.RemovePathsParams{Paths: []string{sipPath}},
-	).Return(
-		&activities.RemovePathsResult{}, nil,
-	)
-
-	s.env.ExecuteWorkflow(
-		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{RelativePath: relPath},
-	)
-
-	s.True(s.env.IsWorkflowCompleted())
-
-	var result workflow.PreprocessingWorkflowResult
-	err := s.env.GetWorkflowResult(&result)
-	s.NoError(err)
-	s.Equal(
-		&result,
-		&workflow.PreprocessingWorkflowResult{RelativePath: finPath},
-	)
-}
-
-func (s *PreprocessingTestSuite) TestVecteurAIP() {
-	relPath := "fake/path/to/aip"
 	sipPath := sharedPath + relPath
 	expectedSIP := sip.SIP{
 		Type:         enums.SIPTypeVecteurAIP,
@@ -172,6 +93,7 @@ func (s *PreprocessingTestSuite) TestVecteurAIP() {
 		ContentPath:  filepath.Join(sipPath, "content", "content"),
 		MetadataPath: filepath.Join(sipPath, "additional", "UpdatedAreldaMetadata.xml"),
 		XSDPath:      filepath.Join(sipPath, "content", "header", "xsd", "arelda.xsd"),
+		RemovePaths:  []string{filepath.Join(sipPath, "content"), filepath.Join(sipPath, "additional")},
 	}
 	s.SetupTest(config.Configuration{})
 
@@ -201,18 +123,16 @@ func (s *PreprocessingTestSuite) TestVecteurAIP() {
 	s.env.OnActivity(
 		activities.MetadataValidationName,
 		sessionCtx,
-		&activities.MetadataValidationParams{
-			MetadataPath: filepath.Join(sipPath, "additional", "UpdatedAreldaMetadata.xml"),
-		},
+		&activities.MetadataValidationParams{MetadataPath: expectedSIP.MetadataPath},
 	).Return(
 		&activities.MetadataValidationResult{}, nil,
 	)
 	s.env.OnActivity(
-		activities.TransformVecteurAIPName,
+		activities.TransformSIPName,
 		sessionCtx,
-		&activities.TransformVecteurAIPParams{Path: sipPath},
+		&activities.TransformSIPParams{SIP: expectedSIP},
 	).Return(
-		&activities.TransformVecteurAIPResult{}, nil,
+		&activities.TransformSIPResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.CombinePREMISName,
@@ -237,13 +157,6 @@ func (s *PreprocessingTestSuite) TestVecteurAIP() {
 		&activities.CreateBagParams{Path: sipPath},
 	).Return(
 		&activities.CreateBagResult{}, nil,
-	)
-	s.env.OnActivity(
-		activities.RemovePathsName,
-		sessionCtx,
-		&activities.RemovePathsParams{Paths: []string(nil)},
-	).Return(
-		&activities.RemovePathsResult{}, nil,
 	)
 
 	s.env.ExecuteWorkflow(

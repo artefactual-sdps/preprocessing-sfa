@@ -14,8 +14,8 @@ import (
 func TestNewSIP(t *testing.T) {
 	t.Parallel()
 
-	vecteurAIP := fs.NewDir(t, "", fs.WithDir("content"), fs.WithDir("additional"))
-	vecteurSIP := fs.NewDir(t, "", fs.WithDir("content"), fs.WithDir("header"))
+	aipPath := fs.NewDir(t, "", fs.WithDir("content"), fs.WithDir("additional")).Path()
+	sipPath := fs.NewDir(t, "", fs.WithDir("content"), fs.WithDir("header")).Path()
 
 	tests := []struct {
 		name    string
@@ -25,24 +25,26 @@ func TestNewSIP(t *testing.T) {
 	}{
 		{
 			name: "Creates a new SIP (type: VecteurAIP)",
-			path: vecteurAIP.Path(),
+			path: aipPath,
 			wantSIP: sip.SIP{
 				Type:         enums.SIPTypeVecteurAIP,
-				Path:         vecteurAIP.Path(),
-				ContentPath:  filepath.Join(vecteurAIP.Path(), "content", "content"),
-				MetadataPath: filepath.Join(vecteurAIP.Path(), "additional", "UpdatedAreldaMetadata.xml"),
-				XSDPath:      filepath.Join(vecteurAIP.Path(), "content", "header", "xsd", "arelda.xsd"),
+				Path:         aipPath,
+				ContentPath:  filepath.Join(aipPath, "content", "content"),
+				MetadataPath: filepath.Join(aipPath, "additional", "UpdatedAreldaMetadata.xml"),
+				XSDPath:      filepath.Join(aipPath, "content", "header", "xsd", "arelda.xsd"),
+				RemovePaths:  []string{filepath.Join(aipPath, "content"), filepath.Join(aipPath, "additional")},
 			},
 		},
 		{
 			name: "Creates a new SIP (type: VecteurSIP)",
-			path: vecteurSIP.Path(),
+			path: sipPath,
 			wantSIP: sip.SIP{
 				Type:         enums.SIPTypeVecteurSIP,
-				Path:         vecteurSIP.Path(),
-				ContentPath:  filepath.Join(vecteurSIP.Path(), "content"),
-				MetadataPath: filepath.Join(vecteurSIP.Path(), "header", "metadata.xml"),
-				XSDPath:      filepath.Join(vecteurSIP.Path(), "header", "xsd", "arelda.xsd"),
+				Path:         sipPath,
+				ContentPath:  filepath.Join(sipPath, "content"),
+				MetadataPath: filepath.Join(sipPath, "header", "metadata.xml"),
+				XSDPath:      filepath.Join(sipPath, "header", "xsd", "arelda.xsd"),
+				RemovePaths:  []string{filepath.Join(sipPath, "content"), filepath.Join(sipPath, "header")},
 			},
 		},
 		{

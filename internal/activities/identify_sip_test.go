@@ -35,6 +35,7 @@ func TestIdentifySIP(t *testing.T) {
 					ContentPath:  filepath.Join(path, "content", "content"),
 					MetadataPath: filepath.Join(path, "additional", "UpdatedAreldaMetadata.xml"),
 					XSDPath:      filepath.Join(path, "content", "header", "xsd", "arelda.xsd"),
+					RemovePaths:  []string{filepath.Join(path, "content"), filepath.Join(path, "additional")},
 				},
 			},
 		},

@@ -13,7 +13,6 @@ import (
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 )
 
 var premisRe *regexp.Regexp = regexp.MustCompile("(?i)_PREMIS.xml$")
@@ -47,20 +46,6 @@ func (w *PreprocessingWorkflow) Execute(
 		e = temporal.NewNonRetryableError(fmt.Errorf("error calling workflow with unexpected inputs"))
 		return nil, e
 	}
-
-	var removePaths []string
-
-	defer func() {
-		var result activities.RemovePathsResult
-		err := temporalsdk_workflow.ExecuteActivity(
-			withLocalActOpts(ctx),
-			activities.RemovePathsName,
-			&activities.RemovePathsParams{Paths: removePaths},
-		).Get(ctx, &result)
-		e = errors.Join(e, err)
-
-		logger.Debug("PreprocessingWorkflow workflow finished!", "result", r, "error", e)
-	}()
 
 	localPath := filepath.Join(w.sharedPath, filepath.Clean(params.RelativePath))
 
@@ -99,87 +84,65 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.MetadataValidationParams{MetadataPath: identifySIP.SIP.MetadataPath},
 	).Get(ctx, &metadataValidation)
 
-	// Combine validation errors.
+	// Combine and return validation errors.
 	e = errors.Join(checkSIPStructureErr, allowedFileFormatsErr, metadataValidationErr)
 	if e != nil {
 		return nil, e
 	}
 
-	var bagPath string
-	if identifySIP.SIP.Type == enums.SIPTypeVecteurSIP {
-		// Repackage SFA SIP into a Bag.
-		var sipCreation activities.SipCreationResult
-		e = temporalsdk_workflow.ExecuteActivity(
-			withLocalActOpts(ctx),
-			activities.SipCreationName,
-			&activities.SipCreationParams{SipPath: localPath},
-		).Get(ctx, &sipCreation)
-		if e != nil {
-			return nil, e
-		}
-
-		bagPath = sipCreation.NewSipPath
-
-		// Remove initial SIP.
-		removePaths = append(removePaths, localPath)
-	} else {
-		// Re-structure Vecteur AIP into SIP.
-		var transformVecteurAIP activities.TransformVecteurAIPResult
-		e = temporalsdk_workflow.ExecuteActivity(
-			withLocalActOpts(ctx),
-			activities.TransformVecteurAIPName,
-			&activities.TransformVecteurAIPParams{Path: localPath},
-		).Get(ctx, &transformVecteurAIP)
-		if e != nil {
-			return nil, e
-		}
-
-		// Combine PREMIS files into one.
-		var combinePREMIS activities.CombinePREMISResult
-		e = temporalsdk_workflow.ExecuteActivity(
-			withLocalActOpts(ctx),
-			activities.CombinePREMISName,
-			&activities.CombinePREMISParams{Path: localPath},
-		).Get(ctx, &combinePREMIS)
-		if e != nil {
-			return nil, e
-		}
-
-		// Remove PREMIS XML files.
-		var removeFilesResult removefiles.ActivityResult
-		e = temporalsdk_workflow.ExecuteActivity(
-			withLocalActOpts(ctx),
-			removefiles.ActivityName,
-			&removefiles.ActivityParams{
-				Path:           localPath,
-				RemovePatterns: []*regexp.Regexp{premisRe},
-			},
-		).Get(ctx, &removeFilesResult)
-		if e != nil {
-			return nil, e
-		}
-
-		// Create Bag.
-		var createBag activities.CreateBagResult
-		e = temporalsdk_workflow.ExecuteActivity(
-			withLocalActOpts(ctx),
-			activities.CreateBagName,
-			&activities.CreateBagParams{Path: localPath},
-		).Get(ctx, &createBag)
-		if e != nil {
-			return nil, e
-		}
-
-		bagPath = localPath
-	}
-
-	// Get final relative path.
-	realPath, e := filepath.Rel(w.sharedPath, bagPath)
+	// Re-structure SIP.
+	var transformSIP activities.TransformSIPResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.TransformSIPName,
+		&activities.TransformSIPParams{SIP: identifySIP.SIP},
+	).Get(ctx, &transformSIP)
 	if e != nil {
 		return nil, e
 	}
 
-	return &PreprocessingWorkflowResult{RelativePath: realPath}, e
+	// Combine PREMIS files into one.
+	var combinePREMIS activities.CombinePREMISResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.CombinePREMISName,
+		&activities.CombinePREMISParams{Path: localPath},
+	).Get(ctx, &combinePREMIS)
+	if e != nil {
+		return nil, e
+	}
+
+	// Remove PREMIS files.
+	var removeFilesResult removefiles.ActivityResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		removefiles.ActivityName,
+		&removefiles.ActivityParams{
+			Path:           localPath,
+			RemovePatterns: []*regexp.Regexp{premisRe},
+		},
+	).Get(ctx, &removeFilesResult)
+	if e != nil {
+		return nil, e
+	}
+
+	// Create Bag.
+	var createBag activities.CreateBagResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.CreateBagName,
+		&activities.CreateBagParams{Path: localPath},
+	).Get(ctx, &createBag)
+	if e != nil {
+		return nil, e
+	}
+
+	// TODO: validate checksums located in the XML metadata file
+	// against the checksums generated on Bag creation.
+
+	logger.Debug("PreprocessingWorkflow workflow finished!", "result", r, "error", e)
+
+	return &PreprocessingWorkflowResult{RelativePath: params.RelativePath}, e
 }
 
 func withLocalActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
