@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/artefactual-sdps/temporal-activities/bagit"
 	"github.com/artefactual-sdps/temporal-activities/removefiles"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
@@ -126,13 +127,13 @@ func (w *PreprocessingWorkflow) Execute(
 		return nil, e
 	}
 
-	// Create Bag.
-	var createBag activities.CreateBagResult
+	// Bag the SIP for Enduro processing.
+	var createBagResult removefiles.ActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
-		activities.CreateBagName,
-		&activities.CreateBagParams{Path: localPath},
-	).Get(ctx, &createBag)
+		bagit.CreateBagActivityName,
+		&bagit.CreateBagActivityParams{SourcePath: localPath},
+	).Get(ctx, &createBagResult)
 	if e != nil {
 		return nil, e
 	}

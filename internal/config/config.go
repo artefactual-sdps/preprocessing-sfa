@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/artefactual-sdps/temporal-activities/bagit"
 	"github.com/spf13/viper"
 )
 
@@ -32,6 +33,7 @@ type Configuration struct {
 
 	Temporal Temporal
 	Worker   WorkerConfig
+	Bagit    bagit.Config
 }
 
 type Temporal struct {
@@ -65,10 +67,10 @@ func (c Configuration) Validate() error {
 		errs = errors.Join(errs, errRequired("SharedPath"))
 	}
 	if c.Temporal.TaskQueue == "" {
-		errs = errors.Join(errs, errRequired("TaskQueue"))
+		errs = errors.Join(errs, errRequired("Temporal.TaskQueue"))
 	}
 	if c.Temporal.WorkflowName == "" {
-		errs = errors.Join(errs, errRequired("WorkflowName"))
+		errs = errors.Join(errs, errRequired("Temporal.WorkflowName"))
 	}
 
 	// Verify that MaxConcurrentSessions is >= 1.
@@ -77,6 +79,10 @@ func (c Configuration) Validate() error {
 			"Worker.MaxConcurrentSessions: %d is less than the minimum value (1)",
 			c.Worker.MaxConcurrentSessions,
 		))
+	}
+
+	if err := c.Bagit.Validate(); err != nil {
+		errs = errors.Join(errs, fmt.Errorf("Bagit.%v", err))
 	}
 
 	return errs
@@ -122,10 +128,7 @@ func Read(config *Configuration, configFile string) (found bool, configFileUsed 
 	}
 
 	if err := config.Validate(); err != nil {
-		return true, "", errors.Join(
-			fmt.Errorf("invalid configuration:"),
-			err,
-		)
+		return true, "", errors.Join(errors.New("invalid configuration:"), err)
 	}
 
 	return true, v.ConfigFileUsed(), nil

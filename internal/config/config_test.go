@@ -3,6 +3,7 @@ package config_test
 import (
 	"testing"
 
+	"github.com/artefactual-sdps/temporal-activities/bagit"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
@@ -20,18 +21,21 @@ taskQueue = "preprocessing"
 workflowName = "preprocessing"
 [worker]
 maxConcurrentSessions = 1
+[bagit]
+checksumAlgorithm = "sha256"
 `
 
 func TestConfig(t *testing.T) {
 	t.Parallel()
 
 	type test struct {
-		name       string
-		configFile string
-		toml       string
-		wantFound  bool
-		wantCfg    config.Configuration
-		wantErr    string
+		name            string
+		configFile      string
+		toml            string
+		wantFound       bool
+		wantCfg         config.Configuration
+		wantErr         string
+		wantErrContains string
 	}
 
 	for _, tc := range []test{
@@ -53,6 +57,9 @@ func TestConfig(t *testing.T) {
 				Worker: config.WorkerConfig{
 					MaxConcurrentSessions: 1,
 				},
+				Bagit: bagit.Config{
+					ChecksumAlgorithm: "sha256",
+				},
 			},
 		},
 		{
@@ -61,8 +68,8 @@ func TestConfig(t *testing.T) {
 			wantFound:  true,
 			wantErr: `invalid configuration:
 SharedPath: missing required value
-TaskQueue: missing required value
-WorkflowName: missing required value`,
+Temporal.TaskQueue: missing required value
+Temporal.WorkflowName: missing required value`,
 		},
 		{
 			name:       "Errors when MaxConcurrentSessions is less than 1",
@@ -76,7 +83,23 @@ workflowName = "preprocessing"
 maxConcurrentSessions = -1
 `,
 			wantFound: true,
-			wantErr:   `Worker.MaxConcurrentSessions: -1 is less than the minimum value (1)`,
+			wantErr: `invalid configuration:
+Worker.MaxConcurrentSessions: -1 is less than the minimum value (1)`,
+		},
+		{
+			name:       "Errors when bagit checksumAlgorithm is invalid",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+[bagit]
+checksumAlgorithm = "unknown"
+`,
+			wantFound: true,
+			wantErr: `invalid configuration:
+Bagit.ChecksumAlgorithm: invalid value "unknown", must be one of (md5, sha1, sha256, sha512)`,
 		},
 		{
 			name:       "Errors when TOML is invalid",
@@ -86,15 +109,15 @@ maxConcurrentSessions = -1
 			wantErr:    "failed to read configuration file: While parsing config: toml: expected character =",
 		},
 		{
-			name:      "Errors when no config file is found in the default paths",
-			wantFound: false,
-			wantErr:   "Config File \"preprocessing\" Not Found in",
+			name:            "Errors when no config file is found in the default paths",
+			wantFound:       false,
+			wantErrContains: "Config File \"preprocessing\" Not Found in \"[",
 		},
 		{
-			name:       "Errors when the given configFile is not found",
-			configFile: "missing.toml",
-			wantFound:  false,
-			wantErr:    "configuration file not found: ",
+			name:            "Errors when the given configFile is not found",
+			configFile:      "missing.toml",
+			wantFound:       false,
+			wantErrContains: "configuration file not found: ",
 		},
 	} {
 		tc := tc
@@ -111,6 +134,11 @@ maxConcurrentSessions = -1
 			var c config.Configuration
 			found, configFileUsed, err := config.Read(&c, configFile)
 			if tc.wantErr != "" {
+				assert.Equal(t, found, tc.wantFound)
+				assert.Error(t, err, tc.wantErr)
+				return
+			}
+			if tc.wantErrContains != "" {
 				assert.Equal(t, found, tc.wantFound)
 				assert.ErrorContains(t, err, tc.wantErr)
 				return

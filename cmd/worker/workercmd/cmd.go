@@ -3,6 +3,7 @@ package workercmd
 import (
 	"context"
 
+	"github.com/artefactual-sdps/temporal-activities/bagit"
 	"github.com/artefactual-sdps/temporal-activities/removefiles"
 	"github.com/go-logr/logr"
 	"go.artefactual.dev/tools/temporal"
@@ -88,8 +89,8 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: removefiles.ActivityName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewCreateBagActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.CreateBagName},
+		bagit.NewCreateBagActivity(m.cfg.Bagit).Execute,
+		temporalsdk_activity.RegisterOptions{Name: bagit.CreateBagActivityName},
 	)
 
 	if err := w.Start(); err != nil {

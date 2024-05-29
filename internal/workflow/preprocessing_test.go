@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/artefactual-sdps/temporal-activities/bagit"
 	"github.com/artefactual-sdps/temporal-activities/removefiles"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -65,8 +66,8 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: removefiles.ActivityName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewCreateBagActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.CreateBagName},
+		bagit.NewCreateBagActivity(cfg.Bagit).Execute,
+		temporalsdk_activity.RegisterOptions{Name: bagit.CreateBagActivityName},
 	)
 
 	s.workflow = workflow.NewPreprocessingWorkflow(sharedPath)
@@ -148,11 +149,11 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&removefiles.ActivityResult{}, nil,
 	)
 	s.env.OnActivity(
-		activities.CreateBagName,
+		bagit.CreateBagActivityName,
 		sessionCtx,
-		&activities.CreateBagParams{Path: sipPath},
+		&bagit.CreateBagActivityParams{SourcePath: sipPath},
 	).Return(
-		&activities.CreateBagResult{}, nil,
+		&bagit.CreateBagActivityResult{}, nil,
 	)
 
 	s.env.ExecuteWorkflow(
