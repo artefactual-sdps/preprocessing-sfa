@@ -2,10 +2,12 @@ package activities
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
+	"path/filepath"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 const AllowedFileFormatsName = "allowed-file-formats"
@@ -17,20 +19,15 @@ func NewAllowedFileFormatsActivity() *AllowedFileFormatsActivity {
 }
 
 type AllowedFileFormatsParams struct {
-	SipPath string
+	ContentPath string
 }
 
-type AllowedFileFormatsResult struct {
-	Ok         bool
-	Formats    map[string]string
-	NotAllowed []string
-}
+type AllowedFileFormatsResult struct{}
 
 func (md *AllowedFileFormatsActivity) Execute(
 	ctx context.Context,
 	params *AllowedFileFormatsParams,
 ) (*AllowedFileFormatsResult, error) {
-	res := &AllowedFileFormatsResult{}
 	sf := fformat.NewSiegfriedEmbed()
 	// TODO(daniel): make allowed list configurable.
 	allowed := map[string]struct{}{
@@ -69,29 +66,34 @@ func (md *AllowedFileFormatsActivity) Execute(
 		"fmt/653":   {},
 	}
 
-	s, err := sip.NewSFASip(params.SipPath)
-	if err != nil {
-		return nil, err
-	}
+	var invalidErrors error
 
-	res.Formats = make(map[string]string)
-	for _, path := range s.Files {
-		ff, err := sf.Identify(path)
+	err := filepath.WalkDir(params.ContentPath, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return nil, err
+			return err
 		}
-		res.Formats[path] = ff.ID
+		if d.IsDir() {
+			return nil
+		}
+		ff, err := sf.Identify(p)
+		if err != nil {
+			return err
+		}
+		if _, exists := allowed[ff.ID]; !exists {
+			invalidErrors = errors.Join(
+				invalidErrors,
+				fmt.Errorf("file format not allowed %q for file %q", ff.ID, p),
+			)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("check content file formats: %v", err)
 	}
 
-	for path, formatID := range res.Formats {
-		if _, exists := allowed[formatID]; !exists {
-			msg := fmt.Sprintf("File format not allowed: %s", path)
-			res.NotAllowed = append(res.NotAllowed, msg)
-		}
+	if invalidErrors != nil {
+		return nil, invalidErrors
 	}
 
-	if len(res.NotAllowed) == 0 {
-		res.Ok = true
-	}
-	return res, nil
+	return &AllowedFileFormatsResult{}, nil
 }

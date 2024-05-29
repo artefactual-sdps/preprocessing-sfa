@@ -64,71 +64,49 @@ func (w *PreprocessingWorkflow) Execute(
 
 	localPath := filepath.Join(w.sharedPath, filepath.Clean(params.RelativePath))
 
-	// Identify transfer.
-	var identifyTransfer activities.IdentifyTransferResult
+	// Identify SIP.
+	var identifySIP activities.IdentifySIPResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
-		activities.IdentifyTransferName,
-		&activities.IdentifyTransferParams{Path: localPath},
-	).Get(ctx, &identifyTransfer)
+		activities.IdentifySIPName,
+		&activities.IdentifySIPParams{Path: localPath},
+	).Get(ctx, &identifySIP)
 	if e != nil {
 		return nil, e
 	}
-
-	var valErr error
 
 	// Validate SIP structure.
-	if identifyTransfer.Type == enums.SIPTypeVecteurSIP {
-		var checkStructureRes activities.CheckSipStructureResult
-		e = temporalsdk_workflow.ExecuteActivity(
-			withLocalActOpts(ctx),
-			activities.CheckSipStructureName,
-			&activities.CheckSipStructureParams{SipPath: localPath},
-		).Get(ctx, &checkStructureRes)
-		if e != nil {
-			return nil, e
-		}
-		if !checkStructureRes.Ok {
-			valErr = activities.ErrInvaliSipStructure
-		}
-	}
+	var checkSIPStructureRes activities.CheckSIPStructureResult
+	checkSIPStructureErr := temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.CheckSIPStructureName,
+		&activities.CheckSIPStructureParams{SIP: identifySIP.SIP},
+	).Get(ctx, &checkSIPStructureRes)
 
-	// Check allowed file formats.
+	// Validate file formats.
 	var allowedFileFormats activities.AllowedFileFormatsResult
-	e = temporalsdk_workflow.ExecuteActivity(
+	allowedFileFormatsErr := temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
 		activities.AllowedFileFormatsName,
-		&activities.AllowedFileFormatsParams{SipPath: localPath},
+		&activities.AllowedFileFormatsParams{ContentPath: identifySIP.SIP.ContentPath},
 	).Get(ctx, &allowedFileFormats)
-	if e != nil {
-		return nil, e
-	}
-	if !allowedFileFormats.Ok {
-		valErr = errors.Join(valErr, activities.ErrIlegalFileFormat)
-	}
 
-	if valErr != nil {
-		e = valErr
-		return nil, e
-	}
-
-	// Validate metadata.xsd.
+	// Validate metadata.
 	var metadataValidation activities.MetadataValidationResult
-	path := filepath.Join(localPath, "additional", "UpdatedAreldaMetadata.xml")
-	if identifyTransfer.Type == enums.SIPTypeVecteurSIP {
-		path = filepath.Join(localPath, "header", "metadata.xml")
-	}
-	e = temporalsdk_workflow.ExecuteActivity(
+	metadataValidationErr := temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
 		activities.MetadataValidationName,
-		&activities.MetadataValidationParams{MetadataPath: path},
+		&activities.MetadataValidationParams{MetadataPath: identifySIP.SIP.MetadataPath},
 	).Get(ctx, &metadataValidation)
+
+	// Combine validation errors.
+	e = errors.Join(checkSIPStructureErr, allowedFileFormatsErr, metadataValidationErr)
 	if e != nil {
 		return nil, e
 	}
 
 	var bagPath string
-	if identifyTransfer.Type == enums.SIPTypeVecteurSIP {
+	if identifySIP.SIP.Type == enums.SIPTypeVecteurSIP {
 		// Repackage SFA SIP into a Bag.
 		var sipCreation activities.SipCreationResult
 		e = temporalsdk_workflow.ExecuteActivity(

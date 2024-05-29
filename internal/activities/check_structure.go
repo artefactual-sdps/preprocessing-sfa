@@ -2,59 +2,60 @@ package activities
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
-const CheckSipStructureName = "check-sip-structure"
+const CheckSIPStructureName = "check-sip-structure"
 
-type CheckSipStructureActivity struct{}
+type CheckSIPStructure struct{}
 
-func NewCheckSipStructure() *CheckSipStructureActivity {
-	return &CheckSipStructureActivity{}
+func NewCheckSIPStructure() *CheckSIPStructure {
+	return &CheckSIPStructure{}
 }
 
-type CheckSipStructureParams struct {
-	SipPath string
+type CheckSIPStructureParams struct {
+	SIP sip.SIP
 }
 
-type CheckSipStructureResult struct {
-	Ok     bool
-	SIP    *sip.SFASip
-	Errors []string
-}
+type CheckSIPStructureResult struct{}
 
-func (md *CheckSipStructureActivity) Execute(
+func (md *CheckSIPStructure) Execute(
 	ctx context.Context,
-	params *CheckSipStructureParams,
-) (*CheckSipStructureResult, error) {
-	res := &CheckSipStructureResult{}
-	s, err := sip.NewSFASip(params.SipPath)
+	params *CheckSIPStructureParams,
+) (*CheckSIPStructureResult, error) {
+	var e error
+
+	if _, err := os.Stat(params.SIP.ContentPath); err != nil {
+		e = errors.Join(e, fmt.Errorf("content folder: %v", err))
+	}
+	if _, err := os.Stat(params.SIP.MetadataPath); err != nil {
+		e = errors.Join(e, fmt.Errorf("metadata file: %v", err))
+	}
+	if _, err := os.Stat(params.SIP.XSDPath); err != nil {
+		e = errors.Join(e, fmt.Errorf("XSD file: %v", err))
+	}
+
+	entries, err := os.ReadDir(params.SIP.ContentPath)
 	if err != nil {
-		return nil, err
+		e = errors.Join(e, fmt.Errorf("read content folder: %v", err))
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			e = errors.Join(e, fmt.Errorf(
+				"unexpected file: %q",
+				filepath.Join(params.SIP.ContentPath, entry.Name()),
+			))
+		}
 	}
 
-	if s.Content == nil {
-		res.Errors = append(res.Errors, "content folder is missing")
-	}
-	if s.Header == nil {
-		res.Errors = append(res.Errors, "header folder is missing")
-	}
-	if !s.MetadataPresent {
-		res.Errors = append(res.Errors, "metadata.xml is missing")
-	}
-	if !s.XSDPresent {
-		res.Errors = append(res.Errors, "XSD folder is missing")
-	}
-	for _, f := range s.Unexpected {
-		res.Errors = append(res.Errors, fmt.Sprintf("unexpected file or folder: %s", f))
+	if e != nil {
+		return nil, e
 	}
 
-	if len(res.Errors) == 0 {
-		res.Ok = true
-	}
-
-	res.SIP = s
-	return res, nil
+	return &CheckSIPStructureResult{}, nil
 }

@@ -37,12 +37,12 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 
 	// Register activities.
 	s.env.RegisterActivityWithOptions(
-		activities.NewIdentifyTransfer().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.IdentifyTransferName},
+		activities.NewIdentifySIP().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.IdentifySIPName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewCheckSipStructure().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.CheckSipStructureName},
+		activities.NewCheckSIPStructure().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.CheckSIPStructureName},
 	)
 	s.env.RegisterActivityWithOptions(
 		activities.NewAllowedFileFormatsActivity().Execute,
@@ -93,30 +93,37 @@ func (s *PreprocessingTestSuite) TestVecteurSIP() {
 	finPath := "fake/path/to/sip_bag"
 	sipPath := sharedPath + relPath
 	bagPath := sharedPath + finPath
+	expectedSIP := sip.SIP{
+		Type:         enums.SIPTypeVecteurSIP,
+		Path:         sipPath,
+		ContentPath:  filepath.Join(sipPath, "content"),
+		MetadataPath: filepath.Join(sipPath, "header", "metadata.xml"),
+		XSDPath:      filepath.Join(sipPath, "header", "xsd", "arelda.xsd"),
+	}
 	s.SetupTest(config.Configuration{})
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
 	s.env.OnActivity(
-		activities.IdentifyTransferName,
+		activities.IdentifySIPName,
 		sessionCtx,
-		&activities.IdentifyTransferParams{Path: sipPath},
+		&activities.IdentifySIPParams{Path: sipPath},
 	).Return(
-		&activities.IdentifyTransferResult{Type: enums.SIPTypeVecteurSIP}, nil,
+		&activities.IdentifySIPResult{SIP: expectedSIP}, nil,
 	)
 	s.env.OnActivity(
-		activities.CheckSipStructureName,
+		activities.CheckSIPStructureName,
 		sessionCtx,
-		&activities.CheckSipStructureParams{SipPath: sipPath},
+		&activities.CheckSIPStructureParams{SIP: expectedSIP},
 	).Return(
-		&activities.CheckSipStructureResult{Ok: true, SIP: &sip.SFASip{}}, nil,
+		&activities.CheckSIPStructureResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.AllowedFileFormatsName,
 		sessionCtx,
-		&activities.AllowedFileFormatsParams{SipPath: sipPath},
+		&activities.AllowedFileFormatsParams{ContentPath: expectedSIP.ContentPath},
 	).Return(
-		&activities.AllowedFileFormatsResult{Ok: true}, nil,
+		&activities.AllowedFileFormatsResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.MetadataValidationName,
@@ -159,23 +166,37 @@ func (s *PreprocessingTestSuite) TestVecteurSIP() {
 func (s *PreprocessingTestSuite) TestVecteurAIP() {
 	relPath := "fake/path/to/aip"
 	sipPath := sharedPath + relPath
+	expectedSIP := sip.SIP{
+		Type:         enums.SIPTypeVecteurAIP,
+		Path:         sipPath,
+		ContentPath:  filepath.Join(sipPath, "content", "content"),
+		MetadataPath: filepath.Join(sipPath, "additional", "UpdatedAreldaMetadata.xml"),
+		XSDPath:      filepath.Join(sipPath, "content", "header", "xsd", "arelda.xsd"),
+	}
 	s.SetupTest(config.Configuration{})
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
 	s.env.OnActivity(
-		activities.IdentifyTransferName,
+		activities.IdentifySIPName,
 		sessionCtx,
-		&activities.IdentifyTransferParams{Path: sipPath},
+		&activities.IdentifySIPParams{Path: sipPath},
 	).Return(
-		&activities.IdentifyTransferResult{Type: enums.SIPTypeVecteurAIP}, nil,
+		&activities.IdentifySIPResult{SIP: expectedSIP}, nil,
+	)
+	s.env.OnActivity(
+		activities.CheckSIPStructureName,
+		sessionCtx,
+		&activities.CheckSIPStructureParams{SIP: expectedSIP},
+	).Return(
+		&activities.CheckSIPStructureResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.AllowedFileFormatsName,
 		sessionCtx,
-		&activities.AllowedFileFormatsParams{SipPath: sipPath},
+		&activities.AllowedFileFormatsParams{ContentPath: expectedSIP.ContentPath},
 	).Return(
-		&activities.AllowedFileFormatsResult{Ok: true}, nil,
+		&activities.AllowedFileFormatsResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.MetadataValidationName,
