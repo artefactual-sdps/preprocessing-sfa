@@ -30,12 +30,12 @@ func TestIdentifySIP(t *testing.T) {
 			params: activities.IdentifySIPParams{Path: path},
 			result: activities.IdentifySIPResult{
 				SIP: sip.SIP{
-					Type:         enums.SIPTypeVecteurAIP,
-					Path:         path,
-					ContentPath:  filepath.Join(path, "content", "content"),
-					MetadataPath: filepath.Join(path, "additional", "UpdatedAreldaMetadata.xml"),
-					XSDPath:      filepath.Join(path, "content", "header", "xsd", "arelda.xsd"),
-					RemovePaths:  []string{filepath.Join(path, "content"), filepath.Join(path, "additional")},
+					Type:          enums.SIPTypeVecteurAIP,
+					Path:          path,
+					ContentPath:   filepath.Join(path, "content", "content"),
+					MetadataPath:  filepath.Join(path, "additional", "UpdatedAreldaMetadata.xml"),
+					XSDPath:       filepath.Join(path, "content", "header", "xsd", "arelda.xsd"),
+					TopLevelPaths: []string{filepath.Join(path, "content"), filepath.Join(path, "additional")},
 				},
 			},
 		},

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
@@ -30,6 +31,7 @@ func (a *ValidateStructure) Execute(
 ) (*ValidateStructureResult, error) {
 	var e error
 
+	// Check existence of specific files/folders.
 	if _, err := os.Stat(params.SIP.ContentPath); err != nil {
 		e = errors.Join(e, fmt.Errorf("content folder: %v", err))
 	}
@@ -40,7 +42,20 @@ func (a *ValidateStructure) Execute(
 		e = errors.Join(e, fmt.Errorf("XSD file: %v", err))
 	}
 
-	entries, err := os.ReadDir(params.SIP.ContentPath)
+	// Check unexpected top-level directories.
+	entries, err := os.ReadDir(params.SIP.Path)
+	if err != nil {
+		e = errors.Join(e, fmt.Errorf("read SIP folder: %v", err))
+	}
+	for _, entry := range entries {
+		path := filepath.Join(params.SIP.Path, entry.Name())
+		if !slices.Contains(params.SIP.TopLevelPaths, path) {
+			e = errors.Join(e, fmt.Errorf("unexpected directory: %q", path))
+		}
+	}
+
+	// Check unexpected files in the content directory.
+	entries, err = os.ReadDir(params.SIP.ContentPath)
 	if err != nil {
 		e = errors.Join(e, fmt.Errorf("read content folder: %v", err))
 	}

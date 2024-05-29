@@ -85,12 +85,12 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 	relPath := "fake/path/to/sip"
 	sipPath := sharedPath + relPath
 	expectedSIP := sip.SIP{
-		Type:         enums.SIPTypeVecteurAIP,
-		Path:         sipPath,
-		ContentPath:  filepath.Join(sipPath, "content", "content"),
-		MetadataPath: filepath.Join(sipPath, "additional", "UpdatedAreldaMetadata.xml"),
-		XSDPath:      filepath.Join(sipPath, "content", "header", "xsd", "arelda.xsd"),
-		RemovePaths:  []string{filepath.Join(sipPath, "content"), filepath.Join(sipPath, "additional")},
+		Type:          enums.SIPTypeVecteurAIP,
+		Path:          sipPath,
+		ContentPath:   filepath.Join(sipPath, "content", "content"),
+		MetadataPath:  filepath.Join(sipPath, "additional", "UpdatedAreldaMetadata.xml"),
+		XSDPath:       filepath.Join(sipPath, "content", "header", "xsd", "arelda.xsd"),
+		TopLevelPaths: []string{filepath.Join(sipPath, "content"), filepath.Join(sipPath, "additional")},
 	}
 	s.SetupTest(config.Configuration{})
 

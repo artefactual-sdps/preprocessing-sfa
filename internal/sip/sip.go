@@ -9,12 +9,12 @@ import (
 )
 
 type SIP struct {
-	Type         enums.SIPType
-	Path         string
-	ContentPath  string
-	MetadataPath string
-	XSDPath      string
-	RemovePaths  []string
+	Type          enums.SIPType
+	Path          string
+	ContentPath   string
+	MetadataPath  string
+	XSDPath       string
+	TopLevelPaths []string
 }
 
 func NewSIP(path string) (SIP, error) {
@@ -33,13 +33,13 @@ func NewSIP(path string) (SIP, error) {
 		s.ContentPath = filepath.Join(s.Path, "content")
 		s.MetadataPath = filepath.Join(s.Path, "header", "metadata.xml")
 		s.XSDPath = filepath.Join(s.Path, "header", "xsd", "arelda.xsd")
-		s.RemovePaths = []string{s.ContentPath, filepath.Join(s.Path, "header")}
+		s.TopLevelPaths = []string{s.ContentPath, filepath.Join(s.Path, "header")}
 	} else {
 		s.Type = enums.SIPTypeVecteurAIP
 		s.ContentPath = filepath.Join(s.Path, "content", "content")
 		s.MetadataPath = filepath.Join(s.Path, "additional", "UpdatedAreldaMetadata.xml")
 		s.XSDPath = filepath.Join(s.Path, "content", "header", "xsd", "arelda.xsd")
-		s.RemovePaths = []string{filepath.Join(s.Path, "content"), additionalPath}
+		s.TopLevelPaths = []string{filepath.Join(s.Path, "content"), additionalPath}
 	}
 
 	return s, nil

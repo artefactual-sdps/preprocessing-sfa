@@ -82,15 +82,14 @@ func (a *TransformSIP) Execute(ctx context.Context, params *TransformSIPParams) 
 		}
 	}
 
-	// Remove extra directories.
-	var removeErr error
-	for _, path := range params.SIP.RemovePaths {
-		if err := os.RemoveAll(path); err != nil {
-			removeErr = errors.Join(removeErr, err)
+	// Remove previous top-level directories.
+	for _, path := range params.SIP.TopLevelPaths {
+		if removeErr := os.RemoveAll(path); err != nil {
+			err = errors.Join(err, removeErr)
 		}
 	}
-	if removeErr != nil {
-		return nil, removeErr
+	if err != nil {
+		return nil, err
 	}
 
 	return &TransformSIPResult{}, nil
