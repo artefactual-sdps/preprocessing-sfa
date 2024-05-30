@@ -33,7 +33,7 @@ RUN mkdir /home/preprocessing/shared
 FROM base AS preprocessing-worker
 ENV PYTHONUNBUFFERED=1
 USER root
-RUN apk add --update --no-cache python3 && \
+RUN apk add --update --no-cache python3 libxml2-dev && \
 	ln -sf python3 /usr/bin/python && \
 	python3 -m ensurepip
 USER preprocessing

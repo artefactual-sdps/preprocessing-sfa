@@ -3,6 +3,7 @@ package activities
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/beevik/etree"
 	"github.com/otiai10/copy"
+	"github.com/terminalstatic/go-xsd-validate"
 )
 
 const CombinePREMISName = "combine-premis"
@@ -134,6 +136,12 @@ func CombinePREMISCopy(source_filepath, destination_filepath string) error {
 		return err
 	}
 
+	// Validate final XML.
+	err = CombinePREMISValidateXML(destination_filepath, "premis-v2-2.xsd")
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -145,4 +153,44 @@ func CombinePREMISAddChildElements(parent_element *etree.Element, new_child_elem
 		}
 		parent_element.AddChild(child_element)
 	}
+}
+
+func CombinePREMISValidateXML(xml_filepath string, xsd_filepath string) error {
+	err := xsdvalidate.Init()
+	if err != nil {
+		return err
+	}
+	defer xsdvalidate.Cleanup()
+
+	// Prepare XSD handler.
+	xsdHandler, err := xsdvalidate.NewXsdHandlerUrl(xsd_filepath, xsdvalidate.ParsErrDefault)
+	if err != nil {
+		return err
+	}
+
+	// Prepare XML handler.
+	xmlFile, err := os.Open(filepath.Clean(xml_filepath))
+	if err != nil {
+		return err
+	}
+	defer xmlFile.Close()
+
+	inXml, err := io.ReadAll(xmlFile)
+	if err != nil {
+		return err
+	}
+
+	xmlhandler, err := xsdvalidate.NewXmlHandlerMem(inXml, xsdvalidate.ParsErrDefault)
+	if err != nil {
+		return err
+	}
+	defer xmlhandler.Free()
+
+	// Validate the XML document against the XSD.
+	err = xsdHandler.Validate(xmlhandler, xsdvalidate.ValidErrDefault)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
