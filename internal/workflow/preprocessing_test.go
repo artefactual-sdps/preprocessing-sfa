@@ -58,10 +58,6 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewCombinePREMIS().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.CombinePREMISName},
-	)
-	s.env.RegisterActivityWithOptions(
 		removefiles.NewActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: removefiles.ActivityName},
 	)
@@ -130,13 +126,6 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.TransformSIPParams{SIP: expectedSIP},
 	).Return(
 		&activities.TransformSIPResult{}, nil,
-	)
-	s.env.OnActivity(
-		activities.CombinePREMISName,
-		sessionCtx,
-		&activities.CombinePREMISParams{Path: sipPath},
-	).Return(
-		&activities.CombinePREMISResult{}, nil,
 	)
 	s.env.OnActivity(
 		removefiles.ActivityName,

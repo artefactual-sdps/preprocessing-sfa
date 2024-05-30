@@ -106,17 +106,6 @@ func (w *PreprocessingWorkflow) Execute(
 		return nil, e
 	}
 
-	// Combine PREMIS files into one.
-	var combinePREMIS activities.CombinePREMISResult
-	e = temporalsdk_workflow.ExecuteActivity(
-		withLocalActOpts(ctx),
-		activities.CombinePREMISName,
-		&activities.CombinePREMISParams{Path: localPath},
-	).Get(ctx, &combinePREMIS)
-	if e != nil {
-		return nil, e
-	}
-
 	// Remove PREMIS files.
 	var removeFiles removefiles.ActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
