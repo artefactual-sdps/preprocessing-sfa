@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/artefactual-sdps/temporal-activities/bagit"
-	"github.com/artefactual-sdps/temporal-activities/removefiles"
 	"github.com/go-logr/logr"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -79,10 +78,6 @@ func (m *Main) Run(ctx context.Context) error {
 	w.RegisterActivityWithOptions(
 		activities.NewTransformSIP().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
-	)
-	w.RegisterActivityWithOptions(
-		removefiles.NewActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: removefiles.ActivityName},
 	)
 	w.RegisterActivityWithOptions(
 		bagit.NewCreateBagActivity(m.cfg.Bagit).Execute,

@@ -2,11 +2,9 @@ package workflow_test
 
 import (
 	"path/filepath"
-	"regexp"
 	"testing"
 
 	"github.com/artefactual-sdps/temporal-activities/bagit"
-	"github.com/artefactual-sdps/temporal-activities/removefiles"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -21,8 +19,6 @@ import (
 )
 
 const sharedPath = "/shared/path/"
-
-var premisRe *regexp.Regexp = regexp.MustCompile("(?i)_PREMIS.xml$")
 
 type PreprocessingTestSuite struct {
 	suite.Suite
@@ -56,10 +52,6 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 	s.env.RegisterActivityWithOptions(
 		activities.NewTransformSIP().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
-	)
-	s.env.RegisterActivityWithOptions(
-		removefiles.NewActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: removefiles.ActivityName},
 	)
 	s.env.RegisterActivityWithOptions(
 		bagit.NewCreateBagActivity(cfg.Bagit).Execute,
@@ -126,16 +118,6 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.TransformSIPParams{SIP: expectedSIP},
 	).Return(
 		&activities.TransformSIPResult{}, nil,
-	)
-	s.env.OnActivity(
-		removefiles.ActivityName,
-		sessionCtx,
-		&removefiles.ActivityParams{
-			Path:           sipPath,
-			RemovePatterns: []*regexp.Regexp{premisRe},
-		},
-	).Return(
-		&removefiles.ActivityResult{}, nil,
 	)
 	s.env.OnActivity(
 		bagit.CreateBagActivityName,

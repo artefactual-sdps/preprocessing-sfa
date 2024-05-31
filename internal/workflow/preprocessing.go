@@ -4,19 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"regexp"
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagit"
-	"github.com/artefactual-sdps/temporal-activities/removefiles"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 )
-
-var premisRe *regexp.Regexp = regexp.MustCompile("(?i)_PREMIS.xml$")
 
 type PreprocessingWorkflowParams struct {
 	RelativePath string
@@ -102,20 +98,6 @@ func (w *PreprocessingWorkflow) Execute(
 		activities.TransformSIPName,
 		&activities.TransformSIPParams{SIP: identifySIP.SIP},
 	).Get(ctx, &transformSIP)
-	if e != nil {
-		return nil, e
-	}
-
-	// Remove PREMIS files.
-	var removeFiles removefiles.ActivityResult
-	e = temporalsdk_workflow.ExecuteActivity(
-		withLocalActOpts(ctx),
-		removefiles.ActivityName,
-		&removefiles.ActivityParams{
-			Path:           localPath,
-			RemovePatterns: []*regexp.Regexp{premisRe},
-		},
-	).Get(ctx, &removeFiles)
 	if e != nil {
 		return nil, e
 	}
