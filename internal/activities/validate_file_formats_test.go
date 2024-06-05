@@ -27,6 +27,7 @@ func TestValidateFileFormats(t *testing.T) {
 	tests := []struct {
 		name    string
 		params  activities.ValidateFileFormatsParams
+		want    activities.ValidateFileFormatsResult
 		wantErr string
 	}{
 		{
@@ -43,18 +44,25 @@ func TestValidateFileFormats(t *testing.T) {
 		{
 			name:   "Fails with invalid formats",
 			params: activities.ValidateFileFormatsParams{ContentPath: invalidFormatsPath},
-			wantErr: fmt.Sprintf(
-				"file format not allowed %q for file %q\nfile format not allowed %q for file %q",
-				"fmt/11",
-				fmt.Sprintf("%s/dir/file1.png", invalidFormatsPath),
-				"fmt/11",
-				fmt.Sprintf("%s/file2.png", invalidFormatsPath),
-			),
+			want: activities.ValidateFileFormatsResult{
+				Failures: []string{
+					fmt.Sprintf(
+						`file format %q not allowed: "%s/dir/file1.png"`,
+						"fmt/11",
+						invalidFormatsPath,
+					),
+					fmt.Sprintf(
+						`file format %q not allowed: "%s/file2.png"`,
+						"fmt/11",
+						invalidFormatsPath,
+					),
+				},
+			},
 		},
 		{
 			name:    "Fails with an invalid content path",
 			params:  activities.ValidateFileFormatsParams{ContentPath: "/path/to/missing/dir"},
-			wantErr: "lstat /path/to/missing/dir: no such file or directory",
+			wantErr: "activity error (type: validate-file-formats, scheduledEventID: 0, startedEventID: 0, identity: ): ValidateFileFormats: lstat /path/to/missing/dir: no such file or directory",
 		},
 		{
 			name: "Fails with empty source",
@@ -63,7 +71,7 @@ func TestValidateFileFormats(t *testing.T) {
 					fs.WithFile("file.txt", ""),
 				).Path(),
 			},
-			wantErr: "check content file formats: empty source",
+			wantErr: "activity error (type: validate-file-formats, scheduledEventID: 0, startedEventID: 0, identity: ): ValidateFileFormats: identify format: empty source",
 		},
 	}
 	for _, tt := range tests {
@@ -77,19 +85,21 @@ func TestValidateFileFormats(t *testing.T) {
 				temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
 			)
 
-			_, err := env.ExecuteActivity(activities.ValidateFileFormatsName, tt.params)
-
+			enc, err := env.ExecuteActivity(activities.ValidateFileFormatsName, tt.params)
 			if tt.wantErr != "" {
 				if err == nil {
 					t.Errorf("error is nil, expecting: %q", tt.wantErr)
 				} else {
-					assert.ErrorContains(t, err, tt.wantErr)
+					assert.Error(t, err, tt.wantErr)
 				}
 
 				return
 			}
-
 			assert.NilError(t, err)
+
+			var result activities.ValidateFileFormatsResult
+			_ = enc.Get(&result)
+			assert.DeepEqual(t, result, tt.want)
 		})
 	}
 }

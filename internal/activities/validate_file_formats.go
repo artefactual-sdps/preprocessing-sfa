@@ -2,7 +2,6 @@ package activities
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -16,7 +15,9 @@ type ValidateFileFormatsParams struct {
 	ContentPath string
 }
 
-type ValidateFileFormatsResult struct{}
+type ValidateFileFormatsResult struct {
+	Failures []string
+}
 
 type ValidateFileFormats struct{}
 
@@ -28,6 +29,8 @@ func (a *ValidateFileFormats) Execute(
 	ctx context.Context,
 	params *ValidateFileFormatsParams,
 ) (*ValidateFileFormatsResult, error) {
+	var failures []string
+
 	sf := fformat.NewSiegfriedEmbed()
 	// TODO(daniel): make allowed list configurable.
 	allowed := map[string]struct{}{
@@ -66,8 +69,6 @@ func (a *ValidateFileFormats) Execute(
 		"fmt/653":   {},
 	}
 
-	var invalidErrors error
-
 	err := filepath.WalkDir(params.ContentPath, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -77,23 +78,19 @@ func (a *ValidateFileFormats) Execute(
 		}
 		ff, err := sf.Identify(p)
 		if err != nil {
-			return err
+			return fmt.Errorf("identify format: %v", err)
 		}
 		if _, exists := allowed[ff.ID]; !exists {
-			invalidErrors = errors.Join(
-				invalidErrors,
-				fmt.Errorf("file format not allowed %q for file %q", ff.ID, p),
+			failures = append(
+				failures,
+				fmt.Sprintf("file format %q not allowed: %q", ff.ID, p),
 			)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("check content file formats: %v", err)
+		return nil, fmt.Errorf("ValidateFileFormats: %v", err)
 	}
 
-	if invalidErrors != nil {
-		return nil, invalidErrors
-	}
-
-	return &ValidateFileFormatsResult{}, nil
+	return &ValidateFileFormatsResult{Failures: failures}, nil
 }
