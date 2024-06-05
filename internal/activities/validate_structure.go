@@ -2,7 +2,6 @@ package activities
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,7 +16,9 @@ type ValidateStructureParams struct {
 	SIP sip.SIP
 }
 
-type ValidateStructureResult struct{}
+type ValidateStructureResult struct {
+	Failures []string
+}
 
 type ValidateStructure struct{}
 
@@ -29,48 +30,70 @@ func (a *ValidateStructure) Execute(
 	ctx context.Context,
 	params *ValidateStructureParams,
 ) (*ValidateStructureResult, error) {
-	var e error
+	var failures []string
 
-	// Check existence of specific files/folders.
-	if _, err := os.Stat(params.SIP.ContentPath); err != nil {
-		e = errors.Join(e, fmt.Errorf("content folder: %v", err))
+	// Check existence of content and XSD folders.
+	hasContentDir := true
+	if !fileExists(params.SIP.ContentPath) {
+		failures = append(failures, "Content folder is missing")
+		hasContentDir = false
 	}
-	if _, err := os.Stat(params.SIP.MetadataPath); err != nil {
-		e = errors.Join(e, fmt.Errorf("metadata file: %v", err))
-	}
-	if _, err := os.Stat(params.SIP.XSDPath); err != nil {
-		e = errors.Join(e, fmt.Errorf("XSD file: %v", err))
+	if !fileExists(params.SIP.XSDPath) {
+		failures = append(failures, "XSD folder is missing")
 	}
 
-	// Check unexpected top-level directories.
-	entries, err := os.ReadDir(params.SIP.Path)
+	// Check existence of metadata file.
+	if !fileExists(params.SIP.MetadataPath) {
+		failures = append(failures, fmt.Sprintf(
+			"%s is missing", filepath.Base(params.SIP.MetadataPath),
+		))
+	}
+
+	// Check for unexpected top-level directories.
+	extras, err := extraFiles(params.SIP.Path, params.SIP.TopLevelPaths, true)
 	if err != nil {
-		e = errors.Join(e, fmt.Errorf("read SIP folder: %v", err))
+		return nil, fmt.Errorf("ValidateStructure: check for unexpected dirs: %v", err)
 	}
+	failures = append(failures, extras...)
+
+	// Check for unexpected files in the content directory.
+	if hasContentDir {
+		extras, err := extraFiles(params.SIP.ContentPath, []string{}, false)
+		if err != nil {
+			return nil, fmt.Errorf("ValidateStructure: check for unexpected files: %v", err)
+		}
+		failures = append(failures, extras...)
+	}
+
+	return &ValidateStructureResult{Failures: failures}, nil
+}
+
+func fileExists(path string) bool {
+	if _, err := os.Stat(path); err == nil {
+		return true
+	}
+	return false
+}
+
+func extraFiles(path string, expected []string, matchDir bool) ([]string, error) {
+	var extras []string
+
+	ftype := "file"
+	if matchDir {
+		ftype = "directory"
+	}
+
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, fmt.Errorf("can't read directory: %v", err)
+	}
+
 	for _, entry := range entries {
-		path := filepath.Join(params.SIP.Path, entry.Name())
-		if !slices.Contains(params.SIP.TopLevelPaths, path) {
-			e = errors.Join(e, fmt.Errorf("unexpected directory: %q", path))
+		fp := filepath.Join(path, entry.Name())
+		if entry.IsDir() == matchDir && !slices.Contains(expected, fp) {
+			extras = append(extras, fmt.Sprintf("Unexpected %s: %q", ftype, fp))
 		}
 	}
 
-	// Check unexpected files in the content directory.
-	entries, err = os.ReadDir(params.SIP.ContentPath)
-	if err != nil {
-		e = errors.Join(e, fmt.Errorf("read content folder: %v", err))
-	}
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			e = errors.Join(e, fmt.Errorf(
-				"unexpected file: %q",
-				filepath.Join(params.SIP.ContentPath, entry.Name()),
-			))
-		}
-	}
-
-	if e != nil {
-		return nil, e
-	}
-
-	return &ValidateStructureResult{}, nil
+	return extras, nil
 }

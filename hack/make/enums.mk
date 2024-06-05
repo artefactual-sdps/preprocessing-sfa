@@ -1,5 +1,6 @@
 ENUMS := \
- 	internal/enums/sip_type_enum.go
+ 	internal/enums/sip_type_enum.go \
+	internal/enums/event_outcome_enum.go
 
 $(ENUMS): GO_ENUM_FLAGS=--marshal --names --ptr --flag --sql --template=$(CURDIR)/hack/make/enums.tmpl
 

@@ -2,7 +2,7 @@ package activities
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"os/exec"
 )
 
@@ -13,7 +13,7 @@ type ValidateMetadataParams struct {
 }
 
 type ValidateMetadataResult struct {
-	Out string
+	Failures []string
 }
 
 type ValidateMetadata struct{}
@@ -26,13 +26,17 @@ func (a *ValidateMetadata) Execute(
 	ctx context.Context,
 	params *ValidateMetadataParams,
 ) (*ValidateMetadataResult, error) {
+	var failures []string
 	e, err := exec.Command("python3", "xsdval.py", params.MetadataPath, "arelda.xsd").CombinedOutput() // #nosec G204
 	if err != nil {
 		return nil, err
 	}
 
 	if string(e) != "Is metadata.xml valid:  True\n" {
-		return nil, errors.New("Failed to validate metadata files: " + string(e))
+		failures = append(failures, fmt.Sprintf(
+			"%s does not match expected metadata requirements",
+			params.MetadataPath,
+		))
 	}
-	return &ValidateMetadataResult{}, nil
+	return &ValidateMetadataResult{Failures: failures}, nil
 }

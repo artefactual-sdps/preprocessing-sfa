@@ -10,7 +10,6 @@ import (
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
@@ -62,9 +61,13 @@ func TestValidateStructure(t *testing.T) {
 	).Path())
 	assert.NilError(t, err)
 
+	missingPiecesSIP, err := sip.NewSIP(fs.NewDir(t, "").Path())
+	assert.NilError(t, err)
+
 	tests := []struct {
 		name    string
 		params  activities.ValidateStructureParams
+		want    activities.ValidateStructureResult
 		wantErr string
 	}{
 		{
@@ -76,25 +79,25 @@ func TestValidateStructure(t *testing.T) {
 			params: activities.ValidateStructureParams{SIP: vecteurSIP},
 		},
 		{
-			name:   "Fails to validate a SIP with unexpected components",
+			name:   "Returns failures when the SIP has unexpected components",
 			params: activities.ValidateStructureParams{SIP: unexpectedPiecesSIP},
-			wantErr: fmt.Sprintf(
-				"%s\n%s",
-				fmt.Sprintf("unexpected directory: %q", unexpectedPiecesSIP.Path+"/unexpected"),
-				fmt.Sprintf("unexpected file: %q", unexpectedPiecesSIP.Path+"/content/unexpected.txt"),
-			),
+			want: activities.ValidateStructureResult{
+				Failures: []string{
+					fmt.Sprintf("Unexpected directory: %q", unexpectedPiecesSIP.Path+"/unexpected"),
+					fmt.Sprintf("Unexpected file: %q", unexpectedPiecesSIP.Path+"/content/unexpected.txt"),
+				},
+			},
 		},
 		{
-			name:   "Fails to validate a SIP with missing components",
-			params: activities.ValidateStructureParams{SIP: sip.SIP{Type: enums.SIPTypeVecteurAIP}},
-			wantErr: fmt.Sprintf(
-				"%s\n%s\n%s\n%s\n%s",
-				"content folder: stat : no such file or directory",
-				"metadata file: stat : no such file or directory",
-				"XSD file: stat : no such file or directory",
-				"read SIP folder: open : no such file or directory",
-				"read content folder: open : no such file or directory",
-			),
+			name:   "Returns failures when the SIP is missing components",
+			params: activities.ValidateStructureParams{SIP: missingPiecesSIP},
+			want: activities.ValidateStructureResult{
+				Failures: []string{
+					"Content folder is missing",
+					"XSD folder is missing",
+					"metadata.xml is missing",
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -108,8 +111,7 @@ func TestValidateStructure(t *testing.T) {
 				temporalsdk_activity.RegisterOptions{Name: activities.ValidateStructureName},
 			)
 
-			_, err := env.ExecuteActivity(activities.ValidateStructureName, tt.params)
-
+			enc, err := env.ExecuteActivity(activities.ValidateStructureName, tt.params)
 			if tt.wantErr != "" {
 				if err == nil {
 					t.Errorf("error is nil, expecting: %q", tt.wantErr)
@@ -120,7 +122,11 @@ func TestValidateStructure(t *testing.T) {
 				return
 			}
 
+			var result activities.ValidateStructureResult
+			_ = enc.Get(&result)
+
 			assert.NilError(t, err)
+			assert.DeepEqual(t, result, tt.want)
 		})
 	}
 }
