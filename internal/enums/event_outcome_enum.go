@@ -14,14 +14,14 @@ import (
 )
 
 const (
-	// EventOutcomeUnspecified is a EventOutcome of type Unspecified.
-	EventOutcomeUnspecified EventOutcome = "Unspecified"
-	// EventOutcomeSuccess is a EventOutcome of type Success.
-	EventOutcomeSuccess EventOutcome = "Success"
-	// EventOutcomeSystemFailure is a EventOutcome of type SystemFailure.
-	EventOutcomeSystemFailure EventOutcome = "SystemFailure"
-	// EventOutcomeValidationFailure is a EventOutcome of type ValidationFailure.
-	EventOutcomeValidationFailure EventOutcome = "ValidationFailure"
+	// EventOutcomeUnspecified is a EventOutcome of type unspecified.
+	EventOutcomeUnspecified EventOutcome = "unspecified"
+	// EventOutcomeSuccess is a EventOutcome of type success.
+	EventOutcomeSuccess EventOutcome = "success"
+	// EventOutcomeSystemFailure is a EventOutcome of type system failure.
+	EventOutcomeSystemFailure EventOutcome = "system failure"
+	// EventOutcomeValidationFailure is a EventOutcome of type validation failure.
+	EventOutcomeValidationFailure EventOutcome = "validation failure"
 )
 
 var ErrInvalidEventOutcome = fmt.Errorf("not a valid EventOutcome, try [%s]", strings.Join(_EventOutcomeNames, ", "))
@@ -53,10 +53,10 @@ func (x EventOutcome) IsValid() bool {
 }
 
 var _EventOutcomeValue = map[string]EventOutcome{
-	"Unspecified":       EventOutcomeUnspecified,
-	"Success":           EventOutcomeSuccess,
-	"SystemFailure":     EventOutcomeSystemFailure,
-	"ValidationFailure": EventOutcomeValidationFailure,
+	"unspecified":        EventOutcomeUnspecified,
+	"success":            EventOutcomeSuccess,
+	"system failure":     EventOutcomeSystemFailure,
+	"validation failure": EventOutcomeValidationFailure,
 }
 
 // ParseEventOutcome attempts to convert a string to a EventOutcome.

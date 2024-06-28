@@ -1,9 +1,9 @@
 package enums
 
 // ENUM(
-// Unspecified,
-// Success,
-// SystemFailure,
-// ValidationFailure,
+// unspecified
+// success
+// system failure
+// validation failure
 // ).
 type EventOutcome string
