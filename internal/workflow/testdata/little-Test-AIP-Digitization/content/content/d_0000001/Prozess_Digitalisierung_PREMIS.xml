@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<premis xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="3.0"
+        xsi:schemaLocation="http://www.loc.gov/premis/v3 http://www.loc.gov/standards/premis/premis.xsd">
+   <object type="file">
+      <objectIdentifier>
+         <objectIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</objectIdentifierType>
+         <objectIdentifierValue>E53#1000/893#15847*</objectIdentifierValue>
+      </objectIdentifier>
+      <objectCharacteristics>
+         <format>
+            <formatDesignation>
+               <formatName>XML</formatName>
+            </formatDesignation>
+         </format>
+      </objectCharacteristics>
+   </object>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>ReceiveDigitizationJob</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime></eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Started without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>ReceiveDigitizationJob</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-05-27 13:11:18.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Finished without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>RequestDossierFromViaduc</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-05-27 13:11:23.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Started without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>RequestDossierFromViaduc</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-05-28 10:42:50.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Finished without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>CheckDossier</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-04 11:18:47.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>manual process, UserID: 14</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Started without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>CheckDossier</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-04 11:25:38.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>manual process, UserID: 14</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Finished without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>PrepareDossier</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-05 08:58:28.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>manual process, UserID: 42</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Started without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>PrepareDossier</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-05 09:02:45.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>manual process, UserID: 42</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Finished without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>Kodaki4250A</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime></eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Started without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>Kodaki4250A</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-05 09:02:46.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Finished without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>Kodaki4250B</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime></eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Started without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>Kodaki4250B</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-05 09:02:47.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Finished without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>MicroboxUltraIIA</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-12 15:34:28.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>manual process, UserID: 63</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Started without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>MicroboxUltraIIA</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-16 14:57:16.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>manual process, UserID: 63</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Finished without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>CheckScans</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-16 15:53:40.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>manual process, UserID: 45</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Started without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>CheckScans</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-16 17:00:04.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>manual process, UserID: 45</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Finished without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>EvaluateDockets</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-16 17:00:09.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Started without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>EvaluateDockets</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-16 17:47:12.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Finished without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>ImageProcessing</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-16 17:47:17.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Started without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>ImageProcessing</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-17 11:29:45.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>automatic process, UserID: 0</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Finished without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>CheckQuality</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-17 16:15:49.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>manual process, UserID: 35</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Started without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <event>
+      <eventIdentifier>
+         <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+         <eventIdentifierValue>CheckQuality</eventIdentifierValue>
+      </eventIdentifier>
+      <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/tra.html">transfer</eventType>
+      <eventDateTime>2020-06-17 16:18:01.0</eventDateTime>
+      <eventDetailInformation>
+         <eventDetail>manual process, UserID: 35</eventDetail>
+      </eventDetailInformation>
+      <eventOutcomeInformation>
+         <eventOutcome>Finished without errors</eventOutcome>
+      </eventOutcomeInformation>
+      <linkingAgentIdentifier>
+         <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+         <linkingAgentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</linkingAgentIdentifierValue>
+      </linkingAgentIdentifier>
+   </event>
+   <agent>
+      <agentIdentifier>
+         <agentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</agentIdentifierType>
+         <agentIdentifierValue>Creator</agentIdentifierValue>
+      </agentIdentifier>
+      <agentName>Bundesverwaltung (Bern)</agentName>
+      <agentType valueURI="http://id.loc.gov/vocabulary/preservation/agentType/org">organization</agentType>
+   </agent>
+   <agent>
+      <agentIdentifier>
+         <agentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</agentIdentifierType>
+         <agentIdentifierValue>Publisher</agentIdentifierValue>
+      </agentIdentifier>
+      <agentName>Schweizerisches Bundesarchiv BAR</agentName>
+      <agentType valueURI="http://id.loc.gov/vocabulary/preservation/agentType/org">organization</agentType>
+   </agent>
+   <agent>
+      <agentIdentifier>
+         <agentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</agentIdentifierType>
+         <agentIdentifierValue>Contributor</agentIdentifierValue>
+      </agentIdentifier>
+      <agentName>Schweizerisches Bundesarchiv BAR</agentName>
+      <agentType valueURI="http://id.loc.gov/vocabulary/preservation/agentType/org">organization</agentType>
+   </agent>
+   <agent>
+      <agentIdentifier>
+         <agentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</agentIdentifierType>
+         <agentIdentifierValue>vecteur-1.1.21-f62255338 (prod)</agentIdentifierValue>
+      </agentIdentifier>
+      <agentName>Vecteur</agentName>
+      <agentType valueURI="http://id.loc.gov/vocabulary/preservation/agentType/sof">software</agentType>
+      <agentVersion>1.1.21-f62255338 (prod)</agentVersion>
+   </agent>
+   <rights>
+      <rightsStatement>
+         <rightsStatementIdentifier>
+            <rightsStatementIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</rightsStatementIdentifierType>
+            <rightsStatementIdentifierValue>copyright</rightsStatementIdentifierValue>
+         </rightsStatementIdentifier>
+         <rightsBasis valueURI="http://id.loc.gov/vocabulary/preservation/rightsBasis/cop">copyright</rightsBasis>
+         <linkingAgentIdentifier>
+            <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/viaf">viaf</linkingAgentIdentifierType>
+            <linkingAgentIdentifierValue>121997218</linkingAgentIdentifierValue>
+            <linkingAgentRole valueURI="http://id.loc.gov/vocabulary/preservation/rightsRelatedAgentRole/gra">grantor</linkingAgentRole>
+         </linkingAgentIdentifier>
+      </rightsStatement>
+   </rights>
+   <rights>
+      <rightsStatement>
+         <rightsStatementIdentifier>
+            <rightsStatementIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</rightsStatementIdentifierType>
+            <rightsStatementIdentifierValue>statute</rightsStatementIdentifierValue>
+         </rightsStatementIdentifier>
+         <rightsBasis valueURI="http://id.loc.gov/vocabulary/preservation/rightsBasis/sta">statute</rightsBasis>
+         <linkingAgentIdentifier>
+            <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/viaf">viaf</linkingAgentIdentifierType>
+            <linkingAgentIdentifierValue>134892105</linkingAgentIdentifierValue>
+            <linkingAgentRole valueURI="http://id.loc.gov/vocabulary/preservation/rightsRelatedAgentRole/rig">rightsholder</linkingAgentRole>
+         </linkingAgentIdentifier>
+      </rightsStatement>
+   </rights>
+</premis>

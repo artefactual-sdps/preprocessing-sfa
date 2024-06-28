@@ -15,6 +15,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 )
 
 type Outcome int
@@ -129,13 +130,48 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 	result.addEvent(validateStructureEvent)
 
+	// Add PREMIS objects.
+	premisFilePath := filepath.Join(localPath, "metadata", "premis.xml")
+
+	var addPREMISObjects activities.AddPREMISObjectsResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.AddPREMISObjectsName,
+		&activities.AddPREMISObjectsParams{
+			PREMISFilePath: premisFilePath,
+			ContentPath:    identifySIP.SIP.ContentPath,
+		},
+	).Get(ctx, &addPREMISObjects)
+	if e != nil {
+		return nil, e
+	}
+
+	// Add PREMIS event noting validate structure result.
+	var addPREMISEvent activities.AddPREMISEventResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.AddPREMISEventName,
+		&activities.AddPREMISEventParams{
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+			Type:           "validateStructure",
+			Failures:       validateStructure.Failures,
+		},
+	).Get(ctx, &addPREMISEvent)
+	if e != nil {
+		return nil, e
+	}
+
 	// Validate file formats.
 	validateFileFormatsEvent := newEvent(ctx, "Validate SIP file formats")
 	var validateFileFormats activities.ValidateFileFormatsResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
 		activities.ValidateFileFormatsName,
-		&activities.ValidateFileFormatsParams{ContentPath: identifySIP.SIP.ContentPath},
+		&activities.ValidateFileFormatsParams{
+			ContentPath:    identifySIP.SIP.ContentPath,
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault()},
 	).Get(ctx, &validateFileFormats)
 	if e != nil {
 		result.addEvent(validateFileFormatsEvent.Complete(
@@ -161,6 +197,21 @@ func (w *PreprocessingWorkflow) Execute(
 		)
 	}
 	result.addEvent(validateFileFormatsEvent)
+
+	// Add PREMIS event noting validate file formats result.
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.AddPREMISEventName,
+		&activities.AddPREMISEventParams{
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+			Type:           "validateFileFormats",
+			Failures:       validateFileFormats.Failures,
+		},
+	).Get(ctx, &addPREMISEvent)
+	if e != nil {
+		return nil, e
+	}
 
 	// Validate metadata.
 	validateMetadataEvent := newEvent(ctx, "Validate SIP metadata")
@@ -197,6 +248,35 @@ func (w *PreprocessingWorkflow) Execute(
 		!validateFileFormatsEvent.IsSuccess() ||
 		!validateMetadataEvent.IsSuccess() {
 		return contentError(&result), nil
+	}
+
+	// Add PREMIS event noting validate metadata result.
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.AddPREMISEventName,
+		&activities.AddPREMISEventParams{
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+			Type:           "validateMetadata",
+			Failures:       validateMetadata.Failures,
+		},
+	).Get(ctx, &addPREMISEvent)
+	if e != nil {
+		return nil, e
+	}
+
+	// Add PREMIS agent.
+	var addPREMISAgent activities.AddPREMISAgentResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.AddPREMISAgentName,
+		&activities.AddPREMISAgentParams{
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+		},
+	).Get(ctx, &addPREMISAgent)
+	if e != nil {
+		return nil, e
 	}
 
 	// Re-structure SIP.

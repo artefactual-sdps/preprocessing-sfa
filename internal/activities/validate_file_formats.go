@@ -7,12 +7,15 @@ import (
 	"path/filepath"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 )
 
 const ValidateFileFormatsName = "validate-file-formats"
 
 type ValidateFileFormatsParams struct {
-	ContentPath string
+	ContentPath    string
+	PREMISFilePath string
+	Agent          premis.Agent
 }
 
 type ValidateFileFormatsResult struct {
@@ -73,19 +76,52 @@ func (a *ValidateFileFormats) Execute(
 		if err != nil {
 			return err
 		}
+
 		if d.IsDir() {
 			return nil
 		}
+
 		ff, err := sf.Identify(p)
 		if err != nil {
 			return fmt.Errorf("identify format: %v", err)
 		}
+
+		// Determine PREMIS event summary detail/outcome and note failure.
+		detail := ""
+		outcome := "valid"
+
 		if _, exists := allowed[ff.ID]; !exists {
-			failures = append(
-				failures,
-				fmt.Sprintf("file format %q not allowed: %q", ff.ID, p),
-			)
+			detail = fmt.Sprintf("file format %q not allowed: %q", ff.ID, p)
+			outcome = "invalid"
+
+			failures = append(failures, detail)
 		}
+
+		// Define PREMIS event.
+		eventSummary := premis.EventSummary{
+			Type:    "validateFileFormats",
+			Detail:  detail,
+			Outcome: outcome,
+		}
+
+		// Append PREMIS event to XML and write results.
+		originalName := premis.OriginalNameForSubpath(p)
+
+		doc, err := premis.ParseOrInitialize(params.PREMISFilePath)
+		if err != nil {
+			return err
+		}
+
+		err = premis.AppendEventAndLinkToObject(doc, eventSummary, params.Agent, originalName)
+		if err != nil {
+			return err
+		}
+
+		err = doc.WriteToFile(params.PREMISFilePath)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {

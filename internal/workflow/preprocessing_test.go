@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagit"
+	cp "github.com/otiai10/copy"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -17,11 +18,12 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflow"
 )
 
-const sharedPath = "/shared/path/"
+const relPath = "sip"
 
 var testTime = time.Date(2024, 6, 6, 15, 8, 39, 0, time.UTC)
 
@@ -31,12 +33,20 @@ type PreprocessingTestSuite struct {
 
 	env      *temporalsdk_testsuite.TestWorkflowEnvironment
 	workflow *workflow.PreprocessingWorkflow
+	testDir  string
 }
 
 func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 	s.env = s.NewTestWorkflowEnvironment()
 	s.env.SetStartTime(testTime)
 	s.env.SetWorkerOptions(temporalsdk_worker.Options{EnableSessionWorker: true})
+	s.testDir = s.T().TempDir()
+	sipPath := filepath.Join(s.testDir, relPath)
+
+	if err := cp.Copy("./testdata/little-Test-AIP-Digitization", sipPath); err != nil {
+		s.Failf("couldn't copy test data: %s", err.Error())
+	}
+	cfg.SharedPath = s.testDir
 
 	// Register activities.
 	s.env.RegisterActivityWithOptions(
@@ -52,6 +62,18 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
 	)
 	s.env.RegisterActivityWithOptions(
+		activities.NewAddPREMISObjects().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISObjectsName},
+	)
+	s.env.RegisterActivityWithOptions(
+		activities.NewAddPREMISEvent().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISEventName},
+	)
+	s.env.RegisterActivityWithOptions(
+		activities.NewAddPREMISAgent().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISAgentName},
+	)
+	s.env.RegisterActivityWithOptions(
 		activities.NewValidateMetadata().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateMetadataName},
 	)
@@ -64,7 +86,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: bagit.CreateBagActivityName},
 	)
 
-	s.workflow = workflow.NewPreprocessingWorkflow(sharedPath)
+	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir)
 }
 
 func (s *PreprocessingTestSuite) AfterTest(suiteName, testName string) {
@@ -90,13 +112,14 @@ func vecteurAIP(path string) sip.SIP {
 }
 
 func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
-	relPath := "fake/path/to/sip"
-	sipPath := sharedPath + relPath
-	expectedSIP := vecteurAIP(sipPath)
 	s.SetupTest(config.Configuration{})
+	sipPath := filepath.Join(s.testDir, relPath)
+	expectedSIP := vecteurAIP(sipPath)
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
+	premisFilePath := filepath.Join(expectedSIP.Path, "metadata", "premis.xml")
+
 	s.env.OnActivity(
 		activities.IdentifySIPName,
 		sessionCtx,
@@ -112,11 +135,49 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.ValidateStructureResult{}, nil,
 	)
 	s.env.OnActivity(
+		activities.AddPREMISObjectsName,
+		sessionCtx,
+		&activities.AddPREMISObjectsParams{
+			PREMISFilePath: premisFilePath,
+			ContentPath:    expectedSIP.ContentPath,
+		},
+	).Return(
+		&activities.AddPREMISObjectsResult{}, nil,
+	)
+	s.env.OnActivity(
+		activities.AddPREMISEventName,
+		sessionCtx,
+		&activities.AddPREMISEventParams{
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+			Type:           "validateStructure",
+			Failures:       nil,
+		},
+	).Return(
+		&activities.AddPREMISEventResult{}, nil,
+	)
+	s.env.OnActivity(
 		activities.ValidateFileFormatsName,
 		sessionCtx,
-		&activities.ValidateFileFormatsParams{ContentPath: expectedSIP.ContentPath},
+		&activities.ValidateFileFormatsParams{
+			ContentPath:    expectedSIP.ContentPath,
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+		},
 	).Return(
 		&activities.ValidateFileFormatsResult{}, nil,
+	)
+	s.env.OnActivity(
+		activities.AddPREMISEventName,
+		sessionCtx,
+		&activities.AddPREMISEventParams{
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+			Type:           "validateFileFormats",
+			Failures:       nil,
+		},
+	).Return(
+		&activities.AddPREMISEventResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.ValidateMetadataName,
@@ -124,6 +185,28 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.ValidateMetadataParams{MetadataPath: expectedSIP.MetadataPath},
 	).Return(
 		&activities.ValidateMetadataResult{}, nil,
+	)
+	s.env.OnActivity(
+		activities.AddPREMISEventName,
+		sessionCtx,
+		&activities.AddPREMISEventParams{
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+			Type:           "validateMetadata",
+			Failures:       nil,
+		},
+	).Return(
+		&activities.AddPREMISEventResult{}, nil,
+	)
+	s.env.OnActivity(
+		activities.AddPREMISAgentName,
+		sessionCtx,
+		&activities.AddPREMISAgentParams{
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+		},
+	).Return(
+		&activities.AddPREMISAgentResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.TransformSIPName,
@@ -204,9 +287,8 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 }
 
 func (s *PreprocessingTestSuite) TestPreprocessingWorkflowIdentifySIPFails() {
-	relPath := "fake/path/to/sip"
-	sipPath := sharedPath + relPath
 	s.SetupTest(config.Configuration{})
+	sipPath := filepath.Join(s.testDir, relPath)
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
@@ -247,14 +329,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowIdentifySIPFails() {
 }
 
 func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
-	relPath := "fake/path/to/sip"
-	sipPath := sharedPath + relPath
-	expectedSIP := vecteurAIP(sipPath)
-
 	s.SetupTest(config.Configuration{})
+	sipPath := filepath.Join(s.testDir, relPath)
+	expectedSIP := vecteurAIP(sipPath)
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
+	premisFilePath := filepath.Join(expectedSIP.Path, "metadata", "premis.xml")
 	s.env.OnActivity(
 		activities.IdentifySIPName,
 		sessionCtx,
@@ -278,7 +359,11 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 	s.env.OnActivity(
 		activities.ValidateFileFormatsName,
 		sessionCtx,
-		&activities.ValidateFileFormatsParams{ContentPath: expectedSIP.ContentPath},
+		&activities.ValidateFileFormatsParams{
+			ContentPath:    expectedSIP.ContentPath,
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+		},
 	).Return(
 		&activities.ValidateFileFormatsResult{Failures: []string{
 			`file format fmt/11 not allowed: "fake/path/to/sip/dir/file1.png"`,

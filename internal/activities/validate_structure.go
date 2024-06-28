@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"slices"
 
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
@@ -34,16 +35,16 @@ func (a *ValidateStructure) Execute(
 
 	// Check existence of content and XSD folders.
 	hasContentDir := true
-	if !fileExists(params.SIP.ContentPath) {
+	if !fsutil.FileExists(params.SIP.ContentPath) {
 		failures = append(failures, "Content folder is missing")
 		hasContentDir = false
 	}
-	if !fileExists(params.SIP.XSDPath) {
+	if !fsutil.FileExists(params.SIP.XSDPath) {
 		failures = append(failures, "XSD folder is missing")
 	}
 
 	// Check existence of metadata file.
-	if !fileExists(params.SIP.MetadataPath) {
+	if !fsutil.FileExists(params.SIP.MetadataPath) {
 		failures = append(failures, fmt.Sprintf(
 			"%s is missing", filepath.Base(params.SIP.MetadataPath),
 		))
@@ -66,13 +67,6 @@ func (a *ValidateStructure) Execute(
 	}
 
 	return &ValidateStructureResult{Failures: failures}, nil
-}
-
-func fileExists(path string) bool {
-	if _, err := os.Stat(path); err == nil {
-		return true
-	}
-	return false
 }
 
 func extraFiles(path string, expected []string, matchDir bool) ([]string, error) {

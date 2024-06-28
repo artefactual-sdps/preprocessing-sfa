@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<premis version="3.0" 
+    xmlns="http://www.loc.gov/premis/v3" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/premis/v3 http://www.loc.gov/standards/premis/premis.xsd">
+    <object xsi:type="premis:file">
+        <objectIdentifier>
+            <objectIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</objectIdentifierType>
+            <objectIdentifierValue>00000001.jp2</objectIdentifierValue>
+        </objectIdentifier>
+        <objectCharacteristics>
+            <fixity>
+                <messageDigestAlgorithm valueURI="http://id.loc.gov/vocabulary/preservation/cryptographicHashFunctions/md5">md5</messageDigestAlgorithm>
+                <messageDigest>f7dc1f76a55cbdca0ae4a6dc8ae64644</messageDigest>
+                <messageDigestOriginator>vecteur-1.0.0</messageDigestOriginator>
+            </fixity>
+            <size>586577</size>
+            <format>
+                <formatDesignation>
+                    <formatName>JP2</formatName>
+                </formatDesignation>
+                <formatRegistry>
+                    <formatRegistryName valueURI="http://www.nationalarchives.gov.uk/pronom">PRONOM</formatRegistryName>
+                    <formatRegistryKey>x-fmt/392</formatRegistryKey>
+                </formatRegistry>
+                <formatNote>resolution=300dpi</formatNote>
+                <formatNote>compression=3,6,12,16,20,24,28,30,34,38</formatNote>
+                <formatNote>colordepth=24bit</formatNote>
+                <formatNote>colorspace=sRGB</formatNote>
+                <formatNote>ImageWidth=3097pixel</formatNote>
+                <formatNote>ImageHight=4498pixel</formatNote>
+                <formatNote>QSSoftware=Jpylyzer v1.18.0</formatNote>
+                <formatNote>QSResult=valid</formatNote>
+                <formatNote>QSDate=2020-06-16T18:12:06+02:00</formatNote>
+            </format>
+            <creatingApplication>
+                <creatingApplicationName>OpenJpeg</creatingApplicationName>
+                <creatingApplicationVersion>2.3.0</creatingApplicationVersion>
+                <dateCreatedByApplication>2020:06:16T18:11:33+02:00</dateCreatedByApplication>
+                <creatingApplicationExtension>
+					<storeCreationDate>2020:06:16T18:11:33+02:00</storeCreationDate>
+				</creatingApplicationExtension>
+            </creatingApplication>
+        </objectCharacteristics>
+        <originalName>00000001.jp2</originalName>
+        <relationship>
+            <relationshipType valueURI="http://id.loc.gov/vocabulary/preservation/relationshipType/str">structural</relationshipType>
+            <relationshipSubType valueURI="http://id.loc.gov/vocabulary/preservation/relationshipSubType/rep">represents</relationshipSubType>
+            <relatedObjectIdentifier>
+                <relatedObjectIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</relatedObjectIdentifierType>
+                <relatedObjectIdentifierValue>E53#1000/893#15847*</relatedObjectIdentifierValue>
+            </relatedObjectIdentifier>
+        </relationship>
+        <relationship>
+            <relationshipType valueURI="http://id.loc.gov/vocabulary/preservation/relationshipType/der">derivation</relationshipType>
+            <relationshipSubType valueURI="http://id.loc.gov/vocabulary/preservation/relationshipSubType/hss">has Source</relationshipSubType>
+            <relatedObjectIdentifier>
+                <relatedObjectIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</relatedObjectIdentifierType>
+                <relatedObjectIdentifierValue>00000001.tif</relatedObjectIdentifierValue>
+            </relatedObjectIdentifier>
+        </relationship>
+        <linkingEventIdentifier>
+            <linkingEventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingEventIdentifierType>
+            <linkingEventIdentifierValue>validation</linkingEventIdentifierValue>
+        </linkingEventIdentifier>
+        <linkingRightsStatementIdentifier>
+            <linkingRightsStatementIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingRightsStatementIdentifierType>
+            <linkingRightsStatementIdentifierValue>copyright</linkingRightsStatementIdentifierValue>
+        </linkingRightsStatementIdentifier>
+        <linkingRightsStatementIdentifier>
+            <linkingRightsStatementIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingRightsStatementIdentifierType>
+            <linkingRightsStatementIdentifierValue>statute</linkingRightsStatementIdentifierValue>
+        </linkingRightsStatementIdentifier>
+    </object>
+    <object xsi:type="premis:file">
+        <objectIdentifier>
+            <objectIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</objectIdentifierType>
+            <objectIdentifierValue>00000001.tif</objectIdentifierValue>
+        </objectIdentifier>
+		<significantProperties>
+			<significantPropertiesExtension>
+				<storeBitDepth>8bit</storeBitDepth>
+			</significantPropertiesExtension> 
+        </significantProperties>
+        <objectCharacteristics>
+            <format>
+                <formatDesignation>
+                    <formatName>TIFF</formatName>
+                </formatDesignation>
+                <formatRegistry>
+                    <formatRegistryName valueURI="http://www.nationalarchives.gov.uk/pronom">PRONOM</formatRegistryName>
+                    <formatRegistryKey>fmt/353</formatRegistryKey>
+                </formatRegistry>
+                <formatNote>resolution=300dpi</formatNote>
+                <formatNote>compression=uncompressed</formatNote>
+                <formatNote>colordepth=24bit</formatNote>
+                <formatNote>colorspace=sRGB</formatNote>
+                <formatNote>scannote=</formatNote>
+                <formatNote>scanhardware=</formatNote>
+            </format>
+            <creatingApplication>
+                <creatingApplicationName>Tocosa Copy Software Ver.:6.69</creatingApplicationName>
+                <creatingApplicationVersion>Ver.:6.69</creatingApplicationVersion>
+                <dateCreatedByApplication>2020:06:16T15:02:22</dateCreatedByApplication>
+            </creatingApplication>
+        </objectCharacteristics>
+        <relationship>
+            <relationshipType valueURI="http://id.loc.gov/vocabulary/preservation/relationshipType/str">structural</relationshipType>
+            <relationshipSubType valueURI="http://id.loc.gov/vocabulary/preservation/relationshipSubType/rep">represents</relationshipSubType>
+            <relatedObjectIdentifier>
+                <relatedObjectIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</relatedObjectIdentifierType>
+                <relatedObjectIdentifierValue>E53#1000/893#15847*</relatedObjectIdentifierValue>
+            </relatedObjectIdentifier>
+        </relationship>
+        <relationship>
+            <relationshipType valueURI="http://id.loc.gov/vocabulary/preservation/relationshipType/der">derivation</relationshipType>
+            <relationshipSubType valueURI="http://id.loc.gov/vocabulary/preservation/relationshipSubType/iso">is Source Of</relationshipSubType>
+            <relatedObjectIdentifier>
+                <relatedObjectIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</relatedObjectIdentifierType>
+                <relatedObjectIdentifierValue>00000001.jp2</relatedObjectIdentifierValue>
+            </relatedObjectIdentifier>
+        </relationship>
+        <linkingRightsStatementIdentifier>
+            <linkingRightsStatementIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingRightsStatementIdentifierType>
+            <linkingRightsStatementIdentifierValue>copyright</linkingRightsStatementIdentifierValue>
+        </linkingRightsStatementIdentifier>
+        <linkingRightsStatementIdentifier>
+            <linkingRightsStatementIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingRightsStatementIdentifierType>
+            <linkingRightsStatementIdentifierValue>statute</linkingRightsStatementIdentifierValue>
+        </linkingRightsStatementIdentifier>
+    </object>
+    <event>
+        <eventIdentifier>
+            <eventIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</eventIdentifierType>
+            <eventIdentifierValue>validation</eventIdentifierValue>
+        </eventIdentifier>
+        <eventType valueURI="http://id.loc.gov/vocabulary/preservation/eventType/val">validation</eventType>
+        <eventDateTime>2020-06-16T18:12:06+02:00</eventDateTime>
+        <eventDetailInformation>
+            <eventDetail>Jpylyzer v1.18.0</eventDetail>
+        </eventDetailInformation>
+        <eventOutcomeInformation>
+            <eventOutcome>valid</eventOutcome>
+        </eventOutcomeInformation>
+        <linkingAgentIdentifier>
+            <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</linkingAgentIdentifierType>
+            <linkingAgentIdentifierValue>vecteur-1.0.0</linkingAgentIdentifierValue>
+            <linkingAgentRole valueURI="http://id.loc.gov/vocabulary/preservation/linkingAgentRoleEvent/val">validator</linkingAgentRole>
+        </linkingAgentIdentifier>
+    </event>
+    <agent>
+        <agentIdentifier>
+            <agentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</agentIdentifierType>
+            <agentIdentifierValue>Creator</agentIdentifierValue>
+        </agentIdentifier>
+        <agentName>Bundesverwaltung (Bern)</agentName>
+        <agentType valueURI="http://id.loc.gov/vocabulary/preservation/agentType/org">organization</agentType>
+    </agent>
+    <agent>
+        <agentIdentifier>
+            <agentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</agentIdentifierType>
+            <agentIdentifierValue>Contributor</agentIdentifierValue>
+        </agentIdentifier>
+        <agentName>Schweizerisches Bundesarchiv BAR</agentName>
+        <agentType valueURI="http://id.loc.gov/vocabulary/preservation/agentType/org">organization</agentType>
+    </agent>
+    <agent>
+        <agentIdentifier>
+            <agentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</agentIdentifierType>
+            <agentIdentifierValue>Publisher</agentIdentifierValue>
+        </agentIdentifier>
+        <agentName>Schweizerisches Bundesarchiv BAR</agentName>
+        <agentType valueURI="http://id.loc.gov/vocabulary/preservation/agentType/org">organization</agentType>
+    </agent>
+    <agent>
+        <agentIdentifier>
+            <agentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</agentIdentifierType>
+            <agentIdentifierValue>vecteur-1.0.0</agentIdentifierValue>
+        </agentIdentifier>
+        <agentName>Vecteur</agentName>
+        <agentType valueURI="http://id.loc.gov/vocabulary/preservation/agentType/sof">software</agentType>
+        <agentVersion>vecteur-1.0.0</agentVersion>
+    </agent>
+    <rights>
+        <rightsStatement>
+            <rightsStatementIdentifier>
+                <rightsStatementIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</rightsStatementIdentifierType>
+                <rightsStatementIdentifierValue>copyright</rightsStatementIdentifierValue>
+            </rightsStatementIdentifier>
+            <rightsBasis valueURI="http://id.loc.gov/vocabulary/preservation/rightsBasis/cop">copyright</rightsBasis>
+            <linkingAgentIdentifier>
+                <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/viaf">viaf</linkingAgentIdentifierType>
+                <linkingAgentIdentifierValue>121997218</linkingAgentIdentifierValue>
+                <linkingAgentRole valueURI="http://id.loc.gov/vocabulary/preservation/rightsRelatedAgentRole/gra">grantor</linkingAgentRole>
+            </linkingAgentIdentifier>
+        </rightsStatement>
+    </rights>
+    <rights>
+        <rightsStatement>
+            <rightsStatementIdentifier>
+                <rightsStatementIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">local</rightsStatementIdentifierType>
+                <rightsStatementIdentifierValue>statute</rightsStatementIdentifierValue>
+            </rightsStatementIdentifier>
+            <rightsBasis valueURI="http://id.loc.gov/vocabulary/preservation/rightsBasis/sta">statute</rightsBasis>
+            <linkingAgentIdentifier>
+                <linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/viaf">viaf</linkingAgentIdentifierType>
+                <linkingAgentIdentifierValue>134892105</linkingAgentIdentifierValue>
+                <linkingAgentRole valueURI="http://id.loc.gov/vocabulary/preservation/rightsRelatedAgentRole/rig">rightsholder</linkingAgentRole>
+            </linkingAgentIdentifier>
+        </rightsStatement>
+    </rights>
+</premis>

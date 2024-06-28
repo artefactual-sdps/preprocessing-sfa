@@ -1,0 +1,748 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<paket xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:xip="http://www.tessella.com/XIP/v4"
+       xmlns="http://bar.admin.ch/arelda/v4"
+       xmlns:xs="http://www.w3.org/2001/XMLSchema"
+       xmlns:submissionTests="http://bar.admin.ch/submissionTestResult"
+       xsi:type="paketAIP"
+       schemaVersion="5.0">
+   <paketTyp>AIP</paketTyp>
+   <globaleAIPId>909c56e9-e334-4c0a-9736-f92c732149d9</globaleAIPId>
+   <lokaleAIPId>fa5fb285-fa45-44e4-8d85-77ec1d774403</lokaleAIPId>
+   <version>1</version>
+   <inhaltsverzeichnis>
+      <ordner>
+         <name>header</name>
+         <ordner>
+            <name>old</name>
+            <ordner>
+               <name>SIP</name>
+               <datei id="OLD_SIP">
+                  <name>metadata.xml</name>
+                  <originalName>metadata.xml</originalName>
+                  <pruefalgorithmus>MD5</pruefalgorithmus>
+                  <pruefsumme>43c533d499c572fca699e77e06295ba3</pruefsumme>
+               </datei>
+            </ordner>
+         </ordner>
+         <ordner>
+            <name>xsd</name>
+            <datei id="_3175sMGjn8RupgcTP1bIHh">
+               <name>ablieferung.xsd</name>
+               <originalName>ablieferung.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>aa1f7ad13064e1643ac85478296165af</pruefsumme>
+            </datei>
+            <datei id="_NfohoAg1rbF49FGzYEEeX0">
+               <name>archivischeNotiz.xsd</name>
+               <originalName>archivischeNotiz.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>847911efbac472d0ecc6fe1e99873799</pruefsumme>
+            </datei>
+            <datei id="_PGh4GchYRRpQfhUNLs2IyD">
+               <name>archivischerVorgang.xsd</name>
+               <originalName>archivischerVorgang.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>4a237563fd2d40be9a9ecbf4c0bf946e</pruefsumme>
+            </datei>
+            <datei id="_xAlSBc3dYcypUMvN8HzeN5">
+               <name>arelda.xsd</name>
+               <originalName>arelda.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>f8454632e1ebf97e0aa8d9527ce2641f</pruefsumme>
+            </datei>
+            <datei id="_1cXPEuRWCUX6KtVf1sBRnb">
+               <name>base.xsd</name>
+               <originalName>base.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>cb30854883c6d5640b0965dae5f34afd</pruefsumme>
+            </datei>
+            <datei id="_0LZUWMCD3N8vvyLgTIdzIK">
+               <name>datei.xsd</name>
+               <originalName>datei.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>a4276f0c798ce6c497f0a03660ead0d9</pruefsumme>
+            </datei>
+            <datei id="_dW0QZnTuKmMgeyyR2f1N1s">
+               <name>dokument.xsd</name>
+               <originalName>dokument.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>721965e5224766040bf0bcd03978809e</pruefsumme>
+            </datei>
+            <datei id="_HcGAdyb3dD13na1QqU5qxY">
+               <name>dossier.xsd</name>
+               <originalName>dossier.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>f3f1141d95e92a291e84cfb30bb30e9a</pruefsumme>
+            </datei>
+            <datei id="_gZ3N2BgtqXvna3OD6q1p6h">
+               <name>ordner.xsd</name>
+               <originalName>ordner.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>83e0f91d1a232c7bdd7416970844af1c</pruefsumme>
+            </datei>
+            <datei id="_xlVpnqTv0Esr0eZqYVw9a9">
+               <name>ordnungssystem.xsd</name>
+               <originalName>ordnungssystem.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>4b64247b25362382d6c648ba8ff76ad6</pruefsumme>
+            </datei>
+            <datei id="_tYnLLPixMxAQubBlcO6Fcv">
+               <name>ordnungssystemposition.xsd</name>
+               <originalName>ordnungssystemposition.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>1e7f0a9b914c8baf1235740b133ec90e</pruefsumme>
+            </datei>
+            <datei id="_ThG0EnhWBnZ2fWxqorQcvu">
+               <name>paket.xsd</name>
+               <originalName>paket.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>9920c66b7066f645390e922ba803aadb</pruefsumme>
+            </datei>
+            <datei id="_shZSQyijfAcEO4BUJEGrxI">
+               <name>provenienz.xsd</name>
+               <originalName>provenienz.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>2d6dbc4665cb5169d62549dbbc3f19a7</pruefsumme>
+            </datei>
+            <datei id="_prGZRopjXUgkToDVM4zhAF">
+               <name>zusatzDaten.xsd</name>
+               <originalName>zusatzDaten.xsd</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>a685887b7ad673ea2deac6f96cf3fb4f</pruefsumme>
+            </datei>
+         </ordner>
+      </ordner>
+      <ordner>
+         <name>content</name>
+         <ordner>
+            <name>d_0000001</name>
+            <datei id="_SRpeVgb4xGImymb23OH1od">
+               <name>00000001_PREMIS.xml</name>
+               <originalName>00000001_PREMIS.xml</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>1428a269ff4e5b4894793b68646984b7</pruefsumme>
+            </datei>
+            <datei id="_MKhAIC639MxzyOn8ji3tN5">
+               <name>00000002_PREMIS.xml</name>
+               <originalName>00000002_PREMIS.xml</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>f338f61911d2620972b0ac668dcc37ec</pruefsumme>
+            </datei>
+            <datei id="_fZzi3dX2jvrwakvY6jeJS8">
+               <name>Prozess_Digitalisierung_PREMIS.xml</name>
+               <originalName>Prozess_Digitalisierung_PREMIS.xml</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>8067daaa900eba6dace69572eea8f8f3</pruefsumme>
+            </datei>
+            <datei id="_miEf29GTkFR7ymi91IV4fO">
+               <name>00000001.jp2</name>
+               <originalName>00000001.jp2</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>f7dc1f76a55cbdca0ae4a6dc8ae64644</pruefsumme>
+            </datei>
+            <datei id="_mOXw3hINt3zY6WvKQOfYmk">
+               <name>00000002.jp2</name>
+               <originalName>00000002.jp2</originalName>
+               <pruefalgorithmus>MD5</pruefalgorithmus>
+               <pruefsumme>954d06be4a70c188b6b2e5fe4309fb2c</pruefsumme>
+            </datei>
+         </ordner>
+      </ordner>
+   </inhaltsverzeichnis>
+   <ablieferung xsi:type="ablieferungFilesAIP">
+      <ablieferungstyp>FILES</ablieferungstyp>
+      <ablieferndeStelle>Bundesverwaltung (Bern)</ablieferndeStelle>
+      <ablieferungsnummer>1000/893_3251903</ablieferungsnummer>
+      <provenienz>
+                        
+               <aktenbildnerName>Bundesverwaltung (k.A.)</aktenbildnerName>
+      </provenienz>
+      <ordnungssystem>
+         <name>Eisenbahnwesen</name>
+         <ordnungssystemposition id="_xcVPiwWKGl2kEpqi34nPyH">
+            <nummer>4.</nummer>
+            <titel>Privatbahnen</titel>
+            <ordnungssystemposition id="_zKWQ9lOwGveal4k4fhixt5">
+               <nummer>4.2</nummer>
+               <titel>Normalspurbahnen</titel>
+               <ordnungssystemposition id="_BQYhY3SoSgQwJBUFt5egJX">
+                  <nummer>4.2.09</nummer>
+                  <titel>Eisenbahnlinien Kanton Luzern</titel>
+                  <ordnungssystemposition id="_G8Tvue8N2gZbOfcH0CMYNr">
+                     <nummer>4.2.09.12</nummer>
+                     <titel>Rigibahnen (Vitznau-Rigistaffel-Rigibahn)</titel>
+                     <dossier id="_KtZVoqJNGcss0xxaPgMpn3">
+                        <titel>Beschwerde von Pfyffer-Zimmermann aus Witznau und Zurücknahme derselbigen</titel>
+                        <erscheinungsform>digital</erscheinungsform>
+                        <entstehungszeitraum>
+                        
+                        
+                           <von>
+                            
+                              <datum>1874-04-01</datum>
+                           </von>
+                           <bis>
+                            
+                              <datum>1874-11-30</datum>
+                           </bis>
+                        </entstehungszeitraum>
+                        <dokument id="_lg7DbMWf9jgVxa699MZ1ZL">
+                           <titel>U_m_s_c_h_l_a_g_0000001</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000001</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_miEf29GTkFR7ymi91IV4fO</dateiRef>
+                           <dateiRef>_SRpeVgb4xGImymb23OH1od</dateiRef>
+                           <dateiRef>_mOXw3hINt3zY6WvKQOfYmk</dateiRef>
+                           <dateiRef>_MKhAIC639MxzyOn8ji3tN5</dateiRef>
+                           <dateiRef>_chYnT1OupaVua05V679qUi</dateiRef>
+                           <dateiRef>_W4d0itDv1Grd0LDFAhwlmR</dateiRef>
+                           <dateiRef>_vUbY87XIyeGLjNG5y3xndZ</dateiRef>
+                           <dateiRef>_XUSIau5otTTxuIfouqUhn4</dateiRef>
+                           <dateiRef>_Qau7zrpSWxttPlj5ebexFJ</dateiRef>
+                           <dateiRef>_Gve1UlcBNTPicVrGMpwFj3</dateiRef>
+                           <dateiRef>_AzXvLcHJZhBA9XiHtax3wL</dateiRef>
+                           <dateiRef>_uyd7l0xiDaXnVtprqR2lQS</dateiRef>
+                        </dokument>
+                        <dokument id="_iucAyofd9J64lKNm4mkGgM">
+                           <titel>D_o_k_u_m_e_n_t_0000001</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000002</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_g1rji2dQsuGpZLBIaAiMPA</dateiRef>
+                           <dateiRef>_dUXhtGwNgH35GN2YJ8pyGj</dateiRef>
+                           <dateiRef>_m9zFkHXuktC31o11YAkQ86</dateiRef>
+                           <dateiRef>_yeOC7WoQW2MvLRoJx9seg4</dateiRef>
+                           <dateiRef>_vjzJldkMgFjhC2x99KxX4C</dateiRef>
+                           <dateiRef>_sAunvZiDt97hvfFKcuUAIp</dateiRef>
+                           <dateiRef>_c0u3TfaCacJqAVcAQA1Vgt</dateiRef>
+                           <dateiRef>_gOPGadEspA069T2N85DpVl</dateiRef>
+                           <dateiRef>_xEGJY9P6wMIrYF5o4mNu1j</dateiRef>
+                           <dateiRef>_mANLal5d2ams8uKVDWrZ6u</dateiRef>
+                           <dateiRef>_MHMqEv92PQk5OGXPz4OdVC</dateiRef>
+                           <dateiRef>_BLhDpBCdVv7XA8lPvYXgiM</dateiRef>
+                           <dateiRef>_kaV2BGkXL0FRUMVSOs4JtG</dateiRef>
+                           <dateiRef>_OQaXkOBY3ZdkDOaThk115U</dateiRef>
+                           <dateiRef>_yUdWYvrUmwzzSx9Za6oGIY</dateiRef>
+                           <dateiRef>_ns8VmWNaaqicac23Ve41wi</dateiRef>
+                           <dateiRef>_8hJ6bqQxfPNvZYSQNiEM0X</dateiRef>
+                           <dateiRef>_WDOTiSst00lZpCM3sU5hCr</dateiRef>
+                           <dateiRef>_LUdtsyL44uJOQaH6jpa6F6</dateiRef>
+                           <dateiRef>_l6KWuZCLx1iKZ2aIB4doXK</dateiRef>
+                           <dateiRef>_AhV2qVsjUaEYYHMqw0aAeM</dateiRef>
+                           <dateiRef>_LqaXt7ItrSVoeFvbHDBLXQ</dateiRef>
+                           <dateiRef>_vqe0NMPet3r3M2SceOawtc</dateiRef>
+                           <dateiRef>_r6zP0gEmpz26iiYhh8GRG9</dateiRef>
+                           <dateiRef>_c9YCcja1BoebFloHrpzCmj</dateiRef>
+                           <dateiRef>_jEW3tnlvkhF2Fzx1k2YvRF</dateiRef>
+                           <dateiRef>_65DO2vjMnsF8s822IspEQL</dateiRef>
+                           <dateiRef>_22poW8ITNRamPDrw9WW8l7</dateiRef>
+                           <dateiRef>_29aZ0BSA4qVep3IQg9EieM</dateiRef>
+                           <dateiRef>_u5MaEjNn2Uz7j04gt3UnNQ</dateiRef>
+                           <dateiRef>_CKkjeyNJ95RnEBAw0YWBno</dateiRef>
+                           <dateiRef>_M1qm9saoSTpN75kfzVqkhg</dateiRef>
+                           <dateiRef>_8eb0XsAYbviO9Xo3jI7U53</dateiRef>
+                           <dateiRef>_09TwnifWryQWrjs7hScdtd</dateiRef>
+                           <dateiRef>_Cf655IAFrvhEC8EimMn1oa</dateiRef>
+                           <dateiRef>_Ahjio1HDqF86v9yYcrOdb7</dateiRef>
+                           <dateiRef>_p88wAjggmlKTY2yqaLeqLO</dateiRef>
+                           <dateiRef>_hnE15fb0ZBvcxvsM1Ma6P4</dateiRef>
+                           <dateiRef>_1bTsyHnoHuMyaWQWXxV6Ms</dateiRef>
+                           <dateiRef>_7YzsOEQAFlg1nigqkj1ZCg</dateiRef>
+                           <dateiRef>_SjnRjf96WKrtNnPPZGl07Z</dateiRef>
+                           <dateiRef>_AqJz4iIE5eqN817DBuxT0E</dateiRef>
+                           <dateiRef>_U8ihZE3VvCx6lIiqRv5dYO</dateiRef>
+                           <dateiRef>_bkACPSns4u8viTC5bFWGiU</dateiRef>
+                           <dateiRef>_K16qGRbMamzTTltdDAmJAn</dateiRef>
+                           <dateiRef>_7XoZ0Szb5fjDnKa8sxbSEG</dateiRef>
+                           <dateiRef>_Kzy1SSowwcrK4Ek0RGTmIG</dateiRef>
+                           <dateiRef>_GMp4D9dmzUjsZHzOcsoMpQ</dateiRef>
+                           <dateiRef>_QUlompkdLkrAEnLg2EjoNO</dateiRef>
+                           <dateiRef>_Uo9EciU6ILcCg65yAH47uX</dateiRef>
+                           <dateiRef>_t2ZFRhyi8nNaNy8hQ2t4L9</dateiRef>
+                           <dateiRef>_0D2xQ2tgEsbfv2n8701jCD</dateiRef>
+                           <dateiRef>_RzGZcWlLHYHYHejEMtYJD1</dateiRef>
+                           <dateiRef>_ZWFNJKDstyjzV5AY7qteck</dateiRef>
+                           <dateiRef>_ENEIr4hcozpDvVU0lTFFNR</dateiRef>
+                           <dateiRef>_6jkE6ZiHpLF7JsqFtHJ6Rj</dateiRef>
+                           <dateiRef>_GF3M4aavmw3A9fj6HTvtzQ</dateiRef>
+                           <dateiRef>_iP9W74QLwsT4iySqXWe489</dateiRef>
+                           <dateiRef>_tCYK9lQ7Sfz1bd7hX7sbQ2</dateiRef>
+                           <dateiRef>_r1av2rPqUUcXdCAwK38N7k</dateiRef>
+                           <dateiRef>_34nTAWDpIsjwIRqaKzIiA9</dateiRef>
+                           <dateiRef>_A0hWZZMTMWs0yOkVsfQIBu</dateiRef>
+                           <dateiRef>_zIG4PT1xSfixgbIoIAiBLM</dateiRef>
+                           <dateiRef>_WuExOQbpKcpVYiv0Zy0e6D</dateiRef>
+                           <dateiRef>_k6oo1SW3RGkriZod3BK99p</dateiRef>
+                           <dateiRef>_ryinWEtuwIpQNP9DyCbrbX</dateiRef>
+                           <dateiRef>_s6EvFkDLbAvJQJNYctw0Ww</dateiRef>
+                           <dateiRef>_tXLTqAespa6nLUIrcavkAr</dateiRef>
+                           <dateiRef>_nwx8S8jRnOeggc1b2JFLM0</dateiRef>
+                           <dateiRef>_9MR0mmyKTu7lD1MOmZYMXw</dateiRef>
+                           <dateiRef>_EwRpkPdle6xkbKXFMZW3IB</dateiRef>
+                           <dateiRef>_TgaykLwdGRzII8teYbJAEm</dateiRef>
+                           <dateiRef>_eUK5I37sOPMxnKsWm7AEvK</dateiRef>
+                           <dateiRef>_TYwgpiUa3dp34fWeYUnJX0</dateiRef>
+                           <dateiRef>_u4MvnOdD3ziITgoB1U7Pzb</dateiRef>
+                           <dateiRef>_UhXXXHpBFJu0W8w1dbvUwg</dateiRef>
+                           <dateiRef>_xagaUMRyqSx77NnWTCyj9h</dateiRef>
+                           <dateiRef>_IWFxD8uipl2XF44si89qdk</dateiRef>
+                           <dateiRef>_0VKeh8UdAQ4QzTCf9DqoqU</dateiRef>
+                           <dateiRef>_MK1pPyJ2VVKPrTmaIJ3WMu</dateiRef>
+                           <dateiRef>_iKCifgultPZAicJf6L5Vtv</dateiRef>
+                           <dateiRef>_mnVnAMZuJUx93XWR40mJLa</dateiRef>
+                           <dateiRef>_4alkEjGRzdvT3zYZjmKqCU</dateiRef>
+                           <dateiRef>_JdYHGXVQngMdqcsOQu6Ge8</dateiRef>
+                        </dokument>
+                        <dokument id="_eG40b3efLRoIcJC5DdA89T">
+                           <titel>D_o_k_u_m_e_n_t_0000002</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000003</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_5GbCxR3sghNXT8xA5s9HyZ</dateiRef>
+                           <dateiRef>_TDIdElybgFikGkAIkTwqoh</dateiRef>
+                           <dateiRef>_IMArz9cRs14LvlsMbiD8dg</dateiRef>
+                           <dateiRef>_QqXM3KgJ6Cd5u5ZcZVLjwh</dateiRef>
+                           <dateiRef>_HHN518svEimt6kKdODk5Hf</dateiRef>
+                           <dateiRef>_TQiyhfZ7pij40uEWgzN9a9</dateiRef>
+                           <dateiRef>_lW3C2jttc1YSfjb94kPsuj</dateiRef>
+                           <dateiRef>_GZnDQZu4tttgYJ3qRnZsIw</dateiRef>
+                           <dateiRef>_9XTvqsaQ7n0h9jnhxCNlwC</dateiRef>
+                           <dateiRef>_T2AHO9Ay2h6xDzQxVxGIQM</dateiRef>
+                           <dateiRef>_erkbH23XUIhY6zYvAfnflZ</dateiRef>
+                           <dateiRef>_FCUJfG1htM4ZjL9n60SbSG</dateiRef>
+                           <dateiRef>_iAT86o61V4mUXrVWFN8TxJ</dateiRef>
+                           <dateiRef>_x6BXCPWfBycjT23AqKXs6z</dateiRef>
+                           <dateiRef>_UEJcxNRFUJCwDZh1saSJL0</dateiRef>
+                           <dateiRef>_ZXqfZ62rCifimFhGXYECU6</dateiRef>
+                           <dateiRef>_TsE8gzpiNSIQE3KermKmIx</dateiRef>
+                           <dateiRef>_6XU2nW1l7uO2WWFPVlb6ds</dateiRef>
+                           <dateiRef>_Ssw46IURTviV1n60ANariT</dateiRef>
+                           <dateiRef>_QoLTixmqRpsl8NJlijTsob</dateiRef>
+                           <dateiRef>_zS9BqPUGf5IXNDYYrIWoK4</dateiRef>
+                           <dateiRef>_JczB9iV7bzkO4XVPSOUhy1</dateiRef>
+                           <dateiRef>_cypvHQeLGC4zlXrpBcfgbE</dateiRef>
+                           <dateiRef>_xcY0O1iSB9YrBeP9dWKxaB</dateiRef>
+                           <dateiRef>_hmBomqIVtkLqZNOLPETgEv</dateiRef>
+                           <dateiRef>_IJwBmAjHb5FqWo7Wq7Qf6R</dateiRef>
+                        </dokument>
+                        <dokument id="_GiFKiICGnlXGfFtXNGeI0c">
+                           <titel>D_o_k_u_m_e_n_t_0000003</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000004</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_RO2p692zkgdsiRQMmkQArf</dateiRef>
+                           <dateiRef>_2vljO2Bhh6leQYePmnzqED</dateiRef>
+                           <dateiRef>_Xl1AqwKT6EEWwAPyyMz3bp</dateiRef>
+                           <dateiRef>_2IO73BJXIP3N5kKDjZgImM</dateiRef>
+                           <dateiRef>_y0qDEePHlePYYVdTB4sPZ8</dateiRef>
+                           <dateiRef>_0xPOqTgXDm6tA6V4EjuO26</dateiRef>
+                           <dateiRef>_HpQUjI8OpqkMCU5R2CyVqD</dateiRef>
+                           <dateiRef>_6NCo6MZM5L0fpRKTQayfoE</dateiRef>
+                           <dateiRef>_1xQ1vIulR4tjnEBAAoGO0Z</dateiRef>
+                           <dateiRef>_SGKzK1JTc14hjyypFvod2d</dateiRef>
+                           <dateiRef>_Z5FZCUArnATPRrenpduVWI</dateiRef>
+                           <dateiRef>_L1bYrroT3aKdWYXP3AIVo9</dateiRef>
+                           <dateiRef>_IcpobVzeGK0lvwjYRfyQBa</dateiRef>
+                           <dateiRef>_qG7sApsw35bYhrWpTXXhEz</dateiRef>
+                           <dateiRef>_oGaZtFyiKiQqMzSeA13Kz2</dateiRef>
+                           <dateiRef>_Qe1TWhopShwLSSSsPmNtqR</dateiRef>
+                           <dateiRef>_EHXkr0OsjGhZpik4z3IfK7</dateiRef>
+                           <dateiRef>_cJAogjjEq7R6RCtxEivL8L</dateiRef>
+                           <dateiRef>_cdJNqJKOQVhxO9GFO01hWj</dateiRef>
+                           <dateiRef>_GMSlFo0t5tdZYwarv50mCL</dateiRef>
+                           <dateiRef>_itLKxrxYH2i5rslI7HHMxu</dateiRef>
+                           <dateiRef>_czXg34nFEEtIeNEbBwBViM</dateiRef>
+                           <dateiRef>_Gq45ShXWYVQB6FGL4eQ6KQ</dateiRef>
+                           <dateiRef>_ohXDvtPkQT9gjavHMhE6s6</dateiRef>
+                           <dateiRef>_2e1DtZvIaWGol7TdeNs7mj</dateiRef>
+                           <dateiRef>_0c7UKGRVoy9SKjluMj6iXM</dateiRef>
+                           <dateiRef>_slVmhdd99ZM7iR1RSHYc23</dateiRef>
+                           <dateiRef>_FeiKFdMGoa0qQuqYOOXeJ2</dateiRef>
+                           <dateiRef>_NyuWZO4M2xpF5mkC5C4W21</dateiRef>
+                           <dateiRef>_vqNP5Wj14Jgo2dEGb82NN5</dateiRef>
+                           <dateiRef>_87PWsbAucVphK2i0GvuoK1</dateiRef>
+                           <dateiRef>_V5wdSfKnvvcHVWbvXxnM4V</dateiRef>
+                           <dateiRef>_XCX4o1SeIkuvOHUTUK4SjK</dateiRef>
+                           <dateiRef>_hsP0JP4t9dbhHZtSLicieI</dateiRef>
+                        </dokument>
+                        <dokument id="_HJT0HY4xXPJmm5AFqniheQ">
+                           <titel>D_o_k_u_m_e_n_t_0000004</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000005</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_MMXDGhijq4qJC2aopeBET2</dateiRef>
+                           <dateiRef>_T64yDbMxHd4zOfiGsoFs4r</dateiRef>
+                           <dateiRef>_KE02A0CGzT96EE5vF9Vkdv</dateiRef>
+                           <dateiRef>_InXaEi8lKBdVMY2qsaBWIY</dateiRef>
+                           <dateiRef>_mHtXnHF6nNaJPU9b2OsETC</dateiRef>
+                           <dateiRef>_y9mcoxJZ6Y61TTtn3URphY</dateiRef>
+                           <dateiRef>_YC1zWSNQ6SRiTgtFGuSogz</dateiRef>
+                           <dateiRef>_kzWnFq4N6JWQSiPehb2GbZ</dateiRef>
+                           <dateiRef>_XZbY1IizMF0WytFYyVm6Mh</dateiRef>
+                           <dateiRef>_K67qrCY8ooGrAR0JKNJNqR</dateiRef>
+                           <dateiRef>_wRRzwtYII1W5VuMvb9mTiF</dateiRef>
+                           <dateiRef>_KS4ieDUVLMUAOTIS5cjkBu</dateiRef>
+                           <dateiRef>_sDtU2QBmgbiypc9lkRsX73</dateiRef>
+                           <dateiRef>_8YO0xGYe4kTm2zwkuTUhsD</dateiRef>
+                           <dateiRef>_WkYMoMj6YoZYe5dzlEl6UH</dateiRef>
+                           <dateiRef>_rtjTAA789ADSKGFsTDQJWX</dateiRef>
+                           <dateiRef>_vsP0fJdtAMMtVJfkr31biT</dateiRef>
+                           <dateiRef>_ajpXoVoMzFfgZZppkaTtiG</dateiRef>
+                           <dateiRef>_Qoj7vhZa7eoIMhSDcyh0o3</dateiRef>
+                           <dateiRef>_e4iXpHuX2MGTYmNMwlVzIF</dateiRef>
+                           <dateiRef>_GNmwhWlzHTpU2c8GYVu3a8</dateiRef>
+                           <dateiRef>_Tfg1PiU4o0BuZLjcCcCcVC</dateiRef>
+                           <dateiRef>_ffMVulAwTv5MBnB7KPPTmA</dateiRef>
+                           <dateiRef>_LOst4IBCydIdX0ubzo3nqT</dateiRef>
+                           <dateiRef>_3CDgIvoEtFU4wIsSBYr09R</dateiRef>
+                           <dateiRef>_rKTEk5Hk6gpJhe10uvvpnJ</dateiRef>
+                           <dateiRef>_HX1YwoXuUlupV5ZRiIzyWk</dateiRef>
+                           <dateiRef>_zaoTYXgwS2noPioDE0mY4r</dateiRef>
+                           <dateiRef>_GuoOJHUs8Yp80qpQ2RS5Te</dateiRef>
+                           <dateiRef>_IkpFMsCq3pe9CRVlLocbs5</dateiRef>
+                        </dokument>
+                        <dokument id="_3QgdSn7znsABaQBemVR60Z">
+                           <titel>D_o_k_u_m_e_n_t_0000005</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000006</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_KZ4jMOlQzsRx7CaeDFivy5</dateiRef>
+                           <dateiRef>_IBo5JKFeEDTSNo8jeJEhi0</dateiRef>
+                           <dateiRef>_1U5ICwsUEWM9IVn8YQKd4x</dateiRef>
+                           <dateiRef>_fYOPbYuQQzIuvBWi65PKa4</dateiRef>
+                           <dateiRef>_2QfWWCHlcQsKdZhqVObpMi</dateiRef>
+                           <dateiRef>_evhPU333knVoQenmoxQp3p</dateiRef>
+                           <dateiRef>_Dzcp26EY5q9tp8FY2qHVHd</dateiRef>
+                           <dateiRef>_RKoI7lbfb02x0CI6tp5pet</dateiRef>
+                           <dateiRef>_rNx0K1iEzAbZ42QtZpoNPp</dateiRef>
+                           <dateiRef>_D47AgSXy1psDGSPvu8n3Ab</dateiRef>
+                           <dateiRef>_VC3k7lRx4gwUYGIbsDHXmx</dateiRef>
+                           <dateiRef>_WmutZZauwa0svTrKLojbfG</dateiRef>
+                           <dateiRef>_xTNQNQq0LeFKFH7DTO0oqp</dateiRef>
+                           <dateiRef>_W44KutzxgdYeJ1dnfei84t</dateiRef>
+                           <dateiRef>_2jGV9dAtXIS6bbAwNy3y0v</dateiRef>
+                           <dateiRef>_LesD7GLY0XU3xwQ3Qam5zt</dateiRef>
+                           <dateiRef>_eHsdgzZhcMxKL4sWSLM3wA</dateiRef>
+                           <dateiRef>_pSF7HwXXEuG4SFNkhsTOZE</dateiRef>
+                           <dateiRef>_v6wfzOFe9ztQ3bRIO99KSv</dateiRef>
+                           <dateiRef>_kp7i5MpgnUZz8Od8q8BlNk</dateiRef>
+                           <dateiRef>_A6HU42E1oIpxNtnaaakSBX</dateiRef>
+                           <dateiRef>_fd6f3iTPfkv0mDfCIBQOB3</dateiRef>
+                           <dateiRef>_9QNMH8PMBe4xKaMRyCS6Om</dateiRef>
+                           <dateiRef>_lAdUCmfzik66AI6chJSlkG</dateiRef>
+                           <dateiRef>_PWNGMrmal4Ot5TZmqB7ZYd</dateiRef>
+                           <dateiRef>_9NcSm0FkkfcvCoiJjsRIgV</dateiRef>
+                           <dateiRef>_NA8YTj85w888SqLKC7GUjy</dateiRef>
+                           <dateiRef>_5ejgwi6M1HiOLIjKHV7Yh2</dateiRef>
+                           <dateiRef>_GLgX9BNnr8REfxjuvJjAt4</dateiRef>
+                           <dateiRef>_MwdwiJAKh9qnKVZTDwn8z0</dateiRef>
+                           <dateiRef>_eo6Un53FiJZcuuze12DZk0</dateiRef>
+                           <dateiRef>_CcRVDmsk1UT6yPoNWZai5D</dateiRef>
+                           <dateiRef>_qhXvBpLc4vvUmwxiuK60zN</dateiRef>
+                           <dateiRef>_IQH4a19oWdTYV6lnX2W60C</dateiRef>
+                           <dateiRef>_IFuBFA9e5pYWgyhmJ0AW4c</dateiRef>
+                           <dateiRef>_PARCvFSaN2WKsVO3euTyWg</dateiRef>
+                           <dateiRef>_Ia3nJ4PRMlJDsRUChOzTf8</dateiRef>
+                           <dateiRef>_sUtsReqAfPndGMezxeCTiK</dateiRef>
+                           <dateiRef>_fS7MPLkGHqBp7U6ND9YyKP</dateiRef>
+                           <dateiRef>_kkerbTQ67I6R6iSKEdMRsb</dateiRef>
+                           <dateiRef>_rvyYCI9FdSbzA0fQsKulE6</dateiRef>
+                           <dateiRef>_n7M0sIwOJL9Yk1gJFr21fB</dateiRef>
+                           <dateiRef>_LHMWPwCslSzpp2IjZ25RWE</dateiRef>
+                           <dateiRef>_fuy90NMhEjOIKrl1WDNsUq</dateiRef>
+                        </dokument>
+                        <dokument id="_HXHncCZfVK5tdqqzRt4wv5">
+                           <titel>D_o_k_u_m_e_n_t_0000006</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000007</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_fqsPyR6gDpgU5Z3ArCJNeM</dateiRef>
+                           <dateiRef>_2aOx3skcAZE17WZeZv5hZq</dateiRef>
+                           <dateiRef>_iLaCg81G9JRb6NuWVePNpF</dateiRef>
+                           <dateiRef>_RLcfryYHYI66uKhTMv4qHz</dateiRef>
+                           <dateiRef>_mCdJazjFP1c6gUit9aKMjR</dateiRef>
+                           <dateiRef>_IrRzPL6OkfOyctmo47bCxq</dateiRef>
+                           <dateiRef>_ROfPPZvW6pvjO8TNzfKJ0M</dateiRef>
+                           <dateiRef>_f4QB89a8ikn1fcWzWFWZez</dateiRef>
+                           <dateiRef>_r8ClVGmpWAxabOq8JC9zL3</dateiRef>
+                           <dateiRef>_P08C99IZ3KFEjT7wgOGs6q</dateiRef>
+                           <dateiRef>_YLiA0pG0Eil9fLj6Mb15Ce</dateiRef>
+                           <dateiRef>_HNNLv4PqWh94DS8CLmI7et</dateiRef>
+                           <dateiRef>_5Y5iAb70VuQLIp4TTRnIK7</dateiRef>
+                           <dateiRef>_WdQdTCXdlo9jZkfPQRFcWh</dateiRef>
+                        </dokument>
+                        <dokument id="_cccxqrYWTQOKtf0ekK9Zee">
+                           <titel>D_o_k_u_m_e_n_t_0000007</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000008</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_RqkBRp1fesebvsPIEiUNQd</dateiRef>
+                           <dateiRef>_pMI2DV3PWJfRkmgpAQZOhK</dateiRef>
+                           <dateiRef>_5nQtK3pesuPnrebALdgAJp</dateiRef>
+                           <dateiRef>_J3EBDE0Qb4NtQzy9Bqz6EP</dateiRef>
+                        </dokument>
+                        <dokument id="_ZyuyThh1R6V70IHShQY7Zu">
+                           <titel>D_o_k_u_m_e_n_t_0000008</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000009</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_Xb7BEeQlYVD5iKjhN002VT</dateiRef>
+                           <dateiRef>_ntrnETgjGq5ZkkqXfWhfrR</dateiRef>
+                           <dateiRef>_HLiV6GpXlYzLYBmbQG70lR</dateiRef>
+                           <dateiRef>_JvTp5wKJSrl0xYkbxOnrRH</dateiRef>
+                           <dateiRef>_Ex74dZAnLGkEnn26OTvug7</dateiRef>
+                           <dateiRef>_ZnggZ8McxV0Zte6iN4FiiJ</dateiRef>
+                           <dateiRef>_kJB5OvwTiRtaQadD87Cr4I</dateiRef>
+                           <dateiRef>_8id5yJvFYTJt562PuQs8F7</dateiRef>
+                           <dateiRef>_yBqDEnTHEKd4OTnTwpWs3r</dateiRef>
+                           <dateiRef>_jMklSwpXym77rS5f7wQSl6</dateiRef>
+                        </dokument>
+                        <dokument id="_Vk6hH0V3prEnCj0GIUmwoz">
+                           <titel>D_o_k_u_m_e_n_t_0000009</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000010</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_kgiVYxgtd2scGDhIt8dozW</dateiRef>
+                           <dateiRef>_MNJhXJMd6aGxXtT4KcVAwl</dateiRef>
+                           <dateiRef>_mOEXfGMbComnFCEn7rY4JJ</dateiRef>
+                           <dateiRef>_OTrhzDR1bOkVBnSODpJ8vm</dateiRef>
+                           <dateiRef>_hH1cCBvux8nppZtw8P6Y5x</dateiRef>
+                           <dateiRef>_ByqxIi7KrjbH9cg4VAJ0LV</dateiRef>
+                           <dateiRef>_SFCHCNPWcdGmGg9xb4V35v</dateiRef>
+                           <dateiRef>_Fq8w7T1SOXj62CObcXUrUG</dateiRef>
+                           <dateiRef>_RGt4S8kcTAjnftlLOtdTed</dateiRef>
+                           <dateiRef>_8JpG2bZ4uHfJvQ8evFpzFm</dateiRef>
+                           <dateiRef>_u8wbaevKqvjDGGIL099UIR</dateiRef>
+                           <dateiRef>_30uCRDgDRfx6unYVsoOtTq</dateiRef>
+                           <dateiRef>_tNXTA6AU8a9C3gFZlLi4ue</dateiRef>
+                           <dateiRef>_znw6633dR5JIvtBpREINzq</dateiRef>
+                           <dateiRef>_9ea8XQ157z3wSdAOQofL6j</dateiRef>
+                           <dateiRef>_U6OWSfan1QaUoFsHgIHt8T</dateiRef>
+                           <dateiRef>_1PMnI74tQGziV2Ac7HPxDA</dateiRef>
+                           <dateiRef>_mbXxIjD4Wf04zsrwAXjMGY</dateiRef>
+                        </dokument>
+                        <dokument id="_ztm9wYauoFISxZkcEGD2lX">
+                           <titel>D_o_k_u_m_e_n_t_0000010</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000011</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_TiPs089ulN6kLu00MwFiA5</dateiRef>
+                           <dateiRef>_9yiUkB1lIPSWhjMhQBpenn</dateiRef>
+                           <dateiRef>_z1661TWaUL5ZslBqg3lezx</dateiRef>
+                           <dateiRef>_kTO13Tip4ClGBOIsVXaY4Z</dateiRef>
+                           <dateiRef>_lYT860phXPJJP12SlrhW7W</dateiRef>
+                           <dateiRef>_O6tiqxLU7KapYy8VUL1NfS</dateiRef>
+                        </dokument>
+                        <dokument id="_FkRepjrPiUFJoH5oL17DaE">
+                           <titel>D_o_k_u_m_e_n_t_0000011</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000012</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_dxHJAQRH9faWPAy2SHGHkK</dateiRef>
+                           <dateiRef>_iMua9Kcu3EXTkTanStTkQX</dateiRef>
+                           <dateiRef>_OS7ocJFpaR9PHVMbEnrCRQ</dateiRef>
+                           <dateiRef>_jqImgnt9qWQXKsFlIejtPj</dateiRef>
+                           <dateiRef>_ZZcGoxi2beNyGA9lqipEOS</dateiRef>
+                           <dateiRef>_P6xU6DgTXZob9HZDmU0XJc</dateiRef>
+                           <dateiRef>_oDA7Qk2f8wL1UmS6hw6BSG</dateiRef>
+                           <dateiRef>_IC6iMb5d5KanurFGtWQxyD</dateiRef>
+                           <dateiRef>_qVDOwCxuC9i82QgRMcIrQu</dateiRef>
+                           <dateiRef>_U8NnQkpVMQcNQTtLyNc39p</dateiRef>
+                        </dokument>
+                        <dokument id="_81a3leaJe93PXoFaYEzzoa">
+                           <titel>D_o_k_u_m_e_n_t_0000012</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000013</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_YmgmI3c08DnHMLZNhjyq25</dateiRef>
+                           <dateiRef>_wtR8U6MzOz3thBU4s1CIY6</dateiRef>
+                           <dateiRef>_3HCURIx5sYfdsSXiNetOUF</dateiRef>
+                           <dateiRef>_grqjylqzmA9ZdcVAEaZ2SY</dateiRef>
+                           <dateiRef>_e9QUoUwvAAYNAIOcHCdVgn</dateiRef>
+                           <dateiRef>_jWHcN1SqXQhkZAEyFpVB12</dateiRef>
+                           <dateiRef>_ZAxrrwnLQmyGnDFMUCoH34</dateiRef>
+                           <dateiRef>_FikviVe8pvRieFmC57WlRY</dateiRef>
+                           <dateiRef>_9HvDTqJLRAr9e2PYyVIbJT</dateiRef>
+                           <dateiRef>_q5yN8ixVJ1Q82sfASKFrm2</dateiRef>
+                        </dokument>
+                        <dokument id="_pOhOVlrOqU5PhHw1UaJfMl">
+                           <titel>D_o_k_u_m_e_n_t_0000013</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000014</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_zNm1O32k4ujOrXNyxlTreS</dateiRef>
+                           <dateiRef>_ll3DM2BEM2B10PAziKaSI9</dateiRef>
+                           <dateiRef>_ls1Nypyn4vcteoDjeAVbJN</dateiRef>
+                           <dateiRef>_BGXS79BxBVD1odwUpTv6E6</dateiRef>
+                           <dateiRef>_7nd9FIuBDLgsFmF8qBLl6Y</dateiRef>
+                           <dateiRef>_zg9JZsUIBwXwG0oFw2oGCq</dateiRef>
+                           <dateiRef>_KHnOoHbnUMh4C5Szg2vyq5</dateiRef>
+                           <dateiRef>_t1A0k0NWhCCbtxiOXswMvs</dateiRef>
+                           <dateiRef>_KEwotJieFXv7TspFOikWKR</dateiRef>
+                           <dateiRef>_7EW6bwHe7cCrJAa5FAYnHi</dateiRef>
+                           <dateiRef>_7c5F8YYaasRTPsu0AOXx0d</dateiRef>
+                           <dateiRef>_KsYsTXZngBrdJJQ3JqbrE8</dateiRef>
+                           <dateiRef>_zC6lpqdRzNQl1BFBPEFy0T</dateiRef>
+                           <dateiRef>_Re80mq9Psk4otRUJAKjrW2</dateiRef>
+                           <dateiRef>_uPShzQ4XHzKvyWYg1Vx12a</dateiRef>
+                           <dateiRef>_q0OhAMl1owqvBvyyYpc3et</dateiRef>
+                           <dateiRef>_fW7pGM0x5ZtHZd193VRY3x</dateiRef>
+                           <dateiRef>_aH1mY7zyKnVmZRTKjLUWHK</dateiRef>
+                           <dateiRef>_LT0ISE1KSSy55RuCFyLuGA</dateiRef>
+                           <dateiRef>_V3glwnlSGywy82iCLZ3N5V</dateiRef>
+                           <dateiRef>_5e7CJ88AMGziywDw1fAjWw</dateiRef>
+                           <dateiRef>_yvp8lVYoYh31gAPkGY1wna</dateiRef>
+                           <dateiRef>_iNVi3HL8osRWfGxljVSZIQ</dateiRef>
+                           <dateiRef>_zeuQIbgcJIAyj7UX3UpeX5</dateiRef>
+                           <dateiRef>_1DTjvhyqIvklV7VFymJKKh</dateiRef>
+                           <dateiRef>_hcEywtSuawS0ZjP2lFTEdF</dateiRef>
+                           <dateiRef>_xtR2SqdyivU2JgFlDanRYx</dateiRef>
+                           <dateiRef>_mBtxLpyAe7WDz60HifW8D5</dateiRef>
+                           <dateiRef>_6BKYFJBuvvQ0Dl77pvLZLS</dateiRef>
+                           <dateiRef>_xyEdrQpxM61BeN6ZmLVq2R</dateiRef>
+                           <dateiRef>_pg9NZbdLMGeLGkFoMO5ASq</dateiRef>
+                           <dateiRef>_KsRi9Bzx6Ro9cjJ3yNSyWK</dateiRef>
+                        </dokument>
+                        <dokument id="_xy7iKaRYYSLF9f11JsXbGz">
+                           <titel>D_o_k_u_m_e_n_t_0000014</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000015</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_BblSEzq4DYiBdsNmhCHVgC</dateiRef>
+                           <dateiRef>_9YFtc0bslkVLZInZvnVrR2</dateiRef>
+                           <dateiRef>_aVV54EggtVulKdoLPzFL8U</dateiRef>
+                           <dateiRef>_1FF9xChDJCKjSPDIM84oUE</dateiRef>
+                           <dateiRef>_ohyOthTAk4aooIrojg0YKQ</dateiRef>
+                           <dateiRef>_6c3OTNj6vrh2prG5A87JRL</dateiRef>
+                           <dateiRef>_IwwCtk50jMU9H5N909OTYq</dateiRef>
+                           <dateiRef>_BLlOwNRwRVYxIGMo7905q5</dateiRef>
+                           <dateiRef>_Ka9zQVJNk9ETDITX2r9kS6</dateiRef>
+                           <dateiRef>_svnHuG5fj6LKMvOBJPIWeE</dateiRef>
+                        </dokument>
+                        <dokument id="_zRf8ejUMwCtPRFHJXcwIKl">
+                           <titel>D_o_k_u_m_e_n_t_0000015</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000016</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_qvO2zsx328rTNX4bdzB06o</dateiRef>
+                           <dateiRef>_dYtCZukGcGw5Dv9rpH7Phf</dateiRef>
+                           <dateiRef>_qL6TWVbmxizhVqd7JTMlJr</dateiRef>
+                           <dateiRef>_gnY2RtL225dXOzn34EsN0s</dateiRef>
+                        </dokument>
+                        <dokument id="_A95r7xmDUkTJ9WVPBbSiLB">
+                           <titel>D_o_k_u_m_e_n_t_0000016</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000017</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_FqoZqKtYsQn9iAdoqqv1cI</dateiRef>
+                           <dateiRef>_riEcze9FkwXNAgtur3vhvB</dateiRef>
+                           <dateiRef>_wrbiTSyMyT93k4b9yhnd8A</dateiRef>
+                           <dateiRef>_QC7MZ9myhW7QgxL7ELdiQV</dateiRef>
+                           <dateiRef>_EltAAZKE7xX72Nr4kNUT7f</dateiRef>
+                           <dateiRef>_oSKAG9iswtYdLdEoZOgNZI</dateiRef>
+                           <dateiRef>_MPUtT4LAN6k1X9i205JK4v</dateiRef>
+                           <dateiRef>_JnLmA6SzL8PXhLuSAjD6BN</dateiRef>
+                           <dateiRef>_RfwXpYysjDoYf1KN9ZDc9K</dateiRef>
+                           <dateiRef>_t86rSQb97ckC4ZprJoDUqP</dateiRef>
+                           <dateiRef>_aZTvmXomyNbDu78bf18jPb</dateiRef>
+                           <dateiRef>_lCNbsKsl9D7BObhJtz81Sw</dateiRef>
+                           <dateiRef>_ao6Adl1bXk9YAFXqcOgECY</dateiRef>
+                           <dateiRef>_o8pOoPrSOEdgE8CMLlbOFq</dateiRef>
+                           <dateiRef>_FDHQdkVRY6R3kiMBSVAkuj</dateiRef>
+                           <dateiRef>_l3La0Qs6HdEVsmPEtnefcJ</dateiRef>
+                        </dokument>
+                        <dokument id="_TvrjbgD5npQ8dEwgp7d93r">
+                           <titel>D_o_k_u_m_e_n_t_0000017</titel>
+                           <erscheinungsform>digital</erscheinungsform>
+                           <zusatzDaten>
+                        
+                              <merkmal name="ReihenfolgeAnalogesDossier">000018</merkmal>
+                           </zusatzDaten>
+                           <dateiRef>_mknnbMIDwFwyyAhb0nNNAi</dateiRef>
+                           <dateiRef>_bVWoiFVEofzRW0cjYiwZiU</dateiRef>
+                           <dateiRef>_a3UQBD05UK5O75fbdz66oY</dateiRef>
+                           <dateiRef>_MxAgCiLVHDdzLmFTqqJgvm</dateiRef>
+                           <dateiRef>_c7FINosFeQtOUoVT1hHhTO</dateiRef>
+                           <dateiRef>_jxDTghxxNxUFP0nh4DmCSF</dateiRef>
+                           <dateiRef>_ehXSmIcDPXHcBRZRcEz93t</dateiRef>
+                           <dateiRef>_QX9ItkC2VPpvB8rdhoLTXL</dateiRef>
+                        </dokument>
+                        <dateiRef>_fZzi3dX2jvrwakvY6jeJS8</dateiRef>
+                     </dossier>
+                  </ordnungssystemposition>
+               </ordnungssystemposition>
+            </ordnungssystemposition>
+         </ordnungssystemposition>
+      </ordnungssystem>
+   </ablieferung>
+   <archivischerVorgang>
+      <vorgangstyp>Eingangsprüfung automatisiert</vorgangstyp>
+      <beschreibung>Automated tests run
+
+                        XML well formed and valid:
+                            passed
+Structural Integrity:
+                            passed
+File Names Correct:
+                            passed
+SIP content structure plausible:
+                            passed
+Virus Check:
+                            passed
+File Formats:
+                            passed
+
+                            Comment:
+                             </beschreibung>
+      <datum>
+         <von>2023-08-31T15:36:11.239+02:00</von>
+         <bis>2023-08-31T15:36:23.236+02:00</bis>
+      </datum>
+      <bearbeiter>Andreas Christe</bearbeiter>
+   </archivischerVorgang>
+   <archivischerVorgang>
+      <vorgangstyp>Eingangsprüfung manuell</vorgangstyp>
+      <beschreibung>SIP Approved for Ingest</beschreibung>
+      <datum>
+         <von>2023-08-31T15:36:23.236+02:00</von>
+         <bis>2023-08-31T15:36:23.236+02:00</bis>
+      </datum>
+      <bearbeiter>Andreas Christe</bearbeiter>
+   </archivischerVorgang>
+</paket>

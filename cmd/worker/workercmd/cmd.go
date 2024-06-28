@@ -72,6 +72,18 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
 	)
 	w.RegisterActivityWithOptions(
+		activities.NewAddPREMISObjects().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISObjectsName},
+	)
+	w.RegisterActivityWithOptions(
+		activities.NewAddPREMISEvent().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISEventName},
+	)
+	w.RegisterActivityWithOptions(
+		activities.NewAddPREMISAgent().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISAgentName},
+	)
+	w.RegisterActivityWithOptions(
 		activities.NewValidateMetadata().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateMetadataName},
 	)
