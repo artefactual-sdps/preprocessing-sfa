@@ -12,6 +12,8 @@ type AddPREMISEventParams struct {
 	PREMISFilePath string
 	Agent          premis.Agent
 	Type           string
+	Detail         string
+	OutcomeDetail  string
 	Failures       []string
 }
 
@@ -32,7 +34,9 @@ func (md *AddPREMISEventActivity) Execute(
 		return nil, err
 	}
 
-	eventSummary, err := premis.NewEventSummary(params.Type, params.Failures)
+	outcome := premis.EventOutcomeForFailures(params.Failures)
+
+	eventSummary, err := premis.NewEventSummary(params.Type, params.Detail, outcome, params.OutcomeDetail)
 	if err != nil {
 		return nil, err
 	}

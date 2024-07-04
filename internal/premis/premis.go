@@ -32,9 +32,10 @@ type Object struct {
 }
 
 type EventSummary struct {
-	Type    string
-	Detail  string
-	Outcome string
+	Type          string
+	Detail        string
+	Outcome       string
+	OutcomeDetail string
 }
 
 type Event struct {
@@ -128,30 +129,21 @@ func eventFromEventSummaryAndAgent(eventSummary EventSummary, agent Agent) Event
 	}
 }
 
-func NewEventSummary(eventType string, failures []string) (EventSummary, error) {
-	detail, outcome := assembleEventDetailAndOutcome(failures)
-
+func NewEventSummary(eventType string, detail string, outcome string, outcomeDetail string) (EventSummary, error) {
 	return EventSummary{
-		Type:    eventType,
-		Detail:  detail,
-		Outcome: outcome,
+		Type:          eventType,
+		Detail:        detail,
+		Outcome:       outcome,
+		OutcomeDetail: outcomeDetail,
 	}, nil
 }
 
-func assembleEventDetailAndOutcome(failures []string) (string, string) {
-	detail := ""
-	outcome := "valid"
-
+func EventOutcomeForFailures(failures []string) string {
 	if failures != nil {
-		// Add failure descriptions to PREMIS event detail.
-		for _, description := range failures {
-			detail = detail + description + "\n"
-		}
-
-		outcome = "invalid"
+		return "invalid"
 	}
 
-	return detail, outcome
+	return "valid"
 }
 
 func AppendObjectXML(doc *etree.Document, object Object) error {
@@ -182,7 +174,11 @@ func AppendEventAndLinkToObject(doc *etree.Document, eventSummary EventSummary, 
 		return err
 	}
 
-	LinkEventToObject(objectEl, event)
+	if objectEl != nil {
+		LinkEventToObject(objectEl, event)
+	} else {
+		return fmt.Errorf("append event and link to object: object '%s' not found", originalName)
+	}
 
 	return nil
 }
@@ -275,6 +271,12 @@ func addEventElement(PREMISEl *etree.Element, event Event) {
 	outcomeInfoEl := eventEl.CreateElement("premis:eventOutcomeInformation")
 	outcomeEl := outcomeInfoEl.CreateElement("premis:eventOutcome")
 	outcomeEl.CreateText(event.Summary.Outcome)
+
+	if event.Summary.OutcomeDetail != "" {
+		outcomeDetailEl := outcomeInfoEl.CreateElement("premis:eventOutcomeDetail")
+		outcomeDetailNoteEl := outcomeDetailEl.CreateElement("premis:eventOutcomeDetailNote")
+		outcomeDetailNoteEl.CreateText(event.Summary.OutcomeDetail)
+	}
 
 	addEventAgentIdentifierElement(eventEl, event)
 }

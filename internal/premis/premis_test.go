@@ -37,7 +37,7 @@ const premisEventAddContent = `<?xml version="1.0" encoding="UTF-8"?>
       <premis:eventIdentifierType>UUID</premis:eventIdentifierType>
       <premis:eventIdentifierValue/>
     </premis:eventIdentifier>
-    <premis:eventType>validateFiles</premis:eventType>
+    <premis:eventType>validation</premis:eventType>
     <premis:eventDateTime/>
     <premis:eventDetailInformation>
       <premis:eventDetail>event detail</premis:eventDetail>
@@ -78,14 +78,16 @@ const premisObjectAndEventAddContent = `<?xml version="1.0" encoding="UTF-8"?>
       <premis:eventIdentifierType>UUID</premis:eventIdentifierType>
       <premis:eventIdentifierValue/>
     </premis:eventIdentifier>
-    <premis:eventType>someEvent</premis:eventType>
+    <premis:eventType>validation</premis:eventType>
     <premis:eventDateTime/>
     <premis:eventDetailInformation>
-      <premis:eventDetail>some failure
-</premis:eventDetail>
+      <premis:eventDetail>name=&quot;Validate SIP metadata&quot;</premis:eventDetail>
     </premis:eventDetailInformation>
     <premis:eventOutcomeInformation>
       <premis:eventOutcome>invalid</premis:eventOutcome>
+      <premis:eventOutcomeDetail>
+        <premis:eventOutcomeDetailNote>Metadata validation successful</premis:eventOutcomeDetailNote>
+      </premis:eventOutcomeDetail>
     </premis:eventOutcomeInformation>
     <premis:linkingAgentIdentifier>
       <premis:linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">url</premis:linkingAgentIdentifierType>
@@ -138,7 +140,7 @@ func TestAppendPREMISEventXML(t *testing.T) {
 	assert.NilError(t, err)
 
 	err = premis.AppendEventXML(doc, premis.EventSummary{
-		Type:    "validateFiles",
+		Type:    "validation",
 		Detail:  "event detail",
 		Outcome: "valid",
 	}, premis.AgentDefault())
@@ -243,9 +245,10 @@ func TestAppendPREMISEventAndLinkToObject(t *testing.T) {
 	// Define PREMIS event with failure.
 	var failures []string
 	failures = append(failures, "some failure")
+	outcome := premis.EventOutcomeForFailures(failures)
 
 	// Add PREMIS event to XML document.
-	eventSummary, err := premis.NewEventSummary("someEvent", failures)
+	eventSummary, err := premis.NewEventSummary("validation", "name=\"Validate SIP metadata\"", outcome, "Metadata validation successful")
 	assert.NilError(t, err)
 
 	doc := etree.NewDocument()

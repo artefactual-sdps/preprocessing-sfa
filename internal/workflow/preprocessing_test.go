@@ -150,7 +150,9 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.AddPREMISEventParams{
 			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
-			Type:           "validateStructure",
+			Type:           "validation",
+			Detail:         "name=\"Validate SIP structure\"",
+			OutcomeDetail:  "SIP structure identified: VecteurAIP. SIP structure matches validation criteria.",
 			Failures:       nil,
 		},
 	).Return(
@@ -168,18 +170,6 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.ValidateFileFormatsResult{}, nil,
 	)
 	s.env.OnActivity(
-		activities.AddPREMISEventName,
-		sessionCtx,
-		&activities.AddPREMISEventParams{
-			PREMISFilePath: premisFilePath,
-			Agent:          premis.AgentDefault(),
-			Type:           "validateFileFormats",
-			Failures:       nil,
-		},
-	).Return(
-		&activities.AddPREMISEventResult{}, nil,
-	)
-	s.env.OnActivity(
 		activities.ValidateMetadataName,
 		sessionCtx,
 		&activities.ValidateMetadataParams{MetadataPath: expectedSIP.MetadataPath},
@@ -192,7 +182,9 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.AddPREMISEventParams{
 			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
-			Type:           "validateMetadata",
+			Type:           "validation",
+			Detail:         "name=\"Validate SIP metadata\"",
+			OutcomeDetail:  "Metadata validation successful",
 			Failures:       nil,
 		},
 	).Return(

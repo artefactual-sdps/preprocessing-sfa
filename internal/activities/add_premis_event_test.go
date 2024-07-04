@@ -15,41 +15,26 @@ import (
 func TestAddPREMISEvent(t *testing.T) {
 	t.Parallel()
 
-	// Normally populated files (for execution expected to work).
-	ContentFilesNormal := fs.NewDir(t, "",
-		fs.WithDir("metadata"),
-		fs.WithDir("content",
-			fs.WithDir("content",
-				fs.WithDir("d_0000001",
-					fs.WithFile("00000001.jp2", ""),
-					fs.WithFile("00000001_PREMIS.xml", ""),
-				),
-			),
-		),
-	)
+	// Normal execution with no failures (for execution expected to work).
+	PREMISFilePathNormalNoFailures := fs.NewFile(t, "premis.xml",
+		fs.WithContent(premis.EmptyXML),
+	).Path()
 
-	PREMISFilePathNormal := ContentFilesNormal.Join("metadata", "premis.xml")
+	// Normal execution with failures (for execution expected to work).
+	PREMISFilePathNormalWithFailures := fs.NewFile(t, "premis.xml",
+		fs.WithContent(premis.EmptyXML),
+	).Path()
 
-	// No files (for execution expected to work).
+	// Creation of PREMIS file in existing directory (for execution expected to work).
 	ContentNoFiles := fs.NewDir(t, "",
 		fs.WithDir("metadata"),
-		fs.WithDir("content",
-			fs.WithDir("content",
-				fs.WithDir("d_0000001"),
-			),
-		),
 	)
 
 	PREMISFilePathNoFiles := ContentNoFiles.Join("metadata", "premis.xml")
 
-	// Non-existent paths (for execution expected to fail).
+	// Creation of PREMIS file in non-existing directory (for execution expected to fail).
 	ContentNonExistent := fs.NewDir(t, "",
 		fs.WithDir("metadata"),
-		fs.WithDir("content",
-			fs.WithDir("content",
-				fs.WithDir("d_0000001"),
-			),
-		),
 	)
 
 	PREMISFilePathNonExistent := ContentNonExistent.Join("metadata", "premis.xml")
@@ -72,7 +57,7 @@ func TestAddPREMISEvent(t *testing.T) {
 		{
 			name: "Add PREMIS event for normal content with no failures",
 			params: activities.AddPREMISEventParams{
-				PREMISFilePath: PREMISFilePathNormal,
+				PREMISFilePath: PREMISFilePathNormalNoFailures,
 				Agent:          premis.AgentDefault(),
 				Type:           "someActivity",
 				Failures:       noFailures,
@@ -82,7 +67,7 @@ func TestAddPREMISEvent(t *testing.T) {
 		{
 			name: "Add PREMIS event for normal content with failures",
 			params: activities.AddPREMISEventParams{
-				PREMISFilePath: PREMISFilePathNormal,
+				PREMISFilePath: PREMISFilePathNormalWithFailures,
 				Agent:          premis.AgentDefault(),
 				Type:           "someActivity",
 				Failures:       failures,
