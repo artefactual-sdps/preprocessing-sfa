@@ -15,6 +15,72 @@ import (
 
 const pngContent = "\x89PNG\r\n\x1a\n\x00\x00\x00\x0DIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90\x77\x53\xDE\x00\x00\x00\x00IEND\xAE\x42\x60\x82"
 
+const premisValidFormatsContent = `<?xml version="1.0" encoding="UTF-8"?>
+<premis:premis xmlns:premis="http://www.loc.gov/premis/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/premis/v3 https://www.loc.gov/standards/premis/premis.xsd" version="3.0">
+  <premis:object xsi:type="premis:file">
+    <premis:objectIdentifier>
+      <premis:objectIdentifierType>uuid</premis:objectIdentifierType>
+      <premis:objectIdentifierValue>c74a85b7-919b-409e-8209-9c7ebe0e7945</premis:objectIdentifierValue>
+    </premis:objectIdentifier>
+    <premis:objectCharacteristics>
+      <premis:format>
+        <premis:formatDesignation>
+          <premis:formatName/>
+        </premis:formatDesignation>
+      </premis:format>
+    </premis:objectCharacteristics>
+    <premis:originalName>data/objects/dir/file1.txt</premis:originalName>
+  </premis:object>
+  <premis:object xsi:type="premis:file">
+    <premis:objectIdentifier>
+      <premis:objectIdentifierType>uuid</premis:objectIdentifierType>
+      <premis:objectIdentifierValue>a74a85b7-919b-409e-8209-9c7ebe0e7945</premis:objectIdentifierValue>
+    </premis:objectIdentifier>
+    <premis:objectCharacteristics>
+      <premis:format>
+        <premis:formatDesignation>
+          <premis:formatName/>
+        </premis:formatDesignation>
+      </premis:format>
+    </premis:objectCharacteristics>
+    <premis:originalName>data/objects/file2.txt</premis:originalName>
+  </premis:object>
+</premis:premis>
+`
+
+const premisInvalidFormatsContent = `<?xml version="1.0" encoding="UTF-8"?>
+<premis:premis xmlns:premis="http://www.loc.gov/premis/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/premis/v3 https://www.loc.gov/standards/premis/premis.xsd" version="3.0">
+  <premis:object xsi:type="premis:file">
+    <premis:objectIdentifier>
+      <premis:objectIdentifierType>uuid</premis:objectIdentifierType>
+      <premis:objectIdentifierValue>c74a85b7-919b-409e-8209-9c7ebe0e7945</premis:objectIdentifierValue>
+    </premis:objectIdentifier>
+    <premis:objectCharacteristics>
+      <premis:format>
+        <premis:formatDesignation>
+          <premis:formatName/>
+        </premis:formatDesignation>
+      </premis:format>
+    </premis:objectCharacteristics>
+    <premis:originalName>data/objects/dir/file1.png</premis:originalName>
+  </premis:object>
+  <premis:object xsi:type="premis:file">
+    <premis:objectIdentifier>
+      <premis:objectIdentifierType>uuid</premis:objectIdentifierType>
+      <premis:objectIdentifierValue>a74a85b7-919b-409e-8209-9c7ebe0e7945</premis:objectIdentifierValue>
+    </premis:objectIdentifier>
+    <premis:objectCharacteristics>
+      <premis:format>
+        <premis:formatDesignation>
+          <premis:formatName/>
+        </premis:formatDesignation>
+      </premis:format>
+    </premis:objectCharacteristics>
+    <premis:originalName>data/objects/file2.png</premis:originalName>
+  </premis:object>
+</premis:premis>
+`
+
 func TestValidateFileFormats(t *testing.T) {
 	t.Parallel()
 
@@ -42,7 +108,7 @@ func TestValidateFileFormats(t *testing.T) {
 					fs.WithFile("file2.txt", "content"),
 				).Path(),
 				PREMISFilePath: fs.NewFile(t, "premis.xml",
-					fs.WithContent(premis.EmptyXML),
+					fs.WithContent(premisValidFormatsContent),
 				).Path(),
 				Agent: premis.AgentDefault(),
 			},
@@ -53,7 +119,7 @@ func TestValidateFileFormats(t *testing.T) {
 			params: activities.ValidateFileFormatsParams{
 				ContentPath: invalidFormatsPath,
 				PREMISFilePath: fs.NewFile(t, "premis.xml",
-					fs.WithContent(premis.EmptyXML),
+					fs.WithContent(premisInvalidFormatsContent),
 				).Path(),
 				Agent: premis.AgentDefault(),
 			},

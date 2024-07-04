@@ -147,6 +147,11 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 
 	// Add PREMIS event noting validate structure result.
+	validateStructureOutcomeDetail := fmt.Sprintf(
+		"SIP structure identified: %s. SIP structure matches validation criteria.",
+		identifySIP.SIP.Type.String(),
+	)
+
 	var addPREMISEvent activities.AddPREMISEventResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
@@ -154,7 +159,9 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.AddPREMISEventParams{
 			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
-			Type:           "validateStructure",
+			Type:           "validation",
+			Detail:         "name=\"Validate SIP structure\"",
+			OutcomeDetail:  validateStructureOutcomeDetail,
 			Failures:       validateStructure.Failures,
 		},
 	).Get(ctx, &addPREMISEvent)
@@ -197,21 +204,6 @@ func (w *PreprocessingWorkflow) Execute(
 		)
 	}
 	result.addEvent(validateFileFormatsEvent)
-
-	// Add PREMIS event noting validate file formats result.
-	e = temporalsdk_workflow.ExecuteActivity(
-		withLocalActOpts(ctx),
-		activities.AddPREMISEventName,
-		&activities.AddPREMISEventParams{
-			PREMISFilePath: premisFilePath,
-			Agent:          premis.AgentDefault(),
-			Type:           "validateFileFormats",
-			Failures:       validateFileFormats.Failures,
-		},
-	).Get(ctx, &addPREMISEvent)
-	if e != nil {
-		return nil, e
-	}
 
 	// Validate metadata.
 	validateMetadataEvent := newEvent(ctx, "Validate SIP metadata")
@@ -257,7 +249,9 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.AddPREMISEventParams{
 			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
-			Type:           "validateMetadata",
+			Type:           "validation",
+			Detail:         "name=\"Validate SIP metadata\"",
+			OutcomeDetail:  "Metadata validation successful",
 			Failures:       validateMetadata.Failures,
 		},
 	).Get(ctx, &addPREMISEvent)

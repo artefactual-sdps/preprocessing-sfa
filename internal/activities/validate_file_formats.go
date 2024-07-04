@@ -99,13 +99,20 @@ func (a *ValidateFileFormats) Execute(
 
 		// Define PREMIS event.
 		eventSummary := premis.EventSummary{
-			Type:    "validateFileFormats",
-			Detail:  detail,
-			Outcome: outcome,
+			Type:          "validation",
+			Detail:        detail,
+			Outcome:       outcome,
+			OutcomeDetail: "Format allowed",
+		}
+
+		// Get subpath within content.
+		subpath, err := filepath.Rel(params.ContentPath, p)
+		if err != nil {
+			return err
 		}
 
 		// Append PREMIS event to XML and write results.
-		originalName := premis.OriginalNameForSubpath(p)
+		originalName := premis.OriginalNameForSubpath(subpath)
 
 		doc, err := premis.ParseOrInitialize(params.PREMISFilePath)
 		if err != nil {
