@@ -103,17 +103,17 @@ func TestTransformSIP(t *testing.T) {
 	}{
 		{
 			name:    "Transforms a Vecteur AIP",
-			params:  activities.TransformSIPParams{SIP: vecteurAIP},
+			params:  activities.TransformSIPParams{SIP: *vecteurAIP},
 			wantSIP: expectedVecteurAIP,
 		},
 		{
 			name:    "Transforms a Vecteur SIP",
-			params:  activities.TransformSIPParams{SIP: vecteurSIP},
+			params:  activities.TransformSIPParams{SIP: *vecteurSIP},
 			wantSIP: expectedVecteurSIP,
 		},
 		{
 			name:   "Fails with a SIP missing the metadata file",
-			params: activities.TransformSIPParams{SIP: missingMetadataSIP},
+			params: activities.TransformSIPParams{SIP: *missingMetadataSIP},
 			wantErr: fmt.Sprintf(
 				"rename %s/header/metadata.xml %s/metadata/metadata.xml: no such file or directory",
 				missingMetadataSIP.Path,
@@ -122,7 +122,7 @@ func TestTransformSIP(t *testing.T) {
 		},
 		{
 			name:   "Fails with a SIP missing the content directory",
-			params: activities.TransformSIPParams{SIP: missingContentSIP},
+			params: activities.TransformSIPParams{SIP: *missingContentSIP},
 			wantErr: fmt.Sprintf(
 				"lstat %s/content: no such file or directory",
 				missingContentSIP.Path,

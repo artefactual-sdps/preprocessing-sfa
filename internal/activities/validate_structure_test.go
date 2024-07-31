@@ -72,15 +72,15 @@ func TestValidateStructure(t *testing.T) {
 	}{
 		{
 			name:   "Validates a Vecteur AIP",
-			params: activities.ValidateStructureParams{SIP: vecteurAIP},
+			params: activities.ValidateStructureParams{SIP: *vecteurAIP},
 		},
 		{
 			name:   "Validates a Vecteur SIP",
-			params: activities.ValidateStructureParams{SIP: vecteurSIP},
+			params: activities.ValidateStructureParams{SIP: *vecteurSIP},
 		},
 		{
 			name:   "Returns failures when the SIP has unexpected components",
-			params: activities.ValidateStructureParams{SIP: unexpectedPiecesSIP},
+			params: activities.ValidateStructureParams{SIP: *unexpectedPiecesSIP},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
 					fmt.Sprintf("Unexpected directory: %q", unexpectedPiecesSIP.Path+"/unexpected"),
@@ -90,7 +90,7 @@ func TestValidateStructure(t *testing.T) {
 		},
 		{
 			name:   "Returns failures when the SIP is missing components",
-			params: activities.ValidateStructureParams{SIP: missingPiecesSIP},
+			params: activities.ValidateStructureParams{SIP: *missingPiecesSIP},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
 					"Content folder is missing",
