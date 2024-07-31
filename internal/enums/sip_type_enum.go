@@ -18,6 +18,8 @@ const (
 	SIPTypeVecteurAIP SIPType = "VecteurAIP"
 	// SIPTypeVecteurSIP is a SIPType of type VecteurSIP.
 	SIPTypeVecteurSIP SIPType = "VecteurSIP"
+	// SIPTypeBornDigital is a SIPType of type BornDigital.
+	SIPTypeBornDigital SIPType = "BornDigital"
 )
 
 var ErrInvalidSIPType = fmt.Errorf("not a valid SIPType, try [%s]", strings.Join(_SIPTypeNames, ", "))
@@ -25,6 +27,7 @@ var ErrInvalidSIPType = fmt.Errorf("not a valid SIPType, try [%s]", strings.Join
 var _SIPTypeNames = []string{
 	string(SIPTypeVecteurAIP),
 	string(SIPTypeVecteurSIP),
+	string(SIPTypeBornDigital),
 }
 
 // SIPTypeNames returns a list of possible string values of SIPType.
@@ -47,8 +50,9 @@ func (x SIPType) IsValid() bool {
 }
 
 var _SIPTypeValue = map[string]SIPType{
-	"VecteurAIP": SIPTypeVecteurAIP,
-	"VecteurSIP": SIPTypeVecteurSIP,
+	"VecteurAIP":  SIPTypeVecteurAIP,
+	"VecteurSIP":  SIPTypeVecteurSIP,
+	"BornDigital": SIPTypeBornDigital,
 }
 
 // ParseSIPType attempts to convert a string to a SIPType.

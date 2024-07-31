@@ -28,5 +28,5 @@ func (a *IdentifySIP) Execute(ctx context.Context, params *IdentifySIPParams) (*
 		return nil, fmt.Errorf("IdentifySIP: %v", err)
 	}
 
-	return &IdentifySIPResult{SIP: s}, nil
+	return &IdentifySIPResult{SIP: *s}, nil
 }

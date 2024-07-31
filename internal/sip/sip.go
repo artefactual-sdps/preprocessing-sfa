@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
 )
 
 type SIP struct {
@@ -17,30 +19,54 @@ type SIP struct {
 	TopLevelPaths []string
 }
 
-func NewSIP(path string) (SIP, error) {
+func NewSIP(path string) (*SIP, error) {
 	s := SIP{Path: path}
 
 	if _, err := os.Stat(s.Path); err != nil {
-		return s, fmt.Errorf("NewSIP: %v", err)
+		return nil, fmt.Errorf("NewSIP: %v", err)
 	}
 
-	additionalPath := filepath.Join(s.Path, "additional")
-	if _, err := os.Stat(additionalPath); err != nil {
-		if !os.IsNotExist(err) {
-			return s, fmt.Errorf("NewSIP: %v", err)
-		}
-		s.Type = enums.SIPTypeVecteurSIP
-		s.ContentPath = filepath.Join(s.Path, "content")
-		s.MetadataPath = filepath.Join(s.Path, "header", "metadata.xml")
-		s.XSDPath = filepath.Join(s.Path, "header", "xsd", "arelda.xsd")
-		s.TopLevelPaths = []string{s.ContentPath, filepath.Join(s.Path, "header")}
-	} else {
-		s.Type = enums.SIPTypeVecteurAIP
-		s.ContentPath = filepath.Join(s.Path, "content", "content")
-		s.MetadataPath = filepath.Join(s.Path, "additional", "UpdatedAreldaMetadata.xml")
-		s.XSDPath = filepath.Join(s.Path, "content", "header", "xsd", "arelda.xsd")
-		s.TopLevelPaths = []string{filepath.Join(s.Path, "content"), additionalPath}
+	if fsutil.FileExists(filepath.Join(s.Path, "additional")) {
+		return s.vecteurAIP(), nil
 	}
 
-	return s, nil
+	f, err := fsutil.FindFilename(s.Path, "Prozess_Digitalisierung_PREMIS.xml")
+	if err != nil {
+		return nil, fmt.Errorf("NewSIP: %v", err)
+	}
+	if len(f) > 0 && strings.Contains(s.Path, "Vecteur") {
+		return s.vecteurSIP(), nil
+	}
+
+	return s.bornDigital(), nil
+}
+
+func (s *SIP) vecteurAIP() *SIP {
+	s.Type = enums.SIPTypeVecteurAIP
+	s.ContentPath = filepath.Join(s.Path, "content", "content")
+	s.MetadataPath = filepath.Join(s.Path, "additional", "UpdatedAreldaMetadata.xml")
+	s.XSDPath = filepath.Join(s.Path, "content", "header", "xsd", "arelda.xsd")
+	s.TopLevelPaths = []string{
+		filepath.Join(s.Path, "content"),
+		filepath.Join(s.Path, "additional"),
+	}
+
+	return s
+}
+
+func (s *SIP) vecteurSIP() *SIP {
+	s.bornDigital()
+	s.Type = enums.SIPTypeVecteurSIP
+
+	return s
+}
+
+func (s *SIP) bornDigital() *SIP {
+	s.Type = enums.SIPTypeBornDigital
+	s.ContentPath = filepath.Join(s.Path, "content")
+	s.MetadataPath = filepath.Join(s.Path, "header", "metadata.xml")
+	s.XSDPath = filepath.Join(s.Path, "header", "xsd", "arelda.xsd")
+	s.TopLevelPaths = []string{s.ContentPath, filepath.Join(s.Path, "header")}
+
+	return s
 }
