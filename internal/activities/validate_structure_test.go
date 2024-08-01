@@ -25,6 +25,11 @@ func TestValidateStructure(t *testing.T) {
 				fs.WithDir("d_0000001"),
 			),
 			fs.WithDir("header",
+				fs.WithDir("old",
+					fs.WithDir("SIP",
+						fs.WithFile("metadata.xml", ""),
+					),
+				),
 				fs.WithDir("xsd",
 					fs.WithFile("arelda.xsd", ""),
 				),
@@ -64,6 +69,11 @@ func TestValidateStructure(t *testing.T) {
 	missingPiecesSIP, err := sip.NewSIP(fs.NewDir(t, "").Path())
 	assert.NilError(t, err)
 
+	missingPiecesAIP, err := sip.NewSIP(fs.NewDir(t, "",
+		fs.WithDir("additional"),
+	).Path())
+	assert.NilError(t, err)
+
 	tests := []struct {
 		name    string
 		params  activities.ValidateStructureParams
@@ -96,6 +106,18 @@ func TestValidateStructure(t *testing.T) {
 					"Content folder is missing",
 					"XSD folder is missing",
 					"metadata.xml is missing",
+				},
+			},
+		},
+		{
+			name:   "Returns failures when a digitized AIP is missing components",
+			params: activities.ValidateStructureParams{SIP: *missingPiecesAIP},
+			want: activities.ValidateStructureResult{
+				Failures: []string{
+					"Content folder is missing",
+					"XSD folder is missing",
+					"metadata.xml is missing",
+					"UpdatedAreldaMetadata.xml is missing",
 				},
 			},
 		},

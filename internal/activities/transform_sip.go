@@ -10,6 +10,7 @@ import (
 
 	"go.artefactual.dev/tools/fsutil"
 
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
@@ -28,25 +29,20 @@ func NewTransformSIP() *TransformSIP {
 }
 
 func (a *TransformSIP) Execute(ctx context.Context, params *TransformSIPParams) (*TransformSIPResult, error) {
-	// Create metadata directory.
+	// Create a metadata directory.
 	mdPath := filepath.Join(params.SIP.Path, "metadata")
 	if err := os.MkdirAll(mdPath, 0o700); err != nil {
 		return nil, err
 	}
 
-	// Move metadata file.
-	err := fsutil.Move(params.SIP.MetadataPath, filepath.Join(mdPath, filepath.Base(params.SIP.MetadataPath)))
-	if err != nil {
-		return nil, err
-	}
-
-	// Move Prozess_Digitalisierung_PREMIS.xml files.
-	err = filepath.WalkDir(params.SIP.ContentPath, func(p string, d fs.DirEntry, err error) error {
+	// Move Prozess_Digitalisierung_PREMIS.xml files to the metadata directory.
+	err := filepath.WalkDir(params.SIP.ContentPath, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if d.Name() == "Prozess_Digitalisierung_PREMIS.xml" {
-			// Adding the parent dir to the filename reduces the likelihood of filename conflicts.
+			// Adding the parent dir to the filename reduces the likelihood of
+			// filename conflicts.
 			dir := filepath.Base(filepath.Dir(p))
 			dest := filepath.Join(mdPath, fmt.Sprintf("Prozess_Digitalisierung_PREMIS_%s.xml", dir))
 			err := fsutil.Move(p, dest)
@@ -60,34 +56,54 @@ func (a *TransformSIP) Execute(ctx context.Context, params *TransformSIPParams) 
 		return nil, err
 	}
 
-	// Create objects directory.
-	objectsPath := filepath.Join(params.SIP.Path, "objects")
-	if err = os.MkdirAll(objectsPath, 0o700); err != nil {
-		return nil, err
-	}
-
-	// Move all entries from content to objects folder.
-	entries, err := os.ReadDir(params.SIP.ContentPath)
-	if err != nil {
-		return nil, err
-	}
-	for _, entry := range entries {
-		err := fsutil.Move(
-			filepath.Join(params.SIP.ContentPath, entry.Name()),
-			filepath.Join(objectsPath, entry.Name()),
+	// Move UpdatedAreldaMetatdata.xml to the metadata directory (Digitized AIP
+	// only)
+	if params.SIP.Type == enums.SIPTypeDigitizedAIP {
+		err = fsutil.Move(
+			params.SIP.UpdatedAreldaMDPath,
+			filepath.Join(mdPath, filepath.Base(params.SIP.UpdatedAreldaMDPath)),
 		)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	// Remove previous top-level directories.
+	// Create objects and [sip-name] sub-directories.
+	objectsPath := filepath.Join(params.SIP.Path, "objects", filepath.Base(params.SIP.Path))
+	if err = os.MkdirAll(objectsPath, 0o700); err != nil {
+		return nil, err
+	}
+
+	// Move the content directory into the objects directory.
+	err = fsutil.Move(params.SIP.ContentPath, filepath.Join(objectsPath, "content"))
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a header directory in the objects folder.
+	headerPath := filepath.Join(objectsPath, "header")
+	if err = os.MkdirAll(headerPath, 0o700); err != nil {
+		return nil, err
+	}
+
+	// Move the metadata.xml file into the header directory.
+	err = fsutil.Move(params.SIP.MetadataPath, filepath.Join(headerPath, filepath.Base(params.SIP.MetadataPath)))
+	if err != nil {
+		return nil, err
+	}
+
+	// Remove the old top-level directories.
 	for _, path := range params.SIP.TopLevelPaths {
 		if removeErr := os.RemoveAll(path); err != nil {
 			err = errors.Join(err, removeErr)
 		}
 	}
 	if err != nil {
+		return nil, err
+	}
+
+	// Set all the file modes.
+	if err = fsutil.SetFileModes(params.SIP.Path, 0o700, 0o600); err != nil {
 		return nil, err
 	}
 

@@ -11,12 +11,13 @@ import (
 )
 
 type SIP struct {
-	Type          enums.SIPType
-	Path          string
-	ContentPath   string
-	MetadataPath  string
-	XSDPath       string
-	TopLevelPaths []string
+	Type                enums.SIPType
+	Path                string
+	ContentPath         string
+	MetadataPath        string
+	UpdatedAreldaMDPath string
+	XSDPath             string
+	TopLevelPaths       []string
 }
 
 func NewSIP(path string) (*SIP, error) {
@@ -44,7 +45,8 @@ func NewSIP(path string) (*SIP, error) {
 func (s *SIP) digitizedAIP() *SIP {
 	s.Type = enums.SIPTypeDigitizedAIP
 	s.ContentPath = filepath.Join(s.Path, "content", "content")
-	s.MetadataPath = filepath.Join(s.Path, "additional", "UpdatedAreldaMetadata.xml")
+	s.MetadataPath = filepath.Join(s.Path, "content", "header", "old", "SIP", "metadata.xml")
+	s.UpdatedAreldaMDPath = filepath.Join(s.Path, "additional", "UpdatedAreldaMetadata.xml")
 	s.XSDPath = filepath.Join(s.Path, "content", "header", "xsd", "arelda.xsd")
 	s.TopLevelPaths = []string{
 		filepath.Join(s.Path, "content"),
