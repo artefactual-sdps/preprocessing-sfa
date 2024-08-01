@@ -2,6 +2,8 @@ package activities_test
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -15,6 +17,11 @@ import (
 
 func TestTransformSIP(t *testing.T) {
 	t.Parallel()
+
+	var (
+		dmode = os.FileMode(0o700)
+		fmode = os.FileMode(0o600)
+	)
 
 	digitizedAIPPath := fs.NewDir(t, "",
 		fs.WithDir("additional",
@@ -40,7 +47,8 @@ func TestTransformSIP(t *testing.T) {
 			),
 		),
 	).Path()
-	digitizedSIPPath := fs.NewDir(t, "",
+
+	digitizedSIPPath := fs.NewDir(t, "Test_Digitized_SIP",
 		fs.WithDir("content",
 			fs.WithDir("d_0000001",
 				fs.WithFile("00000001.jp2", ""),
@@ -62,31 +70,53 @@ func TestTransformSIP(t *testing.T) {
 	assert.NilError(t, err)
 
 	expectedDigitizedAIP := fs.Expected(t,
-		fs.WithDir("objects", fs.WithMode(0o700),
-			fs.WithDir("d_0000001",
-				fs.WithFile("00000001.jp2", ""),
-				fs.WithFile("00000001_PREMIS.xml", ""),
+		fs.WithDir("objects", fs.WithMode(dmode),
+			fs.WithDir(filepath.Base(digitizedAIPPath), fs.WithMode(dmode),
+				fs.WithDir("content", fs.WithMode(dmode),
+					fs.WithDir("d_0000001", fs.WithMode(dmode),
+						fs.WithFile("00000001.jp2", "", fs.WithMode(fmode)),
+						fs.WithFile("00000001_PREMIS.xml", "", fs.WithMode(fmode)),
+					),
+				),
+				fs.WithDir("header", fs.WithMode(dmode),
+					fs.WithFile("metadata.xml", "", fs.WithMode(fmode)),
+				),
 			),
 		),
-		fs.WithDir("metadata", fs.WithMode(0o700),
-			fs.WithFile("Prozess_Digitalisierung_PREMIS_d_0000001.xml", ""),
-			fs.WithFile("UpdatedAreldaMetadata.xml", ""),
-		),
-	)
-	expectedDigitizedSIP := fs.Expected(t,
-		fs.WithDir("objects", fs.WithMode(0o700),
-			fs.WithDir("d_0000001",
-				fs.WithFile("00000001.jp2", ""),
-				fs.WithFile("00000001_PREMIS.xml", ""),
-			),
-		),
-		fs.WithDir("metadata", fs.WithMode(0o700),
-			fs.WithFile("metadata.xml", ""),
-			fs.WithFile("Prozess_Digitalisierung_PREMIS_d_0000001.xml", ""),
+		fs.WithDir("metadata", fs.WithMode(dmode),
+			fs.WithFile("Prozess_Digitalisierung_PREMIS_d_0000001.xml", "", fs.WithMode(fmode)),
+			fs.WithFile("UpdatedAreldaMetadata.xml", "", fs.WithMode(fmode)),
 		),
 	)
 
-	missingMetadataSIP, err := sip.NewSIP(fs.NewDir(t, "").Path())
+	expectedDigitizedSIP := fs.Expected(t,
+		fs.WithDir("objects", fs.WithMode(dmode),
+			fs.WithDir(filepath.Base(digitizedSIPPath), fs.WithMode(dmode),
+				fs.WithDir("content", fs.WithMode(dmode),
+					fs.WithDir("d_0000001", fs.WithMode(dmode),
+						fs.WithFile("00000001.jp2", "", fs.WithMode(fmode)),
+						fs.WithFile("00000001_PREMIS.xml", "", fs.WithMode(fmode)),
+					),
+				),
+				fs.WithDir("header", fs.WithMode(dmode),
+					fs.WithFile("metadata.xml", "", fs.WithMode(fmode)),
+				),
+			),
+		),
+		fs.WithDir("metadata", fs.WithMode(dmode),
+			fs.WithFile("Prozess_Digitalisierung_PREMIS_d_0000001.xml", "", fs.WithMode(fmode)),
+		),
+	)
+
+	missingMetadataSIP, err := sip.NewSIP(fs.NewDir(t, "",
+		fs.WithDir("content",
+			fs.WithDir("d_0000001",
+				fs.WithFile("00000001.jp2", ""),
+				fs.WithFile("00000001_PREMIS.xml", ""),
+				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+			),
+		),
+	).Path())
 	assert.NilError(t, err)
 	missingContentSIP, err := sip.NewSIP(fs.NewDir(t, "",
 		fs.WithDir("header",
@@ -115,9 +145,10 @@ func TestTransformSIP(t *testing.T) {
 			name:   "Fails with a SIP missing the metadata file",
 			params: activities.TransformSIPParams{SIP: *missingMetadataSIP},
 			wantErr: fmt.Sprintf(
-				"rename %s/header/metadata.xml %s/metadata/metadata.xml: no such file or directory",
+				"rename %s/header/metadata.xml %s/objects/%s/header/metadata.xml: no such file or directory",
 				missingMetadataSIP.Path,
 				missingMetadataSIP.Path,
+				filepath.Base(missingMetadataSIP.Path),
 			),
 		},
 		{

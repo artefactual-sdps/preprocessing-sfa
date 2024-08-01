@@ -38,11 +38,12 @@ func TestNewSIP(t *testing.T) {
 			name: "Creates a new digitized AIP",
 			path: aipPath,
 			wantSIP: &sip.SIP{
-				Type:         enums.SIPTypeDigitizedAIP,
-				Path:         aipPath,
-				ContentPath:  filepath.Join(aipPath, "content", "content"),
-				MetadataPath: filepath.Join(aipPath, "additional", "UpdatedAreldaMetadata.xml"),
-				XSDPath:      filepath.Join(aipPath, "content", "header", "xsd", "arelda.xsd"),
+				Type:                enums.SIPTypeDigitizedAIP,
+				Path:                aipPath,
+				ContentPath:         filepath.Join(aipPath, "content", "content"),
+				MetadataPath:        filepath.Join(aipPath, "content", "header", "old", "SIP", "metadata.xml"),
+				UpdatedAreldaMDPath: filepath.Join(aipPath, "additional", "UpdatedAreldaMetadata.xml"),
+				XSDPath:             filepath.Join(aipPath, "content", "header", "xsd", "arelda.xsd"),
 				TopLevelPaths: []string{
 					filepath.Join(aipPath, "content"),
 					filepath.Join(aipPath, "additional"),

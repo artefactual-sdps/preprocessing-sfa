@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"slices"
 
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
@@ -47,6 +48,13 @@ func (a *ValidateStructure) Execute(
 	if !fsutil.FileExists(params.SIP.MetadataPath) {
 		failures = append(failures, fmt.Sprintf(
 			"%s is missing", filepath.Base(params.SIP.MetadataPath),
+		))
+	}
+
+	// Check existence of UpdatedAreldaMetadata file (digitized AIP only).
+	if params.SIP.Type == enums.SIPTypeDigitizedAIP && !fsutil.FileExists(params.SIP.UpdatedAreldaMDPath) {
+		failures = append(failures, fmt.Sprintf(
+			"%s is missing", filepath.Base(params.SIP.UpdatedAreldaMDPath),
 		))
 	}
 
