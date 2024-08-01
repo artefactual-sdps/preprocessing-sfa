@@ -30,7 +30,7 @@ func TestIdentifySIP(t *testing.T) {
 			params: activities.IdentifySIPParams{Path: path},
 			result: activities.IdentifySIPResult{
 				SIP: sip.SIP{
-					Type:          enums.SIPTypeVecteurAIP,
+					Type:          enums.SIPTypeDigitizedAIP,
 					Path:          path,
 					ContentPath:   filepath.Join(path, "content", "content"),
 					MetadataPath:  filepath.Join(path, "additional", "UpdatedAreldaMetadata.xml"),

@@ -27,7 +27,7 @@ func NewSIP(path string) (*SIP, error) {
 	}
 
 	if fsutil.FileExists(filepath.Join(s.Path, "additional")) {
-		return s.vecteurAIP(), nil
+		return s.digitizedAIP(), nil
 	}
 
 	f, err := fsutil.FindFilename(s.Path, "Prozess_Digitalisierung_PREMIS.xml")
@@ -35,14 +35,14 @@ func NewSIP(path string) (*SIP, error) {
 		return nil, fmt.Errorf("NewSIP: %v", err)
 	}
 	if len(f) > 0 && strings.Contains(s.Path, "Vecteur") {
-		return s.vecteurSIP(), nil
+		return s.digitizedSIP(), nil
 	}
 
 	return s.bornDigital(), nil
 }
 
-func (s *SIP) vecteurAIP() *SIP {
-	s.Type = enums.SIPTypeVecteurAIP
+func (s *SIP) digitizedAIP() *SIP {
+	s.Type = enums.SIPTypeDigitizedAIP
 	s.ContentPath = filepath.Join(s.Path, "content", "content")
 	s.MetadataPath = filepath.Join(s.Path, "additional", "UpdatedAreldaMetadata.xml")
 	s.XSDPath = filepath.Join(s.Path, "content", "header", "xsd", "arelda.xsd")
@@ -54,9 +54,9 @@ func (s *SIP) vecteurAIP() *SIP {
 	return s
 }
 
-func (s *SIP) vecteurSIP() *SIP {
+func (s *SIP) digitizedSIP() *SIP {
 	s.bornDigital()
-	s.Type = enums.SIPTypeVecteurSIP
+	s.Type = enums.SIPTypeDigitizedSIP
 
 	return s
 }

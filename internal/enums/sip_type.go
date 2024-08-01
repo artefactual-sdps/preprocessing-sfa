@@ -1,8 +1,8 @@
 package enums
 
 // ENUM(
-// VecteurAIP,
-// VecteurSIP,
+// DigitizedAIP,
+// DigitizedSIP,
 // BornDigital,
 // ).
 type SIPType string

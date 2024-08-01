@@ -38,7 +38,7 @@ func TestNewSIP(t *testing.T) {
 			name: "Creates a new digitized AIP",
 			path: aipPath,
 			wantSIP: &sip.SIP{
-				Type:         enums.SIPTypeVecteurAIP,
+				Type:         enums.SIPTypeDigitizedAIP,
 				Path:         aipPath,
 				ContentPath:  filepath.Join(aipPath, "content", "content"),
 				MetadataPath: filepath.Join(aipPath, "additional", "UpdatedAreldaMetadata.xml"),
@@ -53,7 +53,7 @@ func TestNewSIP(t *testing.T) {
 			name: "Creates a new digitized SIP",
 			path: sipPath,
 			wantSIP: &sip.SIP{
-				Type:         enums.SIPTypeVecteurSIP,
+				Type:         enums.SIPTypeDigitizedSIP,
 				Path:         sipPath,
 				ContentPath:  filepath.Join(sipPath, "content"),
 				MetadataPath: filepath.Join(sipPath, "header", "metadata.xml"),

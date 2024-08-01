@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	// SIPTypeVecteurAIP is a SIPType of type VecteurAIP.
-	SIPTypeVecteurAIP SIPType = "VecteurAIP"
-	// SIPTypeVecteurSIP is a SIPType of type VecteurSIP.
-	SIPTypeVecteurSIP SIPType = "VecteurSIP"
+	// SIPTypeDigitizedAIP is a SIPType of type DigitizedAIP.
+	SIPTypeDigitizedAIP SIPType = "DigitizedAIP"
+	// SIPTypeDigitizedSIP is a SIPType of type DigitizedSIP.
+	SIPTypeDigitizedSIP SIPType = "DigitizedSIP"
 	// SIPTypeBornDigital is a SIPType of type BornDigital.
 	SIPTypeBornDigital SIPType = "BornDigital"
 )
@@ -25,8 +25,8 @@ const (
 var ErrInvalidSIPType = fmt.Errorf("not a valid SIPType, try [%s]", strings.Join(_SIPTypeNames, ", "))
 
 var _SIPTypeNames = []string{
-	string(SIPTypeVecteurAIP),
-	string(SIPTypeVecteurSIP),
+	string(SIPTypeDigitizedAIP),
+	string(SIPTypeDigitizedSIP),
 	string(SIPTypeBornDigital),
 }
 
@@ -50,9 +50,9 @@ func (x SIPType) IsValid() bool {
 }
 
 var _SIPTypeValue = map[string]SIPType{
-	"VecteurAIP":  SIPTypeVecteurAIP,
-	"VecteurSIP":  SIPTypeVecteurSIP,
-	"BornDigital": SIPTypeBornDigital,
+	"DigitizedAIP": SIPTypeDigitizedAIP,
+	"DigitizedSIP": SIPTypeDigitizedSIP,
+	"BornDigital":  SIPTypeBornDigital,
 }
 
 // ParseSIPType attempts to convert a string to a SIPType.
