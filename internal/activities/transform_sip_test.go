@@ -16,7 +16,7 @@ import (
 func TestTransformSIP(t *testing.T) {
 	t.Parallel()
 
-	vecteurAIPPath := fs.NewDir(t, "",
+	digitizedAIPPath := fs.NewDir(t, "",
 		fs.WithDir("additional",
 			fs.WithFile("UpdatedAreldaMetadata.xml", ""),
 		),
@@ -40,7 +40,7 @@ func TestTransformSIP(t *testing.T) {
 			),
 		),
 	).Path()
-	vecteurSIPPath := fs.NewDir(t, "",
+	digitizedSIPPath := fs.NewDir(t, "",
 		fs.WithDir("content",
 			fs.WithDir("d_0000001",
 				fs.WithFile("00000001.jp2", ""),
@@ -56,12 +56,12 @@ func TestTransformSIP(t *testing.T) {
 		),
 	).Path()
 
-	vecteurAIP, err := sip.NewSIP(vecteurAIPPath)
+	digitizedAIP, err := sip.NewSIP(digitizedAIPPath)
 	assert.NilError(t, err)
-	vecteurSIP, err := sip.NewSIP(vecteurSIPPath)
+	digitizedSIP, err := sip.NewSIP(digitizedSIPPath)
 	assert.NilError(t, err)
 
-	expectedVecteurAIP := fs.Expected(t,
+	expectedDigitizedAIP := fs.Expected(t,
 		fs.WithDir("objects", fs.WithMode(0o700),
 			fs.WithDir("d_0000001",
 				fs.WithFile("00000001.jp2", ""),
@@ -73,7 +73,7 @@ func TestTransformSIP(t *testing.T) {
 			fs.WithFile("UpdatedAreldaMetadata.xml", ""),
 		),
 	)
-	expectedVecteurSIP := fs.Expected(t,
+	expectedDigitizedSIP := fs.Expected(t,
 		fs.WithDir("objects", fs.WithMode(0o700),
 			fs.WithDir("d_0000001",
 				fs.WithFile("00000001.jp2", ""),
@@ -102,14 +102,14 @@ func TestTransformSIP(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name:    "Transforms a Vecteur AIP",
-			params:  activities.TransformSIPParams{SIP: *vecteurAIP},
-			wantSIP: expectedVecteurAIP,
+			name:    "Transforms a digitized AIP",
+			params:  activities.TransformSIPParams{SIP: *digitizedAIP},
+			wantSIP: expectedDigitizedAIP,
 		},
 		{
-			name:    "Transforms a Vecteur SIP",
-			params:  activities.TransformSIPParams{SIP: *vecteurSIP},
-			wantSIP: expectedVecteurSIP,
+			name:    "Transforms a digitized SIP",
+			params:  activities.TransformSIPParams{SIP: *digitizedSIP},
+			wantSIP: expectedDigitizedSIP,
 		},
 		{
 			name:   "Fails with a SIP missing the metadata file",

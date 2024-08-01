@@ -16,7 +16,7 @@ import (
 func TestValidateStructure(t *testing.T) {
 	t.Parallel()
 
-	vecteurAIP, err := sip.NewSIP(fs.NewDir(t, "",
+	digitizedAIP, err := sip.NewSIP(fs.NewDir(t, "",
 		fs.WithDir("additional",
 			fs.WithFile("UpdatedAreldaMetadata.xml", ""),
 		),
@@ -33,7 +33,7 @@ func TestValidateStructure(t *testing.T) {
 	).Path())
 	assert.NilError(t, err)
 
-	vecteurSIP, err := sip.NewSIP(fs.NewDir(t, "",
+	digitizedSIP, err := sip.NewSIP(fs.NewDir(t, "",
 		fs.WithDir("content",
 			fs.WithDir("d_0000001"),
 		),
@@ -71,12 +71,12 @@ func TestValidateStructure(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name:   "Validates a Vecteur AIP",
-			params: activities.ValidateStructureParams{SIP: *vecteurAIP},
+			name:   "Validates a digitized AIP",
+			params: activities.ValidateStructureParams{SIP: *digitizedAIP},
 		},
 		{
-			name:   "Validates a Vecteur SIP",
-			params: activities.ValidateStructureParams{SIP: *vecteurSIP},
+			name:   "Validates a digitized SIP",
+			params: activities.ValidateStructureParams{SIP: *digitizedSIP},
 		},
 		{
 			name:   "Returns failures when the SIP has unexpected components",

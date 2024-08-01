@@ -97,9 +97,9 @@ func TestPreprocessingWorkflow(t *testing.T) {
 	suite.Run(t, new(PreprocessingTestSuite))
 }
 
-func vecteurAIP(path string) sip.SIP {
+func digitizedAIP(path string) sip.SIP {
 	return sip.SIP{
-		Type:         enums.SIPTypeVecteurAIP,
+		Type:         enums.SIPTypeDigitizedAIP,
 		Path:         path,
 		ContentPath:  filepath.Join(path, "content", "content"),
 		MetadataPath: filepath.Join(path, "additional", "UpdatedAreldaMetadata.xml"),
@@ -114,7 +114,7 @@ func vecteurAIP(path string) sip.SIP {
 func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 	s.SetupTest(config.Configuration{})
 	sipPath := filepath.Join(s.testDir, relPath)
-	expectedSIP := vecteurAIP(sipPath)
+	expectedSIP := digitizedAIP(sipPath)
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
@@ -152,7 +152,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 			Agent:          premis.AgentDefault(),
 			Type:           "validation",
 			Detail:         "name=\"Validate SIP structure\"",
-			OutcomeDetail:  "SIP structure identified: VecteurAIP. SIP structure matches validation criteria.",
+			OutcomeDetail:  "SIP structure identified: DigitizedAIP. SIP structure matches validation criteria.",
 			Failures:       nil,
 		},
 	).Return(
@@ -232,7 +232,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 			PreservationTasks: []eventlog.Event{
 				{
 					Name:        "Identify SIP structure",
-					Message:     "SIP structure identified: VecteurAIP",
+					Message:     "SIP structure identified: DigitizedAIP",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
@@ -323,7 +323,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowIdentifySIPFails() {
 func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 	s.SetupTest(config.Configuration{})
 	sipPath := filepath.Join(s.testDir, relPath)
-	expectedSIP := vecteurAIP(sipPath)
+	expectedSIP := digitizedAIP(sipPath)
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
@@ -390,7 +390,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 			PreservationTasks: []eventlog.Event{
 				{
 					Name:        "Identify SIP structure",
-					Message:     "SIP structure identified: VecteurAIP",
+					Message:     "SIP structure identified: DigitizedAIP",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
