@@ -248,7 +248,12 @@ func TestAppendPREMISEventAndLinkToObject(t *testing.T) {
 	outcome := premis.EventOutcomeForFailures(failures)
 
 	// Add PREMIS event to XML document.
-	eventSummary, err := premis.NewEventSummary("validation", "name=\"Validate SIP metadata\"", outcome, "Metadata validation successful")
+	eventSummary, err := premis.NewEventSummary(
+		"validation",
+		"name=\"Validate SIP metadata\"",
+		outcome,
+		"Metadata validation successful",
+	)
 	assert.NilError(t, err)
 
 	doc := etree.NewDocument()
@@ -261,7 +266,10 @@ func TestAppendPREMISEventAndLinkToObject(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Blank text for random/time elements.
-	err = blankElementText(doc, "/premis:premis/premis:object/premis:linkingEventIdentifier/premis:linkingEventIdentifierValue")
+	err = blankElementText(
+		doc,
+		"/premis:premis/premis:object/premis:linkingEventIdentifier/premis:linkingEventIdentifierValue",
+	)
 	assert.NilError(t, err)
 
 	err = blankElementText(doc, "/premis:premis/premis:event/premis:eventIdentifier/premis:eventIdentifierValue")

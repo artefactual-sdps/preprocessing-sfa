@@ -129,7 +129,7 @@ func eventFromEventSummaryAndAgent(eventSummary EventSummary, agent Agent) Event
 	}
 }
 
-func NewEventSummary(eventType string, detail string, outcome string, outcomeDetail string) (EventSummary, error) {
+func NewEventSummary(eventType, detail, outcome, outcomeDetail string) (EventSummary, error) {
 	return EventSummary{
 		Type:          eventType,
 		Detail:        detail,
@@ -157,7 +157,12 @@ func AppendObjectXML(doc *etree.Document, object Object) error {
 	return nil
 }
 
-func AppendEventAndLinkToObject(doc *etree.Document, eventSummary EventSummary, agent Agent, originalName string) error {
+func AppendEventAndLinkToObject(
+	doc *etree.Document,
+	eventSummary EventSummary,
+	agent Agent,
+	originalName string,
+) error {
 	PREMISEl, err := getRoot(doc)
 	if err != nil {
 		return err
