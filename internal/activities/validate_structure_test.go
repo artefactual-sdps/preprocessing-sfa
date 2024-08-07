@@ -16,7 +16,7 @@ import (
 func TestValidateStructure(t *testing.T) {
 	t.Parallel()
 
-	digitizedAIP, err := sip.NewSIP(fs.NewDir(t, "",
+	digitizedAIP, err := sip.New(fs.NewDir(t, "",
 		fs.WithDir("additional",
 			fs.WithFile("UpdatedAreldaMetadata.xml", ""),
 		),
@@ -38,7 +38,7 @@ func TestValidateStructure(t *testing.T) {
 	).Path())
 	assert.NilError(t, err)
 
-	digitizedSIP, err := sip.NewSIP(fs.NewDir(t, "",
+	digitizedSIP, err := sip.New(fs.NewDir(t, "",
 		fs.WithDir("content",
 			fs.WithDir("d_0000001"),
 		),
@@ -51,7 +51,7 @@ func TestValidateStructure(t *testing.T) {
 	).Path())
 	assert.NilError(t, err)
 
-	unexpectedPiecesSIP, err := sip.NewSIP(fs.NewDir(t, "",
+	unexpectedPiecesSIP, err := sip.New(fs.NewDir(t, "",
 		fs.WithDir("content",
 			fs.WithDir("d_0000001"),
 			fs.WithFile("unexpected.txt", ""),
@@ -66,10 +66,10 @@ func TestValidateStructure(t *testing.T) {
 	).Path())
 	assert.NilError(t, err)
 
-	missingPiecesSIP, err := sip.NewSIP(fs.NewDir(t, "").Path())
+	missingPiecesSIP, err := sip.New(fs.NewDir(t, "").Path())
 	assert.NilError(t, err)
 
-	missingPiecesAIP, err := sip.NewSIP(fs.NewDir(t, "",
+	missingPiecesAIP, err := sip.New(fs.NewDir(t, "",
 		fs.WithDir("additional"),
 	).Path())
 	assert.NilError(t, err)
@@ -82,15 +82,15 @@ func TestValidateStructure(t *testing.T) {
 	}{
 		{
 			name:   "Validates a digitized AIP",
-			params: activities.ValidateStructureParams{SIP: *digitizedAIP},
+			params: activities.ValidateStructureParams{SIP: digitizedAIP},
 		},
 		{
 			name:   "Validates a digitized SIP",
-			params: activities.ValidateStructureParams{SIP: *digitizedSIP},
+			params: activities.ValidateStructureParams{SIP: digitizedSIP},
 		},
 		{
 			name:   "Returns failures when the SIP has unexpected components",
-			params: activities.ValidateStructureParams{SIP: *unexpectedPiecesSIP},
+			params: activities.ValidateStructureParams{SIP: unexpectedPiecesSIP},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
 					fmt.Sprintf("Unexpected directory: %q", unexpectedPiecesSIP.Path+"/unexpected"),
@@ -100,7 +100,7 @@ func TestValidateStructure(t *testing.T) {
 		},
 		{
 			name:   "Returns failures when the SIP is missing components",
-			params: activities.ValidateStructureParams{SIP: *missingPiecesSIP},
+			params: activities.ValidateStructureParams{SIP: missingPiecesSIP},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
 					"Content folder is missing",
@@ -111,7 +111,7 @@ func TestValidateStructure(t *testing.T) {
 		},
 		{
 			name:   "Returns failures when a digitized AIP is missing components",
-			params: activities.ValidateStructureParams{SIP: *missingPiecesAIP},
+			params: activities.ValidateStructureParams{SIP: missingPiecesAIP},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
 					"Content folder is missing",

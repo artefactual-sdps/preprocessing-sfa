@@ -11,21 +11,41 @@ import (
 )
 
 type SIP struct {
-	Type                enums.SIPType
-	Path                string
-	ContentPath         string
-	MetadataPath        string
+	// Type is the type of SIP (DigitizedAIP, DigitizedSIP, BornDigital).
+	Type enums.SIPType
+
+	// Path is the filepath of the SIP directory.
+	Path string
+
+	// ContentPath is the filepath of the "content" directory.
+	ContentPath string
+
+	// ManifestPath is the filepath of the SIP manifest —
+	// "UpdatedAreldaMetadata.xml" for digitized AIPs, "metadata.xml" for all
+	// other SIP types.
+	ManifestPath string
+
+	// MetadataPath is the path of the "metadata.xml" file.
+	MetadataPath string
+
+	// UpdatedAreldaMDPath is the filepath of the "UpdatedAreldaMetadata.xml"
+	// file for digitized AIPs — it is empty for all other SIP types.
 	UpdatedAreldaMDPath string
-	XSDPath             string
-	TopLevelPaths       []string
+
+	// XSDPath is the filepath of the "arelda.xsd" file.
+	XSDPath string
+
+	// TopLevelPaths is a list of all the top level SIP directories.
+	TopLevelPaths []string
 }
 
-func NewSIP(path string) (*SIP, error) {
-	s := SIP{Path: path}
+func New(path string) (SIP, error) {
+	s := SIP{}
 
-	if _, err := os.Stat(s.Path); err != nil {
-		return nil, fmt.Errorf("NewSIP: %v", err)
+	if _, err := os.Stat(path); err != nil {
+		return s, fmt.Errorf("SIP: New: %v", err)
 	}
+	s.Path = path
 
 	if fsutil.FileExists(filepath.Join(s.Path, "additional")) {
 		return s.digitizedAIP(), nil
@@ -33,7 +53,7 @@ func NewSIP(path string) (*SIP, error) {
 
 	f, err := fsutil.FindFilename(s.Path, "Prozess_Digitalisierung_PREMIS.xml")
 	if err != nil {
-		return nil, fmt.Errorf("NewSIP: %v", err)
+		return s, fmt.Errorf("SIP: New: %v", err)
 	}
 	if len(f) > 0 && strings.Contains(s.Path, "Vecteur") {
 		return s.digitizedSIP(), nil
@@ -42,11 +62,12 @@ func NewSIP(path string) (*SIP, error) {
 	return s.bornDigital(), nil
 }
 
-func (s *SIP) digitizedAIP() *SIP {
+func (s SIP) digitizedAIP() SIP {
 	s.Type = enums.SIPTypeDigitizedAIP
 	s.ContentPath = filepath.Join(s.Path, "content", "content")
 	s.MetadataPath = filepath.Join(s.Path, "content", "header", "old", "SIP", "metadata.xml")
 	s.UpdatedAreldaMDPath = filepath.Join(s.Path, "additional", "UpdatedAreldaMetadata.xml")
+	s.ManifestPath = s.UpdatedAreldaMDPath
 	s.XSDPath = filepath.Join(s.Path, "content", "header", "xsd", "arelda.xsd")
 	s.TopLevelPaths = []string{
 		filepath.Join(s.Path, "content"),
@@ -56,19 +77,23 @@ func (s *SIP) digitizedAIP() *SIP {
 	return s
 }
 
-func (s *SIP) digitizedSIP() *SIP {
-	s.bornDigital()
+func (s SIP) digitizedSIP() SIP {
+	s = s.bornDigital()
 	s.Type = enums.SIPTypeDigitizedSIP
 
 	return s
 }
 
-func (s *SIP) bornDigital() *SIP {
+func (s SIP) bornDigital() SIP {
 	s.Type = enums.SIPTypeBornDigital
 	s.ContentPath = filepath.Join(s.Path, "content")
 	s.MetadataPath = filepath.Join(s.Path, "header", "metadata.xml")
+	s.ManifestPath = s.MetadataPath
 	s.XSDPath = filepath.Join(s.Path, "header", "xsd", "arelda.xsd")
-	s.TopLevelPaths = []string{s.ContentPath, filepath.Join(s.Path, "header")}
+	s.TopLevelPaths = []string{
+		filepath.Join(s.Path, "content"),
+		filepath.Join(s.Path, "header"),
+	}
 
 	return s
 }

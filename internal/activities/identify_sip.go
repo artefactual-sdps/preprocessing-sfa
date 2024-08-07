@@ -23,10 +23,10 @@ func NewIdentifySIP() *IdentifySIP {
 }
 
 func (a *IdentifySIP) Execute(ctx context.Context, params *IdentifySIPParams) (*IdentifySIPResult, error) {
-	s, err := sip.NewSIP(params.Path)
+	s, err := sip.New(params.Path)
 	if err != nil {
 		return nil, fmt.Errorf("IdentifySIP: %v", err)
 	}
 
-	return &IdentifySIPResult{SIP: *s}, nil
+	return &IdentifySIPResult{SIP: s}, nil
 }

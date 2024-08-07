@@ -64,9 +64,9 @@ func TestTransformSIP(t *testing.T) {
 		),
 	).Path()
 
-	digitizedAIP, err := sip.NewSIP(digitizedAIPPath)
+	digitizedAIP, err := sip.New(digitizedAIPPath)
 	assert.NilError(t, err)
-	digitizedSIP, err := sip.NewSIP(digitizedSIPPath)
+	digitizedSIP, err := sip.New(digitizedSIPPath)
 	assert.NilError(t, err)
 
 	expectedDigitizedAIP := fs.Expected(t,
@@ -108,7 +108,7 @@ func TestTransformSIP(t *testing.T) {
 		),
 	)
 
-	missingMetadataSIP, err := sip.NewSIP(fs.NewDir(t, "",
+	missingMetadataSIP, err := sip.New(fs.NewDir(t, "",
 		fs.WithDir("content",
 			fs.WithDir("d_0000001",
 				fs.WithFile("00000001.jp2", ""),
@@ -118,7 +118,7 @@ func TestTransformSIP(t *testing.T) {
 		),
 	).Path())
 	assert.NilError(t, err)
-	missingContentSIP, err := sip.NewSIP(fs.NewDir(t, "",
+	missingContentSIP, err := sip.New(fs.NewDir(t, "",
 		fs.WithDir("header",
 			fs.WithFile("metadata.xml", ""),
 		),
@@ -133,17 +133,17 @@ func TestTransformSIP(t *testing.T) {
 	}{
 		{
 			name:    "Transforms a digitized AIP",
-			params:  activities.TransformSIPParams{SIP: *digitizedAIP},
+			params:  activities.TransformSIPParams{SIP: digitizedAIP},
 			wantSIP: expectedDigitizedAIP,
 		},
 		{
 			name:    "Transforms a digitized SIP",
-			params:  activities.TransformSIPParams{SIP: *digitizedSIP},
+			params:  activities.TransformSIPParams{SIP: digitizedSIP},
 			wantSIP: expectedDigitizedSIP,
 		},
 		{
 			name:   "Fails with a SIP missing the metadata file",
-			params: activities.TransformSIPParams{SIP: *missingMetadataSIP},
+			params: activities.TransformSIPParams{SIP: missingMetadataSIP},
 			wantErr: fmt.Sprintf(
 				"rename %s/header/metadata.xml %s/objects/%s/header/metadata.xml: no such file or directory",
 				missingMetadataSIP.Path,
@@ -153,7 +153,7 @@ func TestTransformSIP(t *testing.T) {
 		},
 		{
 			name:   "Fails with a SIP missing the content directory",
-			params: activities.TransformSIPParams{SIP: *missingContentSIP},
+			params: activities.TransformSIPParams{SIP: missingContentSIP},
 			wantErr: fmt.Sprintf(
 				"lstat %s/content: no such file or directory",
 				missingContentSIP.Path,

@@ -68,6 +68,10 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateStructureName},
 	)
 	w.RegisterActivityWithOptions(
+		activities.NewVerifyManifest().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.VerifyManifestName},
+	)
+	w.RegisterActivityWithOptions(
 		activities.NewValidateFileFormats().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
 	)

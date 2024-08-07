@@ -33,6 +33,7 @@ func TestIdentifySIP(t *testing.T) {
 					Type:                enums.SIPTypeDigitizedAIP,
 					Path:                path,
 					ContentPath:         filepath.Join(path, "content", "content"),
+					ManifestPath:        filepath.Join(path, "additional", "UpdatedAreldaMetadata.xml"),
 					MetadataPath:        filepath.Join(path, "content", "header", "old", "SIP", "metadata.xml"),
 					UpdatedAreldaMDPath: filepath.Join(path, "additional", "UpdatedAreldaMetadata.xml"),
 					XSDPath:             filepath.Join(path, "content", "header", "xsd", "arelda.xsd"),
@@ -42,7 +43,7 @@ func TestIdentifySIP(t *testing.T) {
 		},
 		{
 			name:    "Fails to identify a non existing path",
-			wantErr: "IdentifySIP: NewSIP: stat : no such file or directory",
+			wantErr: "IdentifySIP: SIP: New: stat : no such file or directory",
 		},
 	}
 	for _, tt := range tests {

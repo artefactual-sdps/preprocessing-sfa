@@ -169,6 +169,40 @@ func (w *PreprocessingWorkflow) Execute(
 		return nil, e
 	}
 
+	// Verify that package contents match the manifest.
+	verifyManifestEvent := newEvent(ctx, "Verify SIP manifest")
+	var verifyManifest activities.VerifyManifestResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.VerifyManifestName,
+		&activities.VerifyManifestParams{SIP: identifySIP.SIP},
+	).Get(ctx, &verifyManifest)
+	if e != nil {
+		result.addEvent(verifyManifestEvent.Complete(
+			ctx,
+			enums.EventOutcomeSystemFailure,
+			"System error: manifest verification has failed",
+		))
+		return systemError(logger, "Verify manifest", &result, e), nil
+	}
+
+	if verifyManifest.Failures != nil {
+		verifyManifestEvent.Complete(
+			ctx,
+			enums.EventOutcomeValidationFailure,
+			"Content error: SIP contents do not match %q:\n%s",
+			filepath.Base(identifySIP.SIP.ManifestPath),
+			strings.Join(verifyManifest.Failures, "\n"),
+		)
+	} else {
+		verifyManifestEvent.Complete(
+			ctx,
+			enums.EventOutcomeSuccess,
+			"SIP contents match manifest",
+		)
+	}
+	result.addEvent(verifyManifestEvent)
+
 	// Validate file formats.
 	validateFileFormatsEvent := newEvent(ctx, "Validate SIP file formats")
 	var validateFileFormats activities.ValidateFileFormatsResult
@@ -237,10 +271,10 @@ func (w *PreprocessingWorkflow) Execute(
 	result.addEvent(validateMetadataEvent)
 
 	// Stop here if the SIP content isn't valid.
-	if !validateStructureEvent.IsSuccess() ||
-		!validateFileFormatsEvent.IsSuccess() ||
-		!validateMetadataEvent.IsSuccess() {
-		return contentError(&result), nil
+	for _, t := range result.PreservationTasks {
+		if !t.IsSuccess() {
+			return contentError(&result), nil
+		}
 	}
 
 	// Add PREMIS event noting validate metadata result.
