@@ -178,7 +178,8 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.ValidateFileFormatsParams{
 			ContentPath:    identifySIP.SIP.ContentPath,
 			PREMISFilePath: premisFilePath,
-			Agent:          premis.AgentDefault()},
+			Agent:          premis.AgentDefault(),
+		},
 	).Get(ctx, &validateFileFormats)
 	if e != nil {
 		result.addEvent(validateFileFormatsEvent.Complete(
