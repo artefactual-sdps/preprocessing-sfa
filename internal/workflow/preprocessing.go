@@ -246,7 +246,7 @@ func (w *PreprocessingWorkflow) Execute(
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
 		activities.ValidateMetadataName,
-		&activities.ValidateMetadataParams{MetadataPath: identifySIP.SIP.MetadataPath},
+		&activities.ValidateMetadataParams{SIP: identifySIP.SIP},
 	).Get(ctx, &validateMetadata)
 	if e != nil {
 		validateMetadataEvent.Complete(

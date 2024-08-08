@@ -277,7 +277,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 	s.env.OnActivity(
 		activities.ValidateMetadataName,
 		sessionCtx,
-		&activities.ValidateMetadataParams{MetadataPath: expectedSIP.MetadataPath},
+		&activities.ValidateMetadataParams{SIP: expectedSIP},
 	).Return(
 		&activities.ValidateMetadataResult{}, nil,
 	)
@@ -492,7 +492,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 	s.env.OnActivity(
 		activities.ValidateMetadataName,
 		sessionCtx,
-		&activities.ValidateMetadataParams{MetadataPath: expectedSIP.MetadataPath},
+		&activities.ValidateMetadataParams{SIP: expectedSIP},
 	).Return(
 		&activities.ValidateMetadataResult{Failures: []string{
 			`fake/path/to/sip/additional/UpdatedAreldaMetadata.xml does not match expected metadata requirements`,

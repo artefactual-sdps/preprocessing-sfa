@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"path/filepath"
+
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 const ValidateMetadataName = "validate-metadata"
 
 type ValidateMetadataParams struct {
-	MetadataPath string
+	SIP sip.SIP
 }
 
 type ValidateMetadataResult struct {
@@ -27,16 +30,20 @@ func (a *ValidateMetadata) Execute(
 	params *ValidateMetadataParams,
 ) (*ValidateMetadataResult, error) {
 	var failures []string
-	e, err := exec.Command("python3", "xsdval.py", params.MetadataPath, "arelda.xsd").CombinedOutput() // #nosec G204
+	c := exec.Command("python3", "xsdval.py", params.SIP.ManifestPath, "arelda.xsd") // #nosec G204
+	out, err := c.CombinedOutput()
 	if err != nil {
 		return nil, err
 	}
 
-	if string(e) != "Is metadata.xml valid:  True\n" {
-		failures = append(failures, fmt.Sprintf(
-			"%s does not match expected metadata requirements",
-			params.MetadataPath,
-		))
+	// The xsdval.py script always outputs the name "metadata.xml" in the
+	// following string regardless of the actual manifest filename.
+	if string(out) != "Is metadata.xml valid:  True\n" {
+		p, err := filepath.Rel(params.SIP.Path, params.SIP.ManifestPath)
+		if err != nil {
+			p = params.SIP.ManifestPath
+		}
+		failures = append(failures, fmt.Sprintf("%q does not match expected metadata requirements", p))
 	}
 	return &ValidateMetadataResult{Failures: failures}, nil
 }
