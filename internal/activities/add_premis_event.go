@@ -41,7 +41,7 @@ func (md *AddPREMISEventActivity) Execute(
 		return nil, err
 	}
 
-	err = premis.AppendEventXML(doc, eventSummary, params.Agent)
+	err = premis.AppendEventXMLForEachObject(doc, eventSummary, params.Agent)
 	if err != nil {
 		return nil, err
 	}

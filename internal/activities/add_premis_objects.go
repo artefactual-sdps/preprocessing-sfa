@@ -50,7 +50,7 @@ func (md *AddPREMISObjectsActivity) Execute(
 		object := premis.Object{
 			IdType:       "UUID",
 			IdValue:      uuid.New().String(),
-			OriginalName: premis.OriginalNameForSubpath(subpath),
+			OriginalName: premis.OriginalNameForSubpath(params.ContentPath, subpath),
 		}
 
 		err = premis.AppendObjectXML(doc, object)
