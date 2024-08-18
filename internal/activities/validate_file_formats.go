@@ -112,14 +112,14 @@ func (a *ValidateFileFormats) Execute(
 		}
 
 		// Append PREMIS event to XML and write results.
-		originalName := premis.OriginalNameForSubpath(subpath)
+		originalName := premis.OriginalNameForSubpath(params.ContentPath, subpath)
 
 		doc, err := premis.ParseOrInitialize(params.PREMISFilePath)
 		if err != nil {
 			return err
 		}
 
-		err = premis.AppendEventAndLinkToObject(doc, eventSummary, params.Agent, originalName)
+		err = premis.AppendEventXMLForSingleObject(doc, eventSummary, params.Agent, originalName)
 		if err != nil {
 			return err
 		}

@@ -157,7 +157,7 @@ func AppendObjectXML(doc *etree.Document, object Object) error {
 	return nil
 }
 
-func AppendEventAndLinkToObject(
+func AppendEventXMLForSingleObject(
 	doc *etree.Document,
 	eventSummary EventSummary,
 	agent Agent,
@@ -168,42 +168,46 @@ func AppendEventAndLinkToObject(
 		return err
 	}
 
-	// Define PREMIS event.
-	event := eventFromEventSummaryAndAgent(eventSummary, agent)
-
-	// Add PREMIS event element and, if necessary, agent element.
-	addEventElement(PREMISEl, event)
-
+	// Attempt to get object using originalName.
 	objectEl, err := FindObjectByOriginalName(PREMISEl, originalName)
 	if err != nil {
 		return err
 	}
 
+	// Add event for object, if found.
 	if objectEl != nil {
-		LinkEventToObject(objectEl, event)
+		appendEventXMLForObjects(PREMISEl, eventSummary, agent, []*etree.Element{objectEl})
 	} else {
-		return fmt.Errorf("append event and link to object: object '%s' not found", originalName)
+		return fmt.Errorf("append event and link to object: object '%s' not found as premis originalname", originalName)
 	}
 
 	return nil
 }
 
-func AppendEventXML(doc *etree.Document, eventSummary EventSummary, agent Agent) error {
+func AppendEventXMLForEachObject(doc *etree.Document, eventSummary EventSummary, agent Agent) error {
 	PREMISEl, err := getRoot(doc)
 	if err != nil {
 		return err
 	}
 
-	// Define PREMIS event.
-	event := eventFromEventSummaryAndAgent(eventSummary, agent)
-
-	// Add PREMIS event element and, if necessary, agent element.
-	addEventElement(PREMISEl, event)
-
-	// Add a link to this event to every PREMIS object.
-	linkEventToObjects(PREMISEl, event)
+	// Add events for each existing object.
+	objectEls := PREMISEl.FindElements("//premis:object")
+	appendEventXMLForObjects(PREMISEl, eventSummary, agent, objectEls)
 
 	return nil
+}
+
+func appendEventXMLForObjects(PREMISEl *etree.Element, eventSummary EventSummary, agent Agent, objectEls []*etree.Element) {
+	for _, objectEl := range objectEls {
+		// Define PREMIS event.
+		event := eventFromEventSummaryAndAgent(eventSummary, agent)
+
+		// Add PREMIS event element and, if necessary, agent element.
+		addEventElement(PREMISEl, event)
+
+		// Link event to object
+		LinkEventToObject(objectEl, event)
+	}
 }
 
 func AppendAgentXML(doc *etree.Document, agent Agent) error {
@@ -284,14 +288,6 @@ func addEventElement(PREMISEl *etree.Element, event Event) {
 	}
 
 	addEventAgentIdentifierElement(eventEl, event)
-}
-
-func linkEventToObjects(PREMISEl *etree.Element, eventFull Event) {
-	objectEls := PREMISEl.FindElements("//premis:object")
-
-	for _, objectEl := range objectEls {
-		LinkEventToObject(objectEl, eventFull)
-	}
 }
 
 func LinkEventToObject(objectEl *etree.Element, eventFull Event) {
@@ -418,14 +414,16 @@ func FilesWithinDirectory(contentPath string) ([]string, error) {
 	return subpaths, nil
 }
 
-func OriginalNameForSubpath(subpath string) string {
+func OriginalNameForSubpath(contentPath string, subpath string) string {
+	transferDirName := filepath.Base(filepath.Dir(filepath.Dir(contentPath)))
+
 	if filepath.Base(subpath) == "Prozess_Digitalisierung_PREMIS.xml" {
 		// This file later gets renamed in TransformSIP.
 		parentDirName := filepath.Base(filepath.Dir(subpath))
 		filename := fmt.Sprintf("Prozess_Digitalisierung_PREMIS_%s.xml", parentDirName)
 		return filepath.Join("data", "metadata", filename)
 	} else {
-		return filepath.Join("data", "objects", subpath)
+		return filepath.Join("data", "objects", transferDirName, "content", subpath)
 	}
 }
 

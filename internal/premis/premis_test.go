@@ -25,31 +25,8 @@ const premisObjectAddContent = `<?xml version="1.0" encoding="UTF-8"?>
         </premis:formatDesignation>
       </premis:format>
     </premis:objectCharacteristics>
-    <premis:originalName>data/objects/cat.jpg</premis:originalName>
+    <premis:originalName>data/objects/test_transfer/content/cat.jpg</premis:originalName>
   </premis:object>
-</premis:premis>
-`
-
-const premisEventAddContent = `<?xml version="1.0" encoding="UTF-8"?>
-<premis:premis xmlns:premis="http://www.loc.gov/premis/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/premis/v3 https://www.loc.gov/standards/premis/premis.xsd" version="3.0">
-  <premis:event>
-    <premis:eventIdentifier>
-      <premis:eventIdentifierType>UUID</premis:eventIdentifierType>
-      <premis:eventIdentifierValue/>
-    </premis:eventIdentifier>
-    <premis:eventType>validation</premis:eventType>
-    <premis:eventDateTime/>
-    <premis:eventDetailInformation>
-      <premis:eventDetail>event detail</premis:eventDetail>
-    </premis:eventDetailInformation>
-    <premis:eventOutcomeInformation>
-      <premis:eventOutcome>valid</premis:eventOutcome>
-    </premis:eventOutcomeInformation>
-    <premis:linkingAgentIdentifier>
-      <premis:linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">url</premis:linkingAgentIdentifierType>
-      <premis:linkingAgentIdentifierValue>https://github.com/artefactual-sdps/preprocessing-sfa</premis:linkingAgentIdentifierValue>
-    </premis:linkingAgentIdentifier>
-  </premis:event>
 </premis:premis>
 `
 
@@ -67,7 +44,7 @@ const premisObjectAndEventAddContent = `<?xml version="1.0" encoding="UTF-8"?>
         </premis:formatDesignation>
       </premis:format>
     </premis:objectCharacteristics>
-    <premis:originalName>data/objects/cat.jpg</premis:originalName>
+    <premis:originalName>data/objects/test_transfer/content/cat.jpg</premis:originalName>
     <premis:linkingEventIdentifier>
       <premis:linkingEventIdentifierType>UUID</premis:linkingEventIdentifierType>
       <premis:linkingEventIdentifierValue/>
@@ -113,7 +90,7 @@ const premisAgentAddContent = `<?xml version="1.0" encoding="UTF-8"?>
 func TestAppendPREMISObjectXML(t *testing.T) {
 	// Test with PREMIS object.
 	uuid := "c74a85b7-919b-409e-8209-9c7ebe0e7945"
-	originalName := "data/objects/cat.jpg"
+	originalName := "data/objects/test_transfer/content/cat.jpg"
 
 	doc, err := premis.NewDoc()
 	assert.NilError(t, err)
@@ -135,14 +112,26 @@ func TestAppendPREMISObjectXML(t *testing.T) {
 }
 
 func TestAppendPREMISEventXML(t *testing.T) {
-	// Test with PREMIS event.
+	// Add test PREMIS object.
+	uuid := "c74a85b7-919b-409e-8209-9c7ebe0e7945"
+	originalName := "data/objects/test_transfer/content/cat.jpg"
+
 	doc, err := premis.NewDoc()
 	assert.NilError(t, err)
 
-	err = premis.AppendEventXML(doc, premis.EventSummary{
-		Type:    "validation",
-		Detail:  "event detail",
-		Outcome: "valid",
+	err = premis.AppendObjectXML(doc, premis.Object{
+		IdType:       "uuid",
+		IdValue:      uuid,
+		OriginalName: originalName,
+	})
+	assert.NilError(t, err)
+
+	// Test adding PREMIS event.
+	err = premis.AppendEventXMLForEachObject(doc, premis.EventSummary{
+		Type:          "validation",
+		Detail:        "name=\"Validate SIP metadata\"",
+		Outcome:       "invalid",
+		OutcomeDetail: "Metadata validation successful",
 	}, premis.AgentDefault())
 	assert.NilError(t, err)
 
@@ -152,7 +141,13 @@ func TestAppendPREMISEventXML(t *testing.T) {
 	assert.Assert(t, len(idValueEl.Text()) == 36)
 	idValueEl.SetText("")
 
-	// Blank the event datetime.
+	// Blank text for other random/time elements.
+	err = blankElementText(
+		doc,
+		"/premis:premis/premis:object/premis:linkingEventIdentifier/premis:linkingEventIdentifierValue",
+	)
+	assert.NilError(t, err)
+
 	err = blankElementText(doc, "/premis:premis/premis:event/premis:eventDateTime")
 	assert.NilError(t, err)
 
@@ -162,7 +157,7 @@ func TestAppendPREMISEventXML(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Compare XML to constant.
-	assert.Equal(t, xml, premisEventAddContent)
+	assert.Equal(t, xml, premisObjectAndEventAddContent)
 }
 
 func TestAppendPREMISAgentXML(t *testing.T) {
@@ -226,14 +221,16 @@ func TestFilesWithinDirectory(t *testing.T) {
 func TestOriginalNameForSubpath(t *testing.T) {
 	// Check for correct adjustment of file paths in PREMIS.
 	originalName := premis.OriginalNameForSubpath(
-		"content/content/d_0000001/00000001.jp2",
+		"test_transfer/content/content",
+		"d_0000001/00000001.jp2",
 	)
 
 	assert.Equal(t, originalName,
-		"data/objects/content/content/d_0000001/00000001.jp2")
+		"data/objects/test_transfer/content/d_0000001/00000001.jp2")
 
 	// Check for special handling of this specific file's path in PREMIS.
 	originalName = premis.OriginalNameForSubpath(
+		"test_transfer/content/content",
 		"content/content/d_0000001/Prozess_Digitalisierung_PREMIS.xml",
 	)
 
@@ -260,9 +257,9 @@ func TestAppendPREMISEventAndLinkToObject(t *testing.T) {
 	err = doc.ReadFromString(premisObjectAddContent)
 	assert.NilError(t, err)
 
-	originalName := premis.OriginalNameForSubpath("cat.jpg")
+	originalName := premis.OriginalNameForSubpath("test_transfer/content/content", "cat.jpg")
 
-	err = premis.AppendEventAndLinkToObject(doc, eventSummary, premis.AgentDefault(), originalName)
+	err = premis.AppendEventXMLForSingleObject(doc, eventSummary, premis.AgentDefault(), originalName)
 	assert.NilError(t, err)
 
 	// Blank text for random/time elements.

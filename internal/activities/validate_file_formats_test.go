@@ -2,6 +2,7 @@ package activities_test
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -29,7 +30,7 @@ const premisValidFormatsContent = `<?xml version="1.0" encoding="UTF-8"?>
         </premis:formatDesignation>
       </premis:format>
     </premis:objectCharacteristics>
-    <premis:originalName>data/objects/dir/file1.txt</premis:originalName>
+    <premis:originalName>data/objects/dir/content/file1.txt</premis:originalName>
   </premis:object>
   <premis:object xsi:type="premis:file">
     <premis:objectIdentifier>
@@ -43,7 +44,7 @@ const premisValidFormatsContent = `<?xml version="1.0" encoding="UTF-8"?>
         </premis:formatDesignation>
       </premis:format>
     </premis:objectCharacteristics>
-    <premis:originalName>data/objects/file2.txt</premis:originalName>
+    <premis:originalName>data/objects/dir/content/dir/file2.txt</premis:originalName>
   </premis:object>
 </premis:premis>
 `
@@ -62,7 +63,7 @@ const premisInvalidFormatsContent = `<?xml version="1.0" encoding="UTF-8"?>
         </premis:formatDesignation>
       </premis:format>
     </premis:objectCharacteristics>
-    <premis:originalName>data/objects/dir/file1.png</premis:originalName>
+    <premis:originalName>data/objects/test_transfer/content/dir/file1.png</premis:originalName>
   </premis:object>
   <premis:object xsi:type="premis:file">
     <premis:objectIdentifier>
@@ -76,7 +77,7 @@ const premisInvalidFormatsContent = `<?xml version="1.0" encoding="UTF-8"?>
         </premis:formatDesignation>
       </premis:format>
     </premis:objectCharacteristics>
-    <premis:originalName>data/objects/file2.png</premis:originalName>
+    <premis:originalName>data/objects/test_transfer/content/file2.png</premis:originalName>
   </premis:object>
 </premis:premis>
 `
@@ -84,12 +85,37 @@ const premisInvalidFormatsContent = `<?xml version="1.0" encoding="UTF-8"?>
 func TestValidateFileFormats(t *testing.T) {
 	t.Parallel()
 
-	invalidFormatsPath := fs.NewDir(t, "",
-		fs.WithDir("dir",
-			fs.WithFile("file1.png", pngContent),
+	invalidFormatsTransferPath := fs.NewDir(t, "",
+		fs.WithDir("test_transfer",
+			fs.WithDir("content",
+				fs.WithDir("content",
+					fs.WithFile("file2.png", pngContent),
+					fs.WithDir("dir",
+						fs.WithFile("file1.png", pngContent),
+					),
+				),
+			),
 		),
-		fs.WithFile("file2.png", pngContent),
 	).Path()
+
+	invalidFormatsContentPath := filepath.Join(invalidFormatsTransferPath, "test_transfer", "content", "content")
+
+	validFormatsTransferPath := fs.NewDir(t, "",
+		fs.WithDir("data",
+			fs.WithDir("dir",
+				fs.WithDir("content",
+					fs.WithDir("content",
+						fs.WithFile("file1.txt", "content"),
+						fs.WithDir("dir",
+							fs.WithFile("file2.txt", "content"),
+						),
+					),
+				),
+			),
+		),
+	).Path()
+
+	validFormatsContentPath := filepath.Join(validFormatsTransferPath, "data", "dir", "content", "content")
 
 	tests := []struct {
 		name                 string
@@ -101,12 +127,7 @@ func TestValidateFileFormats(t *testing.T) {
 		{
 			name: "Successes with valid formats",
 			params: activities.ValidateFileFormatsParams{
-				ContentPath: fs.NewDir(t, "",
-					fs.WithDir("dir",
-						fs.WithFile("file1.txt", "content"),
-					),
-					fs.WithFile("file2.txt", "content"),
-				).Path(),
+				ContentPath: validFormatsContentPath,
 				PREMISFilePath: fs.NewFile(t, "premis.xml",
 					fs.WithContent(premisValidFormatsContent),
 				).Path(),
@@ -117,7 +138,7 @@ func TestValidateFileFormats(t *testing.T) {
 		{
 			name: "Fails with invalid formats",
 			params: activities.ValidateFileFormatsParams{
-				ContentPath: invalidFormatsPath,
+				ContentPath: invalidFormatsContentPath,
 				PREMISFilePath: fs.NewFile(t, "premis.xml",
 					fs.WithContent(premisInvalidFormatsContent),
 				).Path(),
@@ -128,12 +149,12 @@ func TestValidateFileFormats(t *testing.T) {
 					fmt.Sprintf(
 						`file format %q not allowed: "%s/dir/file1.png"`,
 						"fmt/11",
-						invalidFormatsPath,
+						invalidFormatsContentPath,
 					),
 					fmt.Sprintf(
 						`file format %q not allowed: "%s/file2.png"`,
 						"fmt/11",
-						invalidFormatsPath,
+						invalidFormatsContentPath,
 					),
 				},
 			},
