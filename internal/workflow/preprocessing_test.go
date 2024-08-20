@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagit"
+	"github.com/artefactual-sdps/temporal-activities/xml"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -149,6 +150,10 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 	s.env.RegisterActivityWithOptions(
 		activities.NewAddPREMISAgent().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISAgentName},
+	)
+	s.env.RegisterActivityWithOptions(
+		xml.NewXSDValidateActivity().Execute,
+		temporalsdk_activity.RegisterOptions{Name: xml.XSDValidateActivityName},
 	)
 	s.env.RegisterActivityWithOptions(
 		activities.NewValidateMetadata().Execute,
@@ -304,6 +309,16 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		},
 	).Return(
 		&activities.AddPREMISAgentResult{}, nil,
+	)
+	s.env.OnActivity(
+		xml.XSDValidateActivityName,
+		sessionCtx,
+		&xml.XSDValidateActivityParams{
+			XMLFilePath: premisFilePath,
+			XSDFilePath: "premis3.xsd",
+		},
+	).Return(
+		&xml.XSDValidateActivityResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.TransformSIPName,

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/artefactual-sdps/temporal-activities/bagit"
+	"github.com/artefactual-sdps/temporal-activities/xml"
 	"github.com/go-logr/logr"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -86,6 +87,10 @@ func (m *Main) Run(ctx context.Context) error {
 	w.RegisterActivityWithOptions(
 		activities.NewAddPREMISAgent().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISAgentName},
+	)
+	w.RegisterActivityWithOptions(
+		xml.NewXSDValidateActivity().Execute,
+		temporalsdk_activity.RegisterOptions{Name: xml.XSDValidateActivityName},
 	)
 	w.RegisterActivityWithOptions(
 		activities.NewValidateMetadata().Execute,

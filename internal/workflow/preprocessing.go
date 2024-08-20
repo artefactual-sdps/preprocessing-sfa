@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagit"
+	"github.com/artefactual-sdps/temporal-activities/xml"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_log "go.temporal.io/sdk/log"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
@@ -304,6 +305,20 @@ func (w *PreprocessingWorkflow) Execute(
 			Agent:          premis.AgentDefault(),
 		},
 	).Get(ctx, &addPREMISAgent)
+	if e != nil {
+		return nil, e
+	}
+
+	// Validate PREMIS XML.
+	var xsdValidate xml.XSDValidateActivityResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		xml.XSDValidateActivityName,
+		&xml.XSDValidateActivityParams{
+			XMLFilePath: premisFilePath,
+			XSDFilePath: "premis3.xsd",
+		},
+	).Get(ctx, &xsdValidate)
 	if e != nil {
 		return nil, e
 	}
