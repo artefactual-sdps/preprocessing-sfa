@@ -197,7 +197,12 @@ func AppendEventXMLForEachObject(doc *etree.Document, eventSummary EventSummary,
 	return nil
 }
 
-func appendEventXMLForObjects(PREMISEl *etree.Element, eventSummary EventSummary, agent Agent, objectEls []*etree.Element) {
+func appendEventXMLForObjects(
+	PREMISEl *etree.Element,
+	eventSummary EventSummary,
+	agent Agent,
+	objectEls []*etree.Element,
+) {
 	for _, objectEl := range objectEls {
 		// Define PREMIS event.
 		event := eventFromEventSummaryAndAgent(eventSummary, agent)
@@ -414,7 +419,7 @@ func FilesWithinDirectory(contentPath string) ([]string, error) {
 	return subpaths, nil
 }
 
-func OriginalNameForSubpath(contentPath string, subpath string) string {
+func OriginalNameForSubpath(contentPath, subpath string) string {
 	transferDirName := filepath.Base(filepath.Dir(filepath.Dir(contentPath)))
 
 	if filepath.Base(subpath) == "Prozess_Digitalisierung_PREMIS.xml" {
