@@ -7,11 +7,18 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"syscall"
+	"time"
 
+	"github.com/oklog/run"
 	"github.com/spf13/pflag"
 	"go.artefactual.dev/tools/log"
+	"go.artefactual.dev/tools/temporal"
+	temporalsdk_client "go.temporal.io/sdk/client"
 
+	"github.com/artefactual-sdps/preprocessing-sfa/cmd/worker/aiscmd"
 	"github.com/artefactual-sdps/preprocessing-sfa/cmd/worker/workercmd"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/version"
 )
@@ -66,22 +73,110 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() { <-c; cancel() }()
+	var g run.Group
 
-	m := workercmd.NewMain(logger, cfg)
-
-	if err := m.Run(ctx); err != nil {
-		_ = m.Close()
-		os.Exit(1)
+	// Preprocessing worker.
+	{
+		done := make(chan struct{})
+		m := workercmd.NewMain(logger, cfg)
+		g.Add(
+			func() error {
+				if err := m.Run(ctx); err != nil {
+					return err
+				}
+				<-done
+				return nil
+			},
+			func(err error) {
+				if err := m.Close(); err != nil {
+					logger.Error(err, "Failed to close preprocessing worker.")
+				}
+				close(done)
+			},
+		)
 	}
 
-	<-ctx.Done()
-
-	if err := m.Close(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		logger.Error(err, "Failed to close the application.")
+	// AIS Temporal client.
+	atc, err := temporalsdk_client.Dial(temporalsdk_client.Options{
+		HostPort:  cfg.AIS.Temporal.Address,
+		Namespace: cfg.AIS.Temporal.Namespace,
+		Logger:    temporal.Logger(logger.WithName("ais-temporal")),
+	})
+	if err != nil {
+		logger.Error(err, "Unable to create AIS Temporal client.")
 		os.Exit(1)
 	}
+	defer atc.Close()
+
+	// AIS worker.
+	{
+		done := make(chan struct{})
+		m := aiscmd.NewMain(logger, cfg.AIS, atc)
+		g.Add(
+			func() error {
+				if err := m.Run(ctx); err != nil {
+					return err
+				}
+				<-done
+				return nil
+			},
+			func(err error) {
+				if err := m.Close(); err != nil {
+					logger.Error(err, "Failed to close AIS worker.")
+				}
+				close(done)
+			},
+		)
+	}
+
+	// AIS API server.
+	{
+		srv := ais.NewAPIServer(ctx, atc, cfg.AIS)
+		g.Add(
+			func() error {
+				logger.Info("API server running", "listen", cfg.AIS.Listen)
+				return srv.ListenAndServe()
+			},
+			func(err error) {
+				ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+				defer cancel()
+				_ = srv.Shutdown(ctx)
+			},
+		)
+	}
+
+	// Signal handler.
+	{
+		var (
+			cancelInterrupt = make(chan struct{})
+			ch              = make(chan os.Signal, 2)
+		)
+		defer close(ch)
+
+		g.Add(
+			func() error {
+				signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+
+				select {
+				case <-ch:
+				case <-cancelInterrupt:
+				}
+
+				return nil
+			},
+			func(err error) {
+				logger.Info("Quitting...")
+				close(cancelInterrupt)
+				cancel()
+				signal.Stop(ch)
+			},
+		)
+	}
+
+	err = g.Run()
+	if err != nil {
+		logger.Error(err, "Application failure.")
+		os.Exit(1)
+	}
+	logger.Info("Bye!")
 }

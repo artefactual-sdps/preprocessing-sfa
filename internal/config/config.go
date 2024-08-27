@@ -8,6 +8,8 @@ import (
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/spf13/viper"
+
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
 )
 
 type ConfigurationValidator interface {
@@ -34,6 +36,7 @@ type Configuration struct {
 	Temporal Temporal
 	Worker   WorkerConfig
 	Bagit    bagcreate.Config
+	AIS      ais.Config
 }
 
 type Temporal struct {

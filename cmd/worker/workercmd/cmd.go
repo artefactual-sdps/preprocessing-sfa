@@ -37,7 +37,7 @@ func (m *Main) Run(ctx context.Context) error {
 	c, err := temporalsdk_client.Dial(temporalsdk_client.Options{
 		HostPort:  m.cfg.Temporal.Address,
 		Namespace: m.cfg.Temporal.Namespace,
-		Logger:    temporal.Logger(m.logger.WithName("temporal")),
+		Logger:    temporal.Logger(m.logger.WithName("preprocessing-temporal")),
 	})
 	if err != nil {
 		m.logger.Error(err, "Unable to create Temporal client.")
@@ -49,7 +49,7 @@ func (m *Main) Run(ctx context.Context) error {
 		EnableSessionWorker:               true,
 		MaxConcurrentSessionExecutionSize: m.cfg.Worker.MaxConcurrentSessions,
 		Interceptors: []temporalsdk_interceptor.WorkerInterceptor{
-			temporal.NewLoggerInterceptor(m.logger.WithName("worker")),
+			temporal.NewLoggerInterceptor(m.logger.WithName(Name)),
 		},
 	})
 	m.temporalWorker = w
@@ -101,7 +101,7 @@ func (m *Main) Run(ctx context.Context) error {
 	)
 
 	if err := w.Start(); err != nil {
-		m.logger.Error(err, "Worker failed to start or fatal error during its execution.")
+		m.logger.Error(err, "Worker failed to start.")
 		return err
 	}
 

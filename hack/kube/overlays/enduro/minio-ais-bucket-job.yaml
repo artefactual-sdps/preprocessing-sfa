@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-ais-bucket
+spec:
+  backoffLimit: 100
+  template:
+    spec:
+      serviceAccountName: sdps
+      restartPolicy: OnFailure
+      containers:
+        - name: ais-bucket
+          image: minio/mc
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MINIO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: user
+            - name: MINIO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: password
+          command: [
+              "sh",
+              "-c",
+              "mc alias set enduro http://minio.enduro-sdps:9000 ${MINIO_USER} ${MINIO_PASSWORD};
+              mc mb enduro/ais --ignore-existing;",
+            ]
