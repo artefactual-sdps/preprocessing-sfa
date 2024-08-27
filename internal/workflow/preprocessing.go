@@ -130,6 +130,40 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 	result.addEvent(validateStructureEvent)
 
+	// Verify that package contents match the manifest.
+	verifyManifestEvent := newEvent(ctx, "Verify SIP manifest")
+	var verifyManifest activities.VerifyManifestResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.VerifyManifestName,
+		&activities.VerifyManifestParams{SIP: identifySIP.SIP},
+	).Get(ctx, &verifyManifest)
+	if e != nil {
+		result.addEvent(verifyManifestEvent.Complete(
+			ctx,
+			enums.EventOutcomeSystemFailure,
+			"System error: manifest verification has failed",
+		))
+		return systemError(logger, "Verify manifest", &result, e), nil
+	}
+
+	if verifyManifest.Failures != nil {
+		verifyManifestEvent.Complete(
+			ctx,
+			enums.EventOutcomeValidationFailure,
+			"Content error: SIP contents do not match %q:\n%s",
+			filepath.Base(identifySIP.SIP.ManifestPath),
+			strings.Join(verifyManifest.Failures, "\n"),
+		)
+	} else {
+		verifyManifestEvent.Complete(
+			ctx,
+			enums.EventOutcomeSuccess,
+			"SIP contents match manifest",
+		)
+	}
+	result.addEvent(verifyManifestEvent)
+
 	// Add PREMIS objects.
 	premisFilePath := filepath.Join(localPath, "metadata", "premis.xml")
 
@@ -168,40 +202,6 @@ func (w *PreprocessingWorkflow) Execute(
 	if e != nil {
 		return nil, e
 	}
-
-	// Verify that package contents match the manifest.
-	verifyManifestEvent := newEvent(ctx, "Verify SIP manifest")
-	var verifyManifest activities.VerifyManifestResult
-	e = temporalsdk_workflow.ExecuteActivity(
-		withLocalActOpts(ctx),
-		activities.VerifyManifestName,
-		&activities.VerifyManifestParams{SIP: identifySIP.SIP},
-	).Get(ctx, &verifyManifest)
-	if e != nil {
-		result.addEvent(verifyManifestEvent.Complete(
-			ctx,
-			enums.EventOutcomeSystemFailure,
-			"System error: manifest verification has failed",
-		))
-		return systemError(logger, "Verify manifest", &result, e), nil
-	}
-
-	if verifyManifest.Failures != nil {
-		verifyManifestEvent.Complete(
-			ctx,
-			enums.EventOutcomeValidationFailure,
-			"Content error: SIP contents do not match %q:\n%s",
-			filepath.Base(identifySIP.SIP.ManifestPath),
-			strings.Join(verifyManifest.Failures, "\n"),
-		)
-	} else {
-		verifyManifestEvent.Complete(
-			ctx,
-			enums.EventOutcomeSuccess,
-			"SIP contents match manifest",
-		)
-	}
-	result.addEvent(verifyManifestEvent)
 
 	// Validate file formats.
 	validateFileFormatsEvent := newEvent(ctx, "Validate SIP file formats")
