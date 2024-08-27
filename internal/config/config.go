@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/artefactual-sdps/temporal-activities/bagit"
+	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/spf13/viper"
 )
 
@@ -33,7 +33,7 @@ type Configuration struct {
 
 	Temporal Temporal
 	Worker   WorkerConfig
-	Bagit    bagit.Config
+	Bagit    bagcreate.Config
 }
 
 type Temporal struct {

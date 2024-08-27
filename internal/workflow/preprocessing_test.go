@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artefactual-sdps/temporal-activities/bagit"
+	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -159,8 +159,8 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
 	)
 	s.env.RegisterActivityWithOptions(
-		bagit.NewCreateBagActivity(cfg.Bagit).Execute,
-		temporalsdk_activity.RegisterOptions{Name: bagit.CreateBagActivityName},
+		bagcreate.New(cfg.Bagit).Execute,
+		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
 	)
 
 	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir)
@@ -313,11 +313,11 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.TransformSIPResult{}, nil,
 	)
 	s.env.OnActivity(
-		bagit.CreateBagActivityName,
+		bagcreate.Name,
 		sessionCtx,
-		&bagit.CreateBagActivityParams{SourcePath: sipPath},
+		&bagcreate.Params{SourcePath: sipPath},
 	).Return(
-		&bagit.CreateBagActivityResult{}, nil,
+		&bagcreate.Result{}, nil,
 	)
 
 	s.env.ExecuteWorkflow(

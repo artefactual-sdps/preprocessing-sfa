@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artefactual-sdps/temporal-activities/bagit"
+	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_log "go.temporal.io/sdk/log"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
@@ -333,11 +333,11 @@ func (w *PreprocessingWorkflow) Execute(
 
 	// Bag the SIP for Enduro processing.
 	createBagEvent := newEvent(ctx, "Bag SIP")
-	var createBag bagit.CreateBagActivityResult
+	var createBag bagcreate.Result
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
-		bagit.CreateBagActivityName,
-		&bagit.CreateBagActivityParams{SourcePath: localPath},
+		bagcreate.Name,
+		&bagcreate.Params{SourcePath: localPath},
 	).Get(ctx, &createBag)
 	if e != nil {
 		result.addEvent(createBagEvent.Complete(

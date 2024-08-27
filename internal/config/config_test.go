@@ -3,7 +3,7 @@ package config_test
 import (
 	"testing"
 
-	"github.com/artefactual-sdps/temporal-activities/bagit"
+	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
@@ -57,7 +57,7 @@ func TestConfig(t *testing.T) {
 				Worker: config.WorkerConfig{
 					MaxConcurrentSessions: 1,
 				},
-				Bagit: bagit.Config{
+				Bagit: bagcreate.Config{
 					ChecksumAlgorithm: "md5",
 				},
 			},
