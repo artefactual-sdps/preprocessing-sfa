@@ -55,7 +55,7 @@ func New(path string) (SIP, error) {
 	if err != nil {
 		return s, fmt.Errorf("SIP: New: %v", err)
 	}
-	if len(f) > 0 && strings.Contains(s.Path, "Vecteur") {
+	if len(f) > 0 && strings.Contains(strings.ToLower(s.Path), "vecteur") {
 		return s.digitizedSIP(), nil
 	}
 

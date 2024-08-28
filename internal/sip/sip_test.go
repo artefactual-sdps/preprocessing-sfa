@@ -27,6 +27,15 @@ func TestNew(t *testing.T) {
 		fs.WithDir("header"),
 	)
 
+	digitizedSIPCase := fs.NewDir(t, "SIP_20201201_vecteur",
+		fs.WithDir("content",
+			fs.WithDir("d_0000001",
+				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+			),
+		),
+		fs.WithDir("header"),
+	)
+
 	bornDigital := fs.NewDir(t, "",
 		fs.WithDir("content"),
 		fs.WithDir("header"),
@@ -68,6 +77,22 @@ func TestNew(t *testing.T) {
 				TopLevelPaths: []string{
 					digitizedSIP.Join("content"),
 					digitizedSIP.Join("header"),
+				},
+			},
+		},
+		{
+			name: "Creates a new digitized SIP (case-insensitive)",
+			path: digitizedSIPCase.Path(),
+			wantSIP: sip.SIP{
+				Type:         enums.SIPTypeDigitizedSIP,
+				Path:         digitizedSIPCase.Path(),
+				ContentPath:  digitizedSIPCase.Join("content"),
+				ManifestPath: digitizedSIPCase.Join("header", "metadata.xml"),
+				MetadataPath: digitizedSIPCase.Join("header", "metadata.xml"),
+				XSDPath:      digitizedSIPCase.Join("header", "xsd", "arelda.xsd"),
+				TopLevelPaths: []string{
+					digitizedSIPCase.Join("content"),
+					digitizedSIPCase.Join("header"),
 				},
 			},
 		},
