@@ -422,13 +422,13 @@ func FilesWithinDirectory(contentPath string) ([]string, error) {
 }
 
 func OriginalNameForSubpath(sip sip.SIP, subpath string) string {
-	// Handle born digital SIP structure separately.
+	// Handle AIP structure differently from SIP structure.
 	var transferDirName string
 
-	if sip.Type == enums.SIPTypeBornDigital {
-		transferDirName = filepath.Base(filepath.Dir(sip.ContentPath))
-	} else {
+	if sip.Type == enums.SIPTypeDigitizedAIP {
 		transferDirName = filepath.Base(filepath.Dir(filepath.Dir(sip.ContentPath)))
+	} else {
+		transferDirName = filepath.Base(filepath.Dir(sip.ContentPath))
 	}
 
 	// Handle one file differently (as it gets renamed latest in TransformSIP).
