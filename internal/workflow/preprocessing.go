@@ -172,8 +172,8 @@ func (w *PreprocessingWorkflow) Execute(
 		withLocalActOpts(ctx),
 		activities.AddPREMISObjectsName,
 		&activities.AddPREMISObjectsParams{
+			SIP:            identifySIP.SIP,
 			PREMISFilePath: premisFilePath,
-			ContentPath:    identifySIP.SIP.ContentPath,
 		},
 	).Get(ctx, &addPREMISObjects)
 	if e != nil {
@@ -210,7 +210,7 @@ func (w *PreprocessingWorkflow) Execute(
 		withLocalActOpts(ctx),
 		activities.ValidateFileFormatsName,
 		&activities.ValidateFileFormatsParams{
-			ContentPath:    identifySIP.SIP.ContentPath,
+			SIP:            identifySIP.SIP,
 			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
 		},

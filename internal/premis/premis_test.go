@@ -8,7 +8,9 @@ import (
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 const premisObjectAddContent = `<?xml version="1.0" encoding="UTF-8"?>
@@ -219,22 +221,41 @@ func TestFilesWithinDirectory(t *testing.T) {
 }
 
 func TestOriginalNameForSubpath(t *testing.T) {
-	// Check for correct adjustment of file paths in PREMIS.
-	originalName := premis.OriginalNameForSubpath(
-		"test_transfer/content/content",
+	// Check for correct adjustment of AIP file path in PREMIS.
+	aipSIP := sip.SIP{
+		Type:        enums.SIPTypeDigitizedAIP,
+		ContentPath: "test_transfer/content/content",
+	}
+
+	aipOriginalName := premis.OriginalNameForSubpath(
+		aipSIP,
 		"d_0000001/00000001.jp2",
 	)
 
-	assert.Equal(t, originalName,
+	assert.Equal(t, aipOriginalName,
+		"data/objects/test_transfer/content/d_0000001/00000001.jp2")
+
+	// Check for correct adjustment of born digital SIP file path in PREMIS.
+	sipSIP := sip.SIP{
+		Type:        enums.SIPTypeBornDigital,
+		ContentPath: "test_transfer/content",
+	}
+
+	sipOriginalName := premis.OriginalNameForSubpath(
+		sipSIP,
+		"d_0000001/00000001.jp2",
+	)
+
+	assert.Equal(t, sipOriginalName,
 		"data/objects/test_transfer/content/d_0000001/00000001.jp2")
 
 	// Check for special handling of this specific file's path in PREMIS.
-	originalName = premis.OriginalNameForSubpath(
-		"test_transfer/content/content",
+	metadataOriginalName := premis.OriginalNameForSubpath(
+		aipSIP,
 		"content/content/d_0000001/Prozess_Digitalisierung_PREMIS.xml",
 	)
 
-	assert.Equal(t, originalName,
+	assert.Equal(t, metadataOriginalName,
 		"data/metadata/Prozess_Digitalisierung_PREMIS_d_0000001.xml")
 }
 
@@ -257,7 +278,11 @@ func TestAppendPREMISEventAndLinkToObject(t *testing.T) {
 	err = doc.ReadFromString(premisObjectAddContent)
 	assert.NilError(t, err)
 
-	originalName := premis.OriginalNameForSubpath("test_transfer/content/content", "cat.jpg")
+	aipSIP := sip.SIP{
+		Type:        enums.SIPTypeDigitizedAIP,
+		ContentPath: "test_transfer/content/content",
+	}
+	originalName := premis.OriginalNameForSubpath(aipSIP, "cat.jpg")
 
 	err = premis.AppendEventXMLForSingleObject(doc, eventSummary, premis.AgentDefault(), originalName)
 	assert.NilError(t, err)

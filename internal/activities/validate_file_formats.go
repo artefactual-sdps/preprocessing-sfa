@@ -8,12 +8,13 @@ import (
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 const ValidateFileFormatsName = "validate-file-formats"
 
 type ValidateFileFormatsParams struct {
-	ContentPath    string
+	SIP            sip.SIP
 	PREMISFilePath string
 	Agent          premis.Agent
 }
@@ -72,7 +73,7 @@ func (a *ValidateFileFormats) Execute(
 		"fmt/653":   {},
 	}
 
-	err := filepath.WalkDir(params.ContentPath, func(p string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(params.SIP.ContentPath, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -106,13 +107,13 @@ func (a *ValidateFileFormats) Execute(
 		}
 
 		// Get subpath within content.
-		subpath, err := filepath.Rel(params.ContentPath, p)
+		subpath, err := filepath.Rel(params.SIP.ContentPath, p)
 		if err != nil {
 			return err
 		}
 
 		// Append PREMIS event to XML and write results.
-		originalName := premis.OriginalNameForSubpath(params.ContentPath, subpath)
+		originalName := premis.OriginalNameForSubpath(params.SIP, subpath)
 
 		doc, err := premis.ParseOrInitialize(params.PREMISFilePath)
 		if err != nil {

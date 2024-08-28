@@ -11,7 +11,9 @@ import (
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 const pngContent = "\x89PNG\r\n\x1a\n\x00\x00\x00\x0DIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90\x77\x53\xDE\x00\x00\x00\x00IEND\xAE\x42\x60\x82"
@@ -127,7 +129,10 @@ func TestValidateFileFormats(t *testing.T) {
 		{
 			name: "Successes with valid formats",
 			params: activities.ValidateFileFormatsParams{
-				ContentPath: validFormatsContentPath,
+				SIP: sip.SIP{
+					Type:        enums.SIPTypeDigitizedAIP,
+					ContentPath: validFormatsContentPath,
+				},
 				PREMISFilePath: fs.NewFile(t, "premis.xml",
 					fs.WithContent(premisValidFormatsContent),
 				).Path(),
@@ -138,7 +143,10 @@ func TestValidateFileFormats(t *testing.T) {
 		{
 			name: "Fails with invalid formats",
 			params: activities.ValidateFileFormatsParams{
-				ContentPath: invalidFormatsContentPath,
+				SIP: sip.SIP{
+					Type:        enums.SIPTypeDigitizedAIP,
+					ContentPath: invalidFormatsContentPath,
+				},
 				PREMISFilePath: fs.NewFile(t, "premis.xml",
 					fs.WithContent(premisInvalidFormatsContent),
 				).Path(),
@@ -163,7 +171,10 @@ func TestValidateFileFormats(t *testing.T) {
 		{
 			name: "Fails with an invalid content path",
 			params: activities.ValidateFileFormatsParams{
-				ContentPath: "/path/to/missing/dir",
+				SIP: sip.SIP{
+					Type:        enums.SIPTypeDigitizedAIP,
+					ContentPath: "/path/to/missing/dir",
+				},
 				PREMISFilePath: fs.NewFile(t, "premis.xml",
 					fs.WithContent(premis.EmptyXML),
 				).Path(),
@@ -174,9 +185,12 @@ func TestValidateFileFormats(t *testing.T) {
 		{
 			name: "Fails with empty source",
 			params: activities.ValidateFileFormatsParams{
-				ContentPath: fs.NewDir(t, "",
-					fs.WithFile("file.txt", ""),
-				).Path(),
+				SIP: sip.SIP{
+					Type: enums.SIPTypeDigitizedAIP,
+					ContentPath: fs.NewDir(t, "",
+						fs.WithFile("file.txt", ""),
+					).Path(),
+				},
 				PREMISFilePath: fs.NewFile(t, "premis.xml",
 					fs.WithContent(premis.EmptyXML),
 				).Path(),

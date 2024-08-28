@@ -9,7 +9,9 @@ import (
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 func TestAddPREMISObjects(t *testing.T) {
@@ -62,24 +64,33 @@ func TestAddPREMISObjects(t *testing.T) {
 		{
 			name: "Add PREMIS objects for normal content",
 			params: activities.AddPREMISObjectsParams{
+				SIP: sip.SIP{
+					Type:        enums.SIPTypeDigitizedAIP,
+					ContentPath: ContentFilesNormal.Path(),
+				},
 				PREMISFilePath: PREMISFilePathNormal,
-				ContentPath:    ContentFilesNormal.Path(),
 			},
 			result: activities.AddPREMISObjectsResult{},
 		},
 		{
 			name: "Add PREMIS objects for no content",
 			params: activities.AddPREMISObjectsParams{
+				SIP: sip.SIP{
+					Type:        enums.SIPTypeDigitizedAIP,
+					ContentPath: ContentNoFiles.Path(),
+				},
 				PREMISFilePath: PREMISFilePathNoFiles,
-				ContentPath:    ContentNoFiles.Path(),
 			},
 			result: activities.AddPREMISObjectsResult{},
 		},
 		{
 			name: "Add PREMIS objects for bad path",
 			params: activities.AddPREMISObjectsParams{
+				SIP: sip.SIP{
+					Type:        enums.SIPTypeDigitizedAIP,
+					ContentPath: ContentNonExistent.Path(),
+				},
 				PREMISFilePath: PREMISFilePathNonExistent,
-				ContentPath:    ContentNonExistent.Path(),
 			},
 			result:  activities.AddPREMISObjectsResult{},
 			wantErr: "no such file or directory",
@@ -116,7 +127,7 @@ func TestAddPREMISObjects(t *testing.T) {
 			assert.DeepEqual(t, res, tt.result)
 
 			// If the content directory has files, make sure that PREMIS file can be parsed.
-			contentFiles, err := premis.FilesWithinDirectory(tt.params.ContentPath)
+			contentFiles, err := premis.FilesWithinDirectory(tt.params.SIP.ContentPath)
 			assert.NilError(t, err)
 
 			if len(contentFiles) > 0 {

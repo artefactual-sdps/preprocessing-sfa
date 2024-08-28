@@ -8,13 +8,14 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 const AddPREMISObjectsName = "add-premis-objects"
 
 type AddPREMISObjectsParams struct {
+	SIP            sip.SIP
 	PREMISFilePath string
-	ContentPath    string
 }
 
 type AddPREMISObjectsResult struct{}
@@ -30,7 +31,7 @@ func (md *AddPREMISObjectsActivity) Execute(
 	params *AddPREMISObjectsParams,
 ) (*AddPREMISObjectsResult, error) {
 	// Get subpaths of files in transfer.
-	subpaths, err := premis.FilesWithinDirectory(params.ContentPath)
+	subpaths, err := premis.FilesWithinDirectory(params.SIP.ContentPath)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +51,7 @@ func (md *AddPREMISObjectsActivity) Execute(
 		object := premis.Object{
 			IdType:       "UUID",
 			IdValue:      uuid.New().String(),
-			OriginalName: premis.OriginalNameForSubpath(params.ContentPath, subpath),
+			OriginalName: premis.OriginalNameForSubpath(params.SIP, subpath),
 		}
 
 		err = premis.AppendObjectXML(doc, object)

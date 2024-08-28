@@ -243,8 +243,8 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		activities.AddPREMISObjectsName,
 		sessionCtx,
 		&activities.AddPREMISObjectsParams{
+			SIP:            expectedSIP,
 			PREMISFilePath: premisFilePath,
-			ContentPath:    expectedSIP.ContentPath,
 		},
 	).Return(
 		&activities.AddPREMISObjectsResult{}, nil,
@@ -267,7 +267,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		activities.ValidateFileFormatsName,
 		sessionCtx,
 		&activities.ValidateFileFormatsParams{
-			ContentPath:    expectedSIP.ContentPath,
+			SIP:            expectedSIP,
 			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
 		},
@@ -478,7 +478,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		activities.ValidateFileFormatsName,
 		sessionCtx,
 		&activities.ValidateFileFormatsParams{
-			ContentPath:    expectedSIP.ContentPath,
+			SIP:            expectedSIP,
 			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
 		},

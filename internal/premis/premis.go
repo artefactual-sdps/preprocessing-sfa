@@ -10,7 +10,9 @@ import (
 	"github.com/beevik/etree"
 	"github.com/google/uuid"
 
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 const EmptyXML = `<?xml version="1.0" encoding="UTF-8"?>
@@ -419,11 +421,18 @@ func FilesWithinDirectory(contentPath string) ([]string, error) {
 	return subpaths, nil
 }
 
-func OriginalNameForSubpath(contentPath, subpath string) string {
-	transferDirName := filepath.Base(filepath.Dir(filepath.Dir(contentPath)))
+func OriginalNameForSubpath(sip sip.SIP, subpath string) string {
+	// Handle born digital SIP structure separately.
+	var transferDirName string
 
+	if sip.Type == enums.SIPTypeBornDigital {
+		transferDirName = filepath.Base(filepath.Dir(sip.ContentPath))
+	} else {
+		transferDirName = filepath.Base(filepath.Dir(filepath.Dir(sip.ContentPath)))
+	}
+
+	// Handle one file differently (as it gets renamed latest in TransformSIP).
 	if filepath.Base(subpath) == "Prozess_Digitalisierung_PREMIS.xml" {
-		// This file later gets renamed in TransformSIP.
 		parentDirName := filepath.Base(filepath.Dir(subpath))
 		filename := fmt.Sprintf("Prozess_Digitalisierung_PREMIS_%s.xml", parentDirName)
 		return filepath.Join("data", "metadata", filename)
