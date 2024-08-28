@@ -221,9 +221,10 @@ func TestFilesWithinDirectory(t *testing.T) {
 }
 
 func TestOriginalNameForSubpath(t *testing.T) {
-	// Check for correct adjustment of AIP file path in PREMIS.
+	// Check for correct adjustment of digitized AIP file path in PREMIS.
 	aipSIP := sip.SIP{
 		Type:        enums.SIPTypeDigitizedAIP,
+		Path:        "test_transfer",
 		ContentPath: "test_transfer/content/content",
 	}
 
@@ -235,18 +236,34 @@ func TestOriginalNameForSubpath(t *testing.T) {
 	assert.Equal(t, aipOriginalName,
 		"data/objects/test_transfer/content/d_0000001/00000001.jp2")
 
-	// Check for correct adjustment of born digital SIP file path in PREMIS.
-	sipSIP := sip.SIP{
-		Type:        enums.SIPTypeBornDigital,
+	// Check for correct adjustment of digitized SIP file path in PREMIS.
+	digitizedSIP := sip.SIP{
+		Type:        enums.SIPTypeDigitizedSIP,
+		Path:        "test_transfer",
 		ContentPath: "test_transfer/content",
 	}
 
-	sipOriginalName := premis.OriginalNameForSubpath(
-		sipSIP,
+	digitizedSIPOriginalName := premis.OriginalNameForSubpath(
+		digitizedSIP,
 		"d_0000001/00000001.jp2",
 	)
 
-	assert.Equal(t, sipOriginalName,
+	assert.Equal(t, digitizedSIPOriginalName,
+		"data/objects/test_transfer/content/d_0000001/00000001.jp2")
+
+	// Check for correct adjustment of born digital SIP file path in PREMIS.
+	bornDigitalSIP := sip.SIP{
+		Type:        enums.SIPTypeBornDigital,
+		Path:        "test_transfer",
+		ContentPath: "test_transfer/content",
+	}
+
+	bornDigitalSIPOriginalName := premis.OriginalNameForSubpath(
+		bornDigitalSIP,
+		"d_0000001/00000001.jp2",
+	)
+
+	assert.Equal(t, bornDigitalSIPOriginalName,
 		"data/objects/test_transfer/content/d_0000001/00000001.jp2")
 
 	// Check for special handling of this specific file's path in PREMIS.
@@ -280,6 +297,7 @@ func TestAppendPREMISEventAndLinkToObject(t *testing.T) {
 
 	aipSIP := sip.SIP{
 		Type:        enums.SIPTypeDigitizedAIP,
+		Path:        "test_transfer",
 		ContentPath: "test_transfer/content/content",
 	}
 	originalName := premis.OriginalNameForSubpath(aipSIP, "cat.jpg")

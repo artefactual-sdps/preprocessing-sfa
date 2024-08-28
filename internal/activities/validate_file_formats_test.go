@@ -87,7 +87,7 @@ const premisInvalidFormatsContent = `<?xml version="1.0" encoding="UTF-8"?>
 func TestValidateFileFormats(t *testing.T) {
 	t.Parallel()
 
-	invalidFormatsTransferPath := fs.NewDir(t, "",
+	invalidFormatsDir := fs.NewDir(t, "",
 		fs.WithDir("test_transfer",
 			fs.WithDir("content",
 				fs.WithDir("content",
@@ -99,10 +99,10 @@ func TestValidateFileFormats(t *testing.T) {
 			),
 		),
 	).Path()
+	invalidFormatsTransferPath := filepath.Join(invalidFormatsDir, "test_transfer")
+	invalidFormatsContentPath := filepath.Join(invalidFormatsTransferPath, "content", "content")
 
-	invalidFormatsContentPath := filepath.Join(invalidFormatsTransferPath, "test_transfer", "content", "content")
-
-	validFormatsTransferPath := fs.NewDir(t, "",
+	validFormatsDir := fs.NewDir(t, "",
 		fs.WithDir("data",
 			fs.WithDir("dir",
 				fs.WithDir("content",
@@ -116,8 +116,8 @@ func TestValidateFileFormats(t *testing.T) {
 			),
 		),
 	).Path()
-
-	validFormatsContentPath := filepath.Join(validFormatsTransferPath, "data", "dir", "content", "content")
+	validFormatsTransferPath := filepath.Join(validFormatsDir, "data", "dir")
+	validFormatsContentPath := filepath.Join(validFormatsTransferPath, "content", "content")
 
 	tests := []struct {
 		name                 string
@@ -131,6 +131,7 @@ func TestValidateFileFormats(t *testing.T) {
 			params: activities.ValidateFileFormatsParams{
 				SIP: sip.SIP{
 					Type:        enums.SIPTypeDigitizedAIP,
+					Path:        validFormatsTransferPath,
 					ContentPath: validFormatsContentPath,
 				},
 				PREMISFilePath: fs.NewFile(t, "premis.xml",
@@ -145,6 +146,7 @@ func TestValidateFileFormats(t *testing.T) {
 			params: activities.ValidateFileFormatsParams{
 				SIP: sip.SIP{
 					Type:        enums.SIPTypeDigitizedAIP,
+					Path:        invalidFormatsTransferPath,
 					ContentPath: invalidFormatsContentPath,
 				},
 				PREMISFilePath: fs.NewFile(t, "premis.xml",
