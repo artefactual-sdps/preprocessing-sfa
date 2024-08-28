@@ -224,6 +224,7 @@ func TestOriginalNameForSubpath(t *testing.T) {
 	// Check for correct adjustment of digitized AIP file path in PREMIS.
 	aipSIP := sip.SIP{
 		Type:        enums.SIPTypeDigitizedAIP,
+		Path:        "test_transfer",
 		ContentPath: "test_transfer/content/content",
 	}
 
@@ -238,6 +239,7 @@ func TestOriginalNameForSubpath(t *testing.T) {
 	// Check for correct adjustment of digitized SIP file path in PREMIS.
 	digitizedSIP := sip.SIP{
 		Type:        enums.SIPTypeDigitizedSIP,
+		Path:        "test_transfer",
 		ContentPath: "test_transfer/content",
 	}
 
@@ -252,6 +254,7 @@ func TestOriginalNameForSubpath(t *testing.T) {
 	// Check for correct adjustment of born digital SIP file path in PREMIS.
 	bornDigitalSIP := sip.SIP{
 		Type:        enums.SIPTypeBornDigital,
+		Path:        "test_transfer",
 		ContentPath: "test_transfer/content",
 	}
 
@@ -294,6 +297,7 @@ func TestAppendPREMISEventAndLinkToObject(t *testing.T) {
 
 	aipSIP := sip.SIP{
 		Type:        enums.SIPTypeDigitizedAIP,
+		Path:        "test_transfer",
 		ContentPath: "test_transfer/content/content",
 	}
 	originalName := premis.OriginalNameForSubpath(aipSIP, "cat.jpg")
