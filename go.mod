@@ -3,7 +3,6 @@ module github.com/artefactual-sdps/preprocessing-sfa
 go 1.22.6
 
 require (
-	github.com/antchfx/xmlquery v1.4.1
 	github.com/artefactual-sdps/temporal-activities v0.0.0-20240821162351-47302711bc7b
 	github.com/beevik/etree v1.4.0
 	github.com/deckarep/golang-set/v2 v2.6.0
@@ -23,7 +22,6 @@ require (
 )
 
 require (
-	github.com/antchfx/xpath v1.3.1 // indirect
 	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.30.3 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.3 // indirect

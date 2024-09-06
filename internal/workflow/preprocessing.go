@@ -3,6 +3,7 @@ package workflow
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -133,6 +134,7 @@ func (w *PreprocessingWorkflow) Execute(
 
 	// Verify that package contents match the manifest.
 	verifyManifestEvent := newEvent(ctx, "Verify SIP manifest")
+	verifyChecksumsEvent := newEvent(ctx, "Verify SIP checksums")
 	var verifyManifest activities.VerifyManifestResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
@@ -148,13 +150,14 @@ func (w *PreprocessingWorkflow) Execute(
 		return systemError(logger, "Verify manifest", &result, e), nil
 	}
 
-	if verifyManifest.Failures != nil {
+	if len(verifyManifest.MissingFiles) > 0 || len(verifyManifest.UnexpectedFiles) > 0 {
+		failures := slices.Concat(verifyManifest.MissingFiles, verifyManifest.UnexpectedFiles)
 		verifyManifestEvent.Complete(
 			ctx,
 			enums.EventOutcomeValidationFailure,
 			"Content error: SIP contents do not match %q:\n%s",
 			filepath.Base(identifySIP.SIP.ManifestPath),
-			strings.Join(verifyManifest.Failures, "\n"),
+			strings.Join(failures, "\n"),
 		)
 	} else {
 		verifyManifestEvent.Complete(
@@ -164,6 +167,22 @@ func (w *PreprocessingWorkflow) Execute(
 		)
 	}
 	result.addEvent(verifyManifestEvent)
+
+	if len(verifyManifest.ChecksumFailures) > 0 {
+		verifyChecksumsEvent.Complete(
+			ctx,
+			enums.EventOutcomeValidationFailure,
+			"Content error: SIP checksums do not match file contents:\n%s",
+			strings.Join(verifyManifest.ChecksumFailures, "\n"),
+		)
+	} else {
+		verifyChecksumsEvent.Complete(
+			ctx,
+			enums.EventOutcomeSuccess,
+			"SIP checksums match file contents",
+		)
+	}
+	result.addEvent(verifyChecksumsEvent)
 
 	// Validate file formats.
 	validateFileFormatsEvent := newEvent(ctx, "Validate SIP file formats")
@@ -284,9 +303,6 @@ func (w *PreprocessingWorkflow) Execute(
 		enums.EventOutcomeSuccess,
 		"SIP has been bagged",
 	))
-
-	// TODO: validate checksums located in the XML metadata file
-	// against the checksums generated on Bag creation.
 
 	return &result, nil
 }
