@@ -7,16 +7,13 @@ import (
 	"path/filepath"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 const ValidateFileFormatsName = "validate-file-formats"
 
 type ValidateFileFormatsParams struct {
-	SIP            sip.SIP
-	PREMISFilePath string
-	Agent          premis.Agent
+	SIP sip.SIP
 }
 
 type ValidateFileFormatsResult struct {
@@ -87,47 +84,8 @@ func (a *ValidateFileFormats) Execute(
 			return fmt.Errorf("identify format: %v", err)
 		}
 
-		// Determine PREMIS event summary detail/outcome and note failure.
-		detail := ""
-		outcome := "valid"
-
-		if _, exists := allowed[ff.ID]; !exists {
-			detail = fmt.Sprintf("file format %q not allowed: %q", ff.ID, p)
-			outcome = "invalid"
-
-			failures = append(failures, detail)
-		}
-
-		// Define PREMIS event.
-		eventSummary := premis.EventSummary{
-			Type:          "validation",
-			Detail:        detail,
-			Outcome:       outcome,
-			OutcomeDetail: "Format allowed",
-		}
-
-		// Get subpath within content.
-		subpath, err := filepath.Rel(params.SIP.ContentPath, p)
-		if err != nil {
-			return err
-		}
-
-		// Append PREMIS event to XML and write results.
-		originalName := premis.OriginalNameForSubpath(params.SIP, subpath)
-
-		doc, err := premis.ParseOrInitialize(params.PREMISFilePath)
-		if err != nil {
-			return err
-		}
-
-		err = premis.AppendEventXMLForSingleObject(doc, eventSummary, params.Agent, originalName)
-		if err != nil {
-			return err
-		}
-
-		err = doc.WriteToFile(params.PREMISFilePath)
-		if err != nil {
-			return err
+		if _, ok := allowed[ff.ID]; !ok {
+			failures = append(failures, fmt.Sprintf("file format %q not allowed: %q", ff.ID, p))
 		}
 
 		return nil

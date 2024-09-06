@@ -34,11 +34,16 @@ func (md *AddPREMISEventActivity) Execute(
 		return nil, err
 	}
 
-	outcome := premis.EventOutcomeForFailures(params.Failures)
+	outcome := "valid"
+	if params.Failures != nil {
+		outcome = "invalid"
+	}
 
-	eventSummary, err := premis.NewEventSummary(params.Type, params.Detail, outcome, params.OutcomeDetail)
-	if err != nil {
-		return nil, err
+	eventSummary := premis.EventSummary{
+		Type:          params.Type,
+		Detail:        params.Detail,
+		Outcome:       outcome,
+		OutcomeDetail: params.OutcomeDetail,
 	}
 
 	err = premis.AppendEventXMLForEachObject(doc, eventSummary, params.Agent)

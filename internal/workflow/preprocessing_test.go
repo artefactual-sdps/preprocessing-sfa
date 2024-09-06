@@ -240,6 +240,22 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.VerifyManifestResult{}, nil,
 	)
 	s.env.OnActivity(
+		activities.ValidateFileFormatsName,
+		sessionCtx,
+		&activities.ValidateFileFormatsParams{SIP: expectedSIP},
+	).Return(
+		&activities.ValidateFileFormatsResult{}, nil,
+	)
+	s.env.OnActivity(
+		activities.ValidateMetadataName,
+		sessionCtx,
+		&activities.ValidateMetadataParams{SIP: expectedSIP},
+	).Return(
+		&activities.ValidateMetadataResult{}, nil,
+	)
+
+	// PREMIS activities.
+	s.env.OnActivity(
 		activities.AddPREMISObjectsName,
 		sessionCtx,
 		&activities.AddPREMISObjectsParams{
@@ -264,22 +280,18 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.AddPREMISEventResult{}, nil,
 	)
 	s.env.OnActivity(
-		activities.ValidateFileFormatsName,
+		activities.AddPREMISEventName,
 		sessionCtx,
-		&activities.ValidateFileFormatsParams{
-			SIP:            expectedSIP,
+		&activities.AddPREMISEventParams{
 			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
+			Type:           "validation",
+			Detail:         "name=\"Validate file format\"",
+			OutcomeDetail:  "Format allowed",
+			Failures:       nil,
 		},
 	).Return(
-		&activities.ValidateFileFormatsResult{}, nil,
-	)
-	s.env.OnActivity(
-		activities.ValidateMetadataName,
-		sessionCtx,
-		&activities.ValidateMetadataParams{SIP: expectedSIP},
-	).Return(
-		&activities.ValidateMetadataResult{}, nil,
+		&activities.AddPREMISEventResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.AddPREMISEventName,
@@ -305,6 +317,8 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 	).Return(
 		&activities.AddPREMISAgentResult{}, nil,
 	)
+
+	// Transform SIP.
 	s.env.OnActivity(
 		activities.TransformSIPName,
 		sessionCtx,
@@ -440,7 +454,6 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
-	premisFilePath := filepath.Join(expectedSIP.Path, "metadata", "premis.xml")
 	s.env.OnActivity(
 		activities.IdentifySIPName,
 		sessionCtx,
@@ -478,9 +491,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		activities.ValidateFileFormatsName,
 		sessionCtx,
 		&activities.ValidateFileFormatsParams{
-			SIP:            expectedSIP,
-			PREMISFilePath: premisFilePath,
-			Agent:          premis.AgentDefault(),
+			SIP: expectedSIP,
 		},
 	).Return(
 		&activities.ValidateFileFormatsResult{Failures: []string{

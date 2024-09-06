@@ -89,7 +89,74 @@ const premisAgentAddContent = `<?xml version="1.0" encoding="UTF-8"?>
 </premis:premis>
 `
 
+func blankElementText(doc *etree.Document, xpath string) error {
+	el := doc.FindElement(xpath)
+	if el == nil {
+		return errors.New("element not found")
+	}
+
+	el.SetText("")
+
+	return nil
+}
+
+func TestParseFile(t *testing.T) {
+	t.Parallel()
+
+	td := fs.NewDir(t, "", fs.WithFile(
+		"agent.xml",
+		premisAgentAddContent,
+	))
+
+	doc, err := premis.ParseFile(td.Join("agent.xml"))
+	assert.NilError(t, err)
+
+	got, err := doc.WriteToString()
+	assert.NilError(t, err)
+	assert.Equal(t, got, premisAgentAddContent)
+}
+
+func TestParseOrInitialize(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Parses an existing XML file", func(t *testing.T) {
+		t.Parallel()
+
+		td := fs.NewDir(t, "", fs.WithFile(
+			"agent.xml",
+			premisAgentAddContent,
+		))
+
+		doc, err := premis.ParseOrInitialize(td.Join("agent.xml"))
+		assert.NilError(t, err)
+
+		got, err := doc.WriteToString()
+		assert.NilError(t, err)
+		assert.Equal(t, got, premisAgentAddContent)
+	})
+
+	t.Run("Creates an empty PREMIS XML file", func(t *testing.T) {
+		t.Parallel()
+
+		td := fs.NewDir(t, "")
+
+		doc, err := premis.ParseOrInitialize(td.Join("test.xml"))
+		assert.NilError(t, err)
+
+		got, err := doc.WriteToString()
+		assert.NilError(t, err)
+		assert.Equal(
+			t,
+			got,
+			`<?xml version="1.0" encoding="UTF-8"?>
+<premis:premis xmlns:premis="http://www.loc.gov/premis/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/premis/v3 https://www.loc.gov/standards/premis/premis.xsd" version="3.0"/>
+`)
+	})
+}
+
 func TestAppendPREMISObjectXML(t *testing.T) {
+	t.Parallel()
+
 	// Test with PREMIS object.
 	uuid := "c74a85b7-919b-409e-8209-9c7ebe0e7945"
 	originalName := "data/objects/test_transfer/content/cat.jpg"
@@ -114,6 +181,8 @@ func TestAppendPREMISObjectXML(t *testing.T) {
 }
 
 func TestAppendPREMISEventXML(t *testing.T) {
+	t.Parallel()
+
 	// Add test PREMIS object.
 	uuid := "c74a85b7-919b-409e-8209-9c7ebe0e7945"
 	originalName := "data/objects/test_transfer/content/cat.jpg"
@@ -163,6 +232,8 @@ func TestAppendPREMISEventXML(t *testing.T) {
 }
 
 func TestAppendPREMISAgentXML(t *testing.T) {
+	t.Parallel()
+
 	// Test with PREMIS agent.
 	doc, err := premis.NewDoc()
 	assert.NilError(t, err)
@@ -196,6 +267,8 @@ func TestAppendPREMISAgentXML(t *testing.T) {
 }
 
 func TestFilesWithinDirectory(t *testing.T) {
+	t.Parallel()
+
 	contentPath := fs.NewDir(t, "",
 		fs.WithDir("content",
 			fs.WithDir("content",
@@ -221,6 +294,8 @@ func TestFilesWithinDirectory(t *testing.T) {
 }
 
 func TestOriginalNameForSubpath(t *testing.T) {
+	t.Parallel()
+
 	// Check for correct adjustment of digitized AIP file path in PREMIS.
 	aipSIP := sip.SIP{
 		Type:        enums.SIPTypeDigitizedAIP,
@@ -274,64 +349,4 @@ func TestOriginalNameForSubpath(t *testing.T) {
 
 	assert.Equal(t, metadataOriginalName,
 		"data/metadata/Prozess_Digitalisierung_PREMIS_d_0000001.xml")
-}
-
-func TestAppendPREMISEventAndLinkToObject(t *testing.T) {
-	// Define PREMIS event with failure.
-	var failures []string
-	failures = append(failures, "some failure")
-	outcome := premis.EventOutcomeForFailures(failures)
-
-	// Add PREMIS event to XML document.
-	eventSummary, err := premis.NewEventSummary(
-		"validation",
-		"name=\"Validate SIP metadata\"",
-		outcome,
-		"Metadata validation successful",
-	)
-	assert.NilError(t, err)
-
-	doc := etree.NewDocument()
-	err = doc.ReadFromString(premisObjectAddContent)
-	assert.NilError(t, err)
-
-	aipSIP := sip.SIP{
-		Type:        enums.SIPTypeDigitizedAIP,
-		Path:        "test_transfer",
-		ContentPath: "test_transfer/content/content",
-	}
-	originalName := premis.OriginalNameForSubpath(aipSIP, "cat.jpg")
-
-	err = premis.AppendEventXMLForSingleObject(doc, eventSummary, premis.AgentDefault(), originalName)
-	assert.NilError(t, err)
-
-	// Blank text for random/time elements.
-	err = blankElementText(
-		doc,
-		"/premis:premis/premis:object/premis:linkingEventIdentifier/premis:linkingEventIdentifierValue",
-	)
-	assert.NilError(t, err)
-
-	err = blankElementText(doc, "/premis:premis/premis:event/premis:eventIdentifier/premis:eventIdentifierValue")
-	assert.NilError(t, err)
-
-	err = blankElementText(doc, "/premis:premis/premis:event/premis:eventDateTime")
-	assert.NilError(t, err)
-
-	// Check modifed XML output.
-	doc.Indent(2)
-	eventXml, err := doc.WriteToString()
-	assert.NilError(t, err)
-	assert.Equal(t, eventXml, premisObjectAndEventAddContent)
-}
-
-func blankElementText(doc *etree.Document, xpath string) error {
-	el := doc.FindElement(xpath)
-	if el == nil {
-		return errors.New("element not found")
-	}
-
-	el.SetText("")
-
-	return nil
 }
