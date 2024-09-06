@@ -2,16 +2,19 @@ package activities
 
 import (
 	"context"
+	"crypto/md5" // #nosec: 501 -- not used for security.
+	"encoding/hex"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
 
-	"github.com/antchfx/xmlquery"
 	goset "github.com/deckarep/golang-set/v2"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/manifest"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
@@ -23,7 +26,10 @@ type (
 		SIP sip.SIP
 	}
 	VerifyManifestResult struct {
-		Failures []string
+		Failed           bool
+		ChecksumFailures []string
+		MissingFiles     []string
+		UnexpectedFiles  []string
 	}
 )
 
@@ -39,76 +45,56 @@ func (a *VerifyManifest) Execute(ctx context.Context, params *VerifyManifestPara
 	if err != nil {
 		return nil, fmt.Errorf("verify manifest: parse manifest: %v", err)
 	}
+	manifestSet := goset.NewSetFromMapKeys(manifestFiles)
 
 	sipFiles, err := sipFiles(params.SIP)
 	if err != nil {
 		return nil, fmt.Errorf("verify manifest: get SIP contents: %v", err)
 	}
 
-	var failures []string
-
-	if s := manifestFiles.Difference(sipFiles).ToSlice(); len(s) > 0 {
-		slices.Sort(s)
-		for _, p := range s {
-			failures = append(failures, fmt.Sprintf("Missing file: %s", p))
-		}
+	badChecksums, err := verifyChecksums(manifestFiles, sipFiles, params.SIP.Path)
+	if err != nil {
+		return nil, fmt.Errorf("verify checksums: %v", err)
 	}
 
-	if s := sipFiles.Difference(manifestFiles).ToSlice(); len(s) > 0 {
-		slices.Sort(s)
-		for _, p := range s {
-			failures = append(failures, fmt.Sprintf("Unexpected file: %s", p))
-		}
-	}
+	missing := missingFiles(manifestSet, sipFiles)
+	unexpected := unexpectedFiles(manifestSet, sipFiles)
 
-	return &VerifyManifestResult{Failures: failures}, nil
+	return &VerifyManifestResult{
+		Failed:           len(missing) > 0 || len(unexpected) > 0 || len(badChecksums) > 0,
+		ChecksumFailures: badChecksums,
+		MissingFiles:     missing,
+		UnexpectedFiles:  unexpected,
+	}, nil
 }
 
-// manifestFiles returns the set of all files paths listed in a SIP's manifest.
-func manifestFiles(s sip.SIP) (goset.Set[string], error) {
+// manifestFiles parses the SIP manifest and returns a map of file paths
+// (relative to the SIP root directory) to file checksums.
+func manifestFiles(s sip.SIP) (map[string]*manifest.Checksum, error) {
 	f, err := os.Open(s.ManifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("open: %v", err)
 	}
 
-	doc, err := xmlquery.Parse(f)
+	files, err := manifest.Files(f)
 	if err != nil {
-		return nil, fmt.Errorf("parse document: %v", err)
+		return nil, err
 	}
 
-	manifest, err := xmlquery.Query(doc, "//paket/inhaltsverzeichnis")
-	if err != nil || manifest == nil {
-		return nil, fmt.Errorf("missing inhaltsverzeichnis entry: %v", err)
-	}
-
-	root := ""
+	// Prefix "content/" to digitized AIP file paths.
 	if s.Type == enums.SIPTypeDigitizedAIP {
-		root = "content"
+		m := make(map[string]*manifest.Checksum, len(files))
+		for k, v := range files {
+			m[filepath.Join("content", k)] = v
+		}
+		files = m
 	}
 
-	return walkNode(manifest, root), nil
-}
-
-// walkNode recursively walks node's xpath tree and returns the set of all file
-// (excluding directories) paths found.
-func walkNode(node *xmlquery.Node, path string) goset.Set[string] {
-	paths := goset.NewSet[string]()
-
-	for _, n := range node.SelectElements("ordner") {
-		name := n.SelectElement("name").InnerText()
-		paths = paths.Union(walkNode(n, filepath.Join(path, name)))
-	}
-
-	for _, n := range node.SelectElements("datei") {
-		name := n.SelectElement("name").InnerText()
-		paths.Add(filepath.Join(path, name))
-	}
-
-	return paths
+	return files, nil
 }
 
 // sipFiles recursively walks dir's tree and returns the set of all file
-// (excluding directories) paths found.
+// (excluding directory) paths found.
 func sipFiles(s sip.SIP) (goset.Set[string], error) {
 	root := s.Path
 	if s.Type == enums.SIPTypeDigitizedAIP {
@@ -130,8 +116,8 @@ func sipFiles(s sip.SIP) (goset.Set[string], error) {
 			return err
 		}
 
-		// Digitized SIP and born-digital SIPs don't include metadata.xml in the
-		// manifest, so ignore the file here.
+		// Digitized SIPs and born-digital SIPs don't include metadata.xml in
+		// the manifest, so ignore the file here.
 		if s.Type != enums.SIPTypeDigitizedAIP && p == "header/metadata.xml" {
 			return nil
 		}
@@ -145,4 +131,88 @@ func sipFiles(s sip.SIP) (goset.Set[string], error) {
 	}
 
 	return paths, nil
+}
+
+// missingFiles returns the list of all files that are in manifest but not
+// filesys.
+func missingFiles(manifest, filesys goset.Set[string]) []string {
+	var missing []string
+	if s := manifest.Difference(filesys).ToSlice(); len(s) > 0 {
+		slices.Sort(s)
+		for _, p := range s {
+			missing = append(missing, fmt.Sprintf("Missing file: %s", p))
+		}
+	}
+	return missing
+}
+
+// unexpectedFiles returns the list of all files that are in filesys but not
+// manifest.
+func unexpectedFiles(manifest, filesys goset.Set[string]) []string {
+	var unexpected []string
+	if s := filesys.Difference(manifest).ToSlice(); len(s) > 0 {
+		slices.Sort(s)
+		for _, p := range s {
+			unexpected = append(unexpected, fmt.Sprintf("Unexpected file: %s", p))
+		}
+	}
+	return unexpected
+}
+
+// verifyChecksums checks that each manifestFiles file checksum matches the
+// checksum generated from the actual file contents. If a file is on the
+// manifest but missing from the filesystem, or vice versa, it will be skipped
+// with no validation message.  The root is the absolute path to the root
+// directory of the SIP, and is prefixed to each relative file path in the
+// manifest to create an absolute path the file.
+func verifyChecksums(
+	manifestFiles map[string]*manifest.Checksum,
+	sipFiles goset.Set[string],
+	root string,
+) ([]string, error) {
+	var failures []string
+
+	for path, checksum := range manifestFiles {
+		// Check if file exists on filesystem.
+		if !sipFiles.Contains(path) {
+			continue
+		}
+
+		// Generate checksum from filesystem file contents.
+		switch checksum.Algorithm {
+		case "MD5":
+			hash, err := md5Hash(filepath.Join(root, path))
+			if err != nil {
+				return nil, fmt.Errorf("generate MD5 hash: %v", err)
+			}
+			if hash != checksum.Hash {
+				failures = append(
+					failures,
+					fmt.Sprintf("Checksum mismatch for %q (expected: %q, got: %q)", path, checksum.Hash, hash),
+				)
+			}
+		default:
+			return nil, fmt.Errorf("hash algorithm %q is not supported", checksum.Algorithm)
+		}
+	}
+	slices.Sort(failures)
+
+	return failures, nil
+}
+
+// md5Hash returns a hexadecimal encoded hash string generated from the contents
+// of the file at path.
+func md5Hash(path string) (string, error) {
+	f, err := os.Open(path) // #nosec: G304 -- trusted path.
+	if err != nil {
+		return "", fmt.Errorf("open file: %v", err)
+	}
+	defer f.Close()
+
+	h := md5.New() // #nosec: G401 -- not used for security.
+	if _, err := io.Copy(h, f); err != nil {
+		return "", fmt.Errorf("copy contents: %v", err)
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), nil
 }

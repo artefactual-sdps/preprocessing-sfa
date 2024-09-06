@@ -21,7 +21,7 @@
                   <name>metadata.xml</name>
                   <originalName>metadata.xml</originalName>
                   <pruefalgorithmus>MD5</pruefalgorithmus>
-                  <pruefsumme>43c533d499c572fca699e77e06295ba3</pruefsumme>
+                  <pruefsumme>29a08a4c20e931bf91079abb6951c79e</pruefsumme>
                </datei>
             </ordner>
          </ordner>
@@ -121,13 +121,13 @@
                <name>00000001_PREMIS.xml</name>
                <originalName>00000001_PREMIS.xml</originalName>
                <pruefalgorithmus>MD5</pruefalgorithmus>
-               <pruefsumme>1428a269ff4e5b4894793b68646984b7</pruefsumme>
+               <pruefsumme>11f791c655cae7f4ab1dcaf613314151</pruefsumme>
             </datei>
             <datei id="_MKhAIC639MxzyOn8ji3tN5">
                <name>00000002_PREMIS.xml</name>
                <originalName>00000002_PREMIS.xml</originalName>
                <pruefalgorithmus>MD5</pruefalgorithmus>
-               <pruefsumme>f338f61911d2620972b0ac668dcc37ec</pruefsumme>
+               <pruefsumme>4ed338cc69d7635450b5332fb727d2d3</pruefsumme>
             </datei>
             <datei id="_fZzi3dX2jvrwakvY6jeJS8">
                <name>Prozess_Digitalisierung_PREMIS.xml</name>
@@ -155,7 +155,7 @@
       <ablieferndeStelle>Bundesverwaltung (Bern)</ablieferndeStelle>
       <ablieferungsnummer>1000/893_3251903</ablieferungsnummer>
       <provenienz>
-                        
+
                <aktenbildnerName>Bundesverwaltung (k.A.)</aktenbildnerName>
       </provenienz>
       <ordnungssystem>
@@ -176,14 +176,14 @@
                         <titel>Beschwerde von Pfyffer-Zimmermann aus Witznau und Zurücknahme derselbigen</titel>
                         <erscheinungsform>digital</erscheinungsform>
                         <entstehungszeitraum>
-                        
-                        
+
+
                            <von>
-                            
+
                               <datum>1874-04-01</datum>
                            </von>
                            <bis>
-                            
+
                               <datum>1874-11-30</datum>
                            </bis>
                         </entstehungszeitraum>
@@ -191,7 +191,7 @@
                            <titel>U_m_s_c_h_l_a_g_0000001</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000001</merkmal>
                            </zusatzDaten>
                            <dateiRef>_miEf29GTkFR7ymi91IV4fO</dateiRef>
@@ -211,7 +211,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000001</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000002</merkmal>
                            </zusatzDaten>
                            <dateiRef>_g1rji2dQsuGpZLBIaAiMPA</dateiRef>
@@ -303,7 +303,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000002</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000003</merkmal>
                            </zusatzDaten>
                            <dateiRef>_5GbCxR3sghNXT8xA5s9HyZ</dateiRef>
@@ -337,7 +337,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000003</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000004</merkmal>
                            </zusatzDaten>
                            <dateiRef>_RO2p692zkgdsiRQMmkQArf</dateiRef>
@@ -379,7 +379,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000004</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000005</merkmal>
                            </zusatzDaten>
                            <dateiRef>_MMXDGhijq4qJC2aopeBET2</dateiRef>
@@ -417,7 +417,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000005</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000006</merkmal>
                            </zusatzDaten>
                            <dateiRef>_KZ4jMOlQzsRx7CaeDFivy5</dateiRef>
@@ -469,7 +469,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000006</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000007</merkmal>
                            </zusatzDaten>
                            <dateiRef>_fqsPyR6gDpgU5Z3ArCJNeM</dateiRef>
@@ -491,7 +491,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000007</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000008</merkmal>
                            </zusatzDaten>
                            <dateiRef>_RqkBRp1fesebvsPIEiUNQd</dateiRef>
@@ -503,7 +503,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000008</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000009</merkmal>
                            </zusatzDaten>
                            <dateiRef>_Xb7BEeQlYVD5iKjhN002VT</dateiRef>
@@ -521,7 +521,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000009</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000010</merkmal>
                            </zusatzDaten>
                            <dateiRef>_kgiVYxgtd2scGDhIt8dozW</dateiRef>
@@ -547,7 +547,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000010</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000011</merkmal>
                            </zusatzDaten>
                            <dateiRef>_TiPs089ulN6kLu00MwFiA5</dateiRef>
@@ -561,7 +561,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000011</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000012</merkmal>
                            </zusatzDaten>
                            <dateiRef>_dxHJAQRH9faWPAy2SHGHkK</dateiRef>
@@ -579,7 +579,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000012</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000013</merkmal>
                            </zusatzDaten>
                            <dateiRef>_YmgmI3c08DnHMLZNhjyq25</dateiRef>
@@ -597,7 +597,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000013</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000014</merkmal>
                            </zusatzDaten>
                            <dateiRef>_zNm1O32k4ujOrXNyxlTreS</dateiRef>
@@ -637,7 +637,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000014</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000015</merkmal>
                            </zusatzDaten>
                            <dateiRef>_BblSEzq4DYiBdsNmhCHVgC</dateiRef>
@@ -655,7 +655,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000015</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000016</merkmal>
                            </zusatzDaten>
                            <dateiRef>_qvO2zsx328rTNX4bdzB06o</dateiRef>
@@ -667,7 +667,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000016</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000017</merkmal>
                            </zusatzDaten>
                            <dateiRef>_FqoZqKtYsQn9iAdoqqv1cI</dateiRef>
@@ -691,7 +691,7 @@
                            <titel>D_o_k_u_m_e_n_t_0000017</titel>
                            <erscheinungsform>digital</erscheinungsform>
                            <zusatzDaten>
-                        
+
                               <merkmal name="ReihenfolgeAnalogesDossier">000018</merkmal>
                            </zusatzDaten>
                            <dateiRef>_mknnbMIDwFwyyAhb0nNNAi</dateiRef>

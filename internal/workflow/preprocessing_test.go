@@ -371,6 +371,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 					CompletedAt: testTime,
 				},
 				{
+					Name:        "Verify SIP checksums",
+					Message:     "SIP checksums match file contents",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
 					Name:        "Validate SIP file formats",
 					Message:     "No disallowed file formats found",
 					Outcome:     enums.EventOutcomeSuccess,
@@ -480,10 +487,12 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		&activities.VerifyManifestParams{SIP: expectedSIP},
 	).Return(
 		&activities.VerifyManifestResult{
-			Failures: []string{
-				"Missing file: d_0000001/00000001.jp2",
-				"Unexpected file: d_0000001/extra_file.txt",
+			Failed: true,
+			ChecksumFailures: []string{
+				`Checksum mismatch for "content/content/d_0000001/00000001.jp2" (expected: "827ccb0eea8a706c4c34a16891f84e7b", got: "2714364e3a0ac68e8bf9b898b31ff303")`,
 			},
+			MissingFiles:    []string{"Missing file: d_0000001/00000001.jp2"},
+			UnexpectedFiles: []string{"Unexpected file: d_0000001/extra_file.txt"},
 		},
 		nil,
 	)
@@ -546,6 +555,14 @@ UpdatedAreldaMetadata.xml is missing`,
 					Message: `Content error: SIP contents do not match "UpdatedAreldaMetadata.xml":
 Missing file: d_0000001/00000001.jp2
 Unexpected file: d_0000001/extra_file.txt`,
+					Outcome:     enums.EventOutcomeValidationFailure,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
+					Name: "Verify SIP checksums",
+					Message: `Content error: SIP checksums do not match file contents:
+Checksum mismatch for "content/content/d_0000001/00000001.jp2" (expected: "827ccb0eea8a706c4c34a16891f84e7b", got: "2714364e3a0ac68e8bf9b898b31ff303")`,
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,

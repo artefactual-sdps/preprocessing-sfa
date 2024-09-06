@@ -36,7 +36,7 @@ const (
 						<name>metadata.xml</name>
 						<originalName>metadata.xml</originalName>
 						<pruefalgorithmus>MD5</pruefalgorithmus>
-						<pruefsumme>43c533d499c572fca699e77e06295ba3</pruefsumme>
+						<pruefsumme>636351dce76b47b3d40712813b9a34f3</pruefsumme>
 					</datei>
 				</ordner>
 			</ordner>
@@ -46,7 +46,7 @@ const (
 					<name>arelda.xsd</name>
 					<originalName>arelda.xsd</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>f8454632e1ebf97e0aa8d9527ce2641f</pruefsumme>
+					<pruefsumme>661c2df1b1e76d1446e90a54816d91ae</pruefsumme>
 				</datei>
 			</ordner>
 		</ordner>
@@ -58,31 +58,31 @@ const (
 					<name>00000001_PREMIS.xml</name>
 					<originalName>00000001_PREMIS.xml</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>1428a269ff4e5b4894793b68646984b7</pruefsumme>
+					<pruefsumme>e80b5017098950fc58aad83c8c14978e</pruefsumme>
 				</datei>
 				<datei id="_MKhAIC639MxzyOn8ji3tN5">
 					<name>00000002_PREMIS.xml</name>
 					<originalName>00000002_PREMIS.xml</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>f338f61911d2620972b0ac668dcc37ec</pruefsumme>
+					<pruefsumme>33f12195e0fc136bc17de332c6b92b0d</pruefsumme>
 				</datei>
 				<datei id="_fZzi3dX2jvrwakvY6jeJS8">
 					<name>Prozess_Digitalisierung_PREMIS.xml</name>
 					<originalName>Prozess_Digitalisierung_PREMIS.xml</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>8067daaa900eba6dace69572eea8f8f3</pruefsumme>
+					<pruefsumme>816cabd1c0334ed363555889d9f4dbe4</pruefsumme>
 				</datei>
 				<datei id="_miEf29GTkFR7ymi91IV4fO">
 					<name>00000001.jp2</name>
 					<originalName>00000001.jp2</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>f7dc1f76a55cbdca0ae4a6dc8ae64644</pruefsumme>
+					<pruefsumme>827ccb0eea8a706c4c34a16891f84e7b</pruefsumme>
 				</datei>
 				<datei id="_mOXw3hINt3zY6WvKQOfYmk">
 					<name>00000002.jp2</name>
 					<originalName>00000002.jp2</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>954d06be4a70c188b6b2e5fe4309fb2c</pruefsumme>
+					<pruefsumme>1e01ba3e07ac48cbdab2d3284d1dd0fa</pruefsumme>
 				</datei>
 			</ordner>
 		</ordner>
@@ -107,7 +107,7 @@ const (
 					<name>arelda.xsd</name>
 					<originalName>arelda.xsd</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>f8454632e1ebf97e0aa8d9527ce2641f</pruefsumme>
+					<pruefsumme>661c2df1b1e76d1446e90a54816d91ae</pruefsumme>
 				</datei>
 			</ordner>
 		</ordner>
@@ -121,31 +121,31 @@ const (
 					<name>00000001.jp2</name>
 					<originalName>00000001.jp2</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>dc29291d0e2a18363d0efd2ec2fe81c9</pruefsumme>
+					<pruefsumme>827ccb0eea8a706c4c34a16891f84e7b</pruefsumme>
 				</datei>
 				<datei id="_rlPKJX9ZcAl4ooc4IfoIkM">
 					<name>00000002.jp2</name>
 					<originalName>00000002.jp2</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>9093907ec32f06fe595e0f14982c4bf0</pruefsumme>
+					<pruefsumme>1e01ba3e07ac48cbdab2d3284d1dd0fa</pruefsumme>
 				</datei>
 				<datei id="_WuDmXAs5UDwKTGVLsCcZxa">
 					<name>00000001_PREMIS.xml</name>
 					<originalName>00000001_PREMIS.xml</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>1d310772d26138a42eb2d6bebb637457</pruefsumme>
+					<pruefsumme>e80b5017098950fc58aad83c8c14978e</pruefsumme>
 				</datei>
 				<datei id="_Ohk77y2DJa82RXqsWG4S90">
 					<name>00000002_PREMIS.xml</name>
 					<originalName>00000002_PREMIS.xml</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>abe7d286e9fa8db7ab8a3078df761c8e</pruefsumme>
+					<pruefsumme>33f12195e0fc136bc17de332c6b92b0d</pruefsumme>
 				</datei>
 				<datei id="_cQ6sm5CChWVqtqmrWvne0W">
 					<name>Prozess_Digitalisierung_PREMIS.xml</name>
 					<originalName>Prozess_Digitalisierung_PREMIS.xml</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>21d8e90afdefd2c43386ca1d1658cab0</pruefsumme>
+					<pruefsumme>816cabd1c0334ed363555889d9f4dbe4</pruefsumme>
 				</datei>
 			</ordner>
 		</ordner>
@@ -154,9 +154,9 @@ const (
 `
 )
 
-func testSIP(t *testing.T, dir *fs.Dir) sip.SIP {
+func testSIP(t *testing.T, path string) sip.SIP {
 	t.Helper()
-	s, err := sip.New(dir.Path())
+	s, err := sip.New(path)
 	if err != nil {
 		t.Fatalf("sip: New(): %v", err)
 	}
@@ -175,35 +175,7 @@ func TestVerifyManifest(t *testing.T) {
 		{
 			name: "Verifies a digitized AIP manifest",
 			params: activities.VerifyManifestParams{
-				SIP: testSIP(
-					t,
-					fs.NewDir(t, "Test_Digitized_AIP",
-						fs.WithDir("additional",
-							fs.WithFile("UpdatedAreldaMetadata.xml", aipManifest),
-						),
-						fs.WithDir("content",
-							fs.WithDir("content",
-								fs.WithDir("d_0000001",
-									fs.WithFile("00000001.jp2", ""),
-									fs.WithFile("00000001_PREMIS.xml", ""),
-									fs.WithFile("00000002.jp2", ""),
-									fs.WithFile("00000002_PREMIS.xml", ""),
-									fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
-								),
-							),
-							fs.WithDir("header",
-								fs.WithDir("old",
-									fs.WithDir("SIP",
-										fs.WithFile("metadata.xml", ""),
-									),
-								),
-								fs.WithDir("xsd",
-									fs.WithFile("arelda.xsd", ""),
-								),
-							),
-						),
-					),
-				),
+				SIP: testSIP(t, "../testdata/little-Test-AIP-Digitization"),
 			},
 			want: activities.VerifyManifestResult{},
 		},
@@ -215,20 +187,20 @@ func TestVerifyManifest(t *testing.T) {
 					fs.NewDir(t, "Test_Digitized_SIP",
 						fs.WithDir("content",
 							fs.WithDir("d_0000001",
-								fs.WithFile("00000001.jp2", ""),
-								fs.WithFile("00000001_PREMIS.xml", ""),
-								fs.WithFile("00000002.jp2", ""),
-								fs.WithFile("00000002_PREMIS.xml", ""),
-								fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+								fs.WithFile("00000001.jp2", "12345"),
+								fs.WithFile("00000001_PREMIS.xml", "abcdef"),
+								fs.WithFile("00000002.jp2", "67890"),
+								fs.WithFile("00000002_PREMIS.xml", "ghijk"),
+								fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
 							),
 						),
 						fs.WithDir("header",
 							fs.WithDir("xsd",
-								fs.WithFile("arelda.xsd", ""),
+								fs.WithFile("arelda.xsd", "vwxyz"),
 							),
 							fs.WithFile("metadata.xml", sipManifest),
 						),
-					),
+					).Path(),
 				),
 			},
 			want: activities.VerifyManifestResult{},
@@ -245,26 +217,27 @@ func TestVerifyManifest(t *testing.T) {
 						fs.WithDir("content",
 							fs.WithDir("content",
 								fs.WithDir("d_0000001",
-									// fs.WithFile("00000001.jp2", ""),
-									fs.WithFile("00000001_PREMIS.xml", ""),
-									fs.WithFile("00000002.jp2", ""),
-									fs.WithFile("00000002_PREMIS.xml", ""),
-									fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+									// fs.WithFile("00000001.jp2", "12345"),
+									fs.WithFile("00000001_PREMIS.xml", "abcdef"),
+									fs.WithFile("00000002.jp2", "67890"),
+									fs.WithFile("00000002_PREMIS.xml", "ghijk"),
+									fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
 								),
 							),
 							fs.WithDir("header",
 								fs.WithDir("old",
 									fs.WithDir("SIP",
-										fs.WithFile("metadata.xml", ""),
+										fs.WithFile("metadata.xml", "qrstu"),
 									),
 								),
 							),
 						),
-					),
+					).Path(),
 				),
 			},
 			want: activities.VerifyManifestResult{
-				Failures: []string{
+				Failed: true,
+				MissingFiles: []string{
 					"Missing file: content/content/d_0000001/00000001.jp2",
 					"Missing file: content/header/xsd/arelda.xsd",
 				},
@@ -283,32 +256,74 @@ func TestVerifyManifest(t *testing.T) {
 							fs.WithDir("content",
 								fs.WithDir("d_0000001",
 									fs.WithFile("extra_file.txt", "I'm an extra file."),
-									fs.WithFile("00000001.jp2", ""),
-									fs.WithFile("00000001_PREMIS.xml", ""),
-									fs.WithFile("00000002.jp2", ""),
-									fs.WithFile("00000002_PREMIS.xml", ""),
-									fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+									fs.WithFile("00000001.jp2", "12345"),
+									fs.WithFile("00000001_PREMIS.xml", "abcdef"),
+									fs.WithFile("00000002.jp2", "67890"),
+									fs.WithFile("00000002_PREMIS.xml", "ghijk"),
+									fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
 								),
 							),
 							fs.WithDir("header",
 								fs.WithDir("old",
 									fs.WithDir("SIP",
-										fs.WithFile("metadata.xml", ""),
+										fs.WithFile("metadata.xml", "qrstu"),
 									),
 								),
 								fs.WithDir("xsd",
-									fs.WithFile("arelda.xsd", ""),
-									fs.WithFile("extra.xsd", ""),
+									fs.WithFile("arelda.xsd", "vwxyz"),
+									fs.WithFile("extra.xsd", "I'm an extra XSD file."),
 								),
 							),
 						),
-					),
+					).Path(),
 				),
 			},
 			want: activities.VerifyManifestResult{
-				Failures: []string{
+				Failed: true,
+				UnexpectedFiles: []string{
 					"Unexpected file: content/content/d_0000001/extra_file.txt",
 					"Unexpected file: content/header/xsd/extra.xsd",
+				},
+			},
+		},
+		{
+			name: "Returns a list of mismatched checksums",
+			params: activities.VerifyManifestParams{
+				SIP: testSIP(
+					t,
+					fs.NewDir(t, "Test_Extra_Files",
+						fs.WithDir("additional",
+							fs.WithFile("UpdatedAreldaMetadata.xml", aipManifest),
+						),
+						fs.WithDir("content",
+							fs.WithDir("content",
+								fs.WithDir("d_0000001",
+									fs.WithFile("00000001.jp2", "wrong checksum"),
+									fs.WithFile("00000001_PREMIS.xml", "abcdef"),
+									fs.WithFile("00000002.jp2", "67890"),
+									fs.WithFile("00000002_PREMIS.xml", "ghijk"),
+									fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
+								),
+							),
+							fs.WithDir("header",
+								fs.WithDir("old",
+									fs.WithDir("SIP",
+										fs.WithFile("metadata.xml", "also wrong checksum"),
+									),
+								),
+								fs.WithDir("xsd",
+									fs.WithFile("arelda.xsd", "vwxyz"),
+								),
+							),
+						),
+					).Path(),
+				),
+			},
+			want: activities.VerifyManifestResult{
+				Failed: true,
+				ChecksumFailures: []string{
+					`Checksum mismatch for "content/content/d_0000001/00000001.jp2" (expected: "827ccb0eea8a706c4c34a16891f84e7b", got: "2714364e3a0ac68e8bf9b898b31ff303")`,
+					`Checksum mismatch for "content/header/old/SIP/metadata.xml" (expected: "636351dce76b47b3d40712813b9a34f3", got: "dff24b6a34ff7ab645cb477e090bee5f")`,
 				},
 			},
 		},
