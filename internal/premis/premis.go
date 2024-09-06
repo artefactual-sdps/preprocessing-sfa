@@ -130,23 +130,6 @@ func eventFromEventSummaryAndAgent(eventSummary EventSummary, agent Agent) Event
 	}
 }
 
-func NewEventSummary(eventType, detail, outcome, outcomeDetail string) (EventSummary, error) {
-	return EventSummary{
-		Type:          eventType,
-		Detail:        detail,
-		Outcome:       outcome,
-		OutcomeDetail: outcomeDetail,
-	}, nil
-}
-
-func EventOutcomeForFailures(failures []string) string {
-	if failures != nil {
-		return "invalid"
-	}
-
-	return "valid"
-}
-
 func AppendObjectXML(doc *etree.Document, object Object) error {
 	PREMISEl, err := getRoot(doc)
 	if err != nil {
@@ -154,33 +137,6 @@ func AppendObjectXML(doc *etree.Document, object Object) error {
 	}
 
 	addObjectElementIfNeeded(PREMISEl, object)
-
-	return nil
-}
-
-func AppendEventXMLForSingleObject(
-	doc *etree.Document,
-	eventSummary EventSummary,
-	agent Agent,
-	originalName string,
-) error {
-	PREMISEl, err := getRoot(doc)
-	if err != nil {
-		return err
-	}
-
-	// Attempt to get object using originalName.
-	objectEl, err := FindObjectByOriginalName(PREMISEl, originalName)
-	if err != nil {
-		return err
-	}
-
-	// Add event for object, if found.
-	if objectEl != nil {
-		appendEventXMLForObjects(PREMISEl, eventSummary, agent, []*etree.Element{objectEl})
-	} else {
-		return fmt.Errorf("append event and link to object: object '%s' not found as premis originalname", originalName)
-	}
 
 	return nil
 }
@@ -429,16 +385,4 @@ func OriginalNameForSubpath(sip sip.SIP, subpath string) string {
 	} else {
 		return filepath.Join("data", "objects", filepath.Base(sip.Path), "content", subpath)
 	}
-}
-
-func FindObjectByOriginalName(PREMISEl *etree.Element, originalName string) (*etree.Element, error) {
-	for _, objectEl := range PREMISEl.FindElements("//premis:object") {
-		originalNameEl := objectEl.FindElement("./premis:originalName")
-
-		if originalNameEl.Text() == originalName {
-			return objectEl, nil
-		}
-	}
-
-	return nil, nil
 }

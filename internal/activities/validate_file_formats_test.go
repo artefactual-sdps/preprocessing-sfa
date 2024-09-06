@@ -12,77 +12,10 @@ import (
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 const pngContent = "\x89PNG\r\n\x1a\n\x00\x00\x00\x0DIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90\x77\x53\xDE\x00\x00\x00\x00IEND\xAE\x42\x60\x82"
-
-const premisValidFormatsContent = `<?xml version="1.0" encoding="UTF-8"?>
-<premis:premis xmlns:premis="http://www.loc.gov/premis/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/premis/v3 https://www.loc.gov/standards/premis/premis.xsd" version="3.0">
-  <premis:object xsi:type="premis:file">
-    <premis:objectIdentifier>
-      <premis:objectIdentifierType>uuid</premis:objectIdentifierType>
-      <premis:objectIdentifierValue>c74a85b7-919b-409e-8209-9c7ebe0e7945</premis:objectIdentifierValue>
-    </premis:objectIdentifier>
-    <premis:objectCharacteristics>
-      <premis:format>
-        <premis:formatDesignation>
-          <premis:formatName/>
-        </premis:formatDesignation>
-      </premis:format>
-    </premis:objectCharacteristics>
-    <premis:originalName>data/objects/dir/content/file1.txt</premis:originalName>
-  </premis:object>
-  <premis:object xsi:type="premis:file">
-    <premis:objectIdentifier>
-      <premis:objectIdentifierType>uuid</premis:objectIdentifierType>
-      <premis:objectIdentifierValue>a74a85b7-919b-409e-8209-9c7ebe0e7945</premis:objectIdentifierValue>
-    </premis:objectIdentifier>
-    <premis:objectCharacteristics>
-      <premis:format>
-        <premis:formatDesignation>
-          <premis:formatName/>
-        </premis:formatDesignation>
-      </premis:format>
-    </premis:objectCharacteristics>
-    <premis:originalName>data/objects/dir/content/dir/file2.txt</premis:originalName>
-  </premis:object>
-</premis:premis>
-`
-
-const premisInvalidFormatsContent = `<?xml version="1.0" encoding="UTF-8"?>
-<premis:premis xmlns:premis="http://www.loc.gov/premis/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/premis/v3 https://www.loc.gov/standards/premis/premis.xsd" version="3.0">
-  <premis:object xsi:type="premis:file">
-    <premis:objectIdentifier>
-      <premis:objectIdentifierType>uuid</premis:objectIdentifierType>
-      <premis:objectIdentifierValue>c74a85b7-919b-409e-8209-9c7ebe0e7945</premis:objectIdentifierValue>
-    </premis:objectIdentifier>
-    <premis:objectCharacteristics>
-      <premis:format>
-        <premis:formatDesignation>
-          <premis:formatName/>
-        </premis:formatDesignation>
-      </premis:format>
-    </premis:objectCharacteristics>
-    <premis:originalName>data/objects/test_transfer/content/dir/file1.png</premis:originalName>
-  </premis:object>
-  <premis:object xsi:type="premis:file">
-    <premis:objectIdentifier>
-      <premis:objectIdentifierType>uuid</premis:objectIdentifierType>
-      <premis:objectIdentifierValue>a74a85b7-919b-409e-8209-9c7ebe0e7945</premis:objectIdentifierValue>
-    </premis:objectIdentifier>
-    <premis:objectCharacteristics>
-      <premis:format>
-        <premis:formatDesignation>
-          <premis:formatName/>
-        </premis:formatDesignation>
-      </premis:format>
-    </premis:objectCharacteristics>
-    <premis:originalName>data/objects/test_transfer/content/file2.png</premis:originalName>
-  </premis:object>
-</premis:premis>
-`
 
 func TestValidateFileFormats(t *testing.T) {
 	t.Parallel()
@@ -120,11 +53,10 @@ func TestValidateFileFormats(t *testing.T) {
 	validFormatsContentPath := filepath.Join(validFormatsTransferPath, "content", "content")
 
 	tests := []struct {
-		name                 string
-		params               activities.ValidateFileFormatsParams
-		want                 activities.ValidateFileFormatsResult
-		wantErr              string
-		expectedPREMISEvents int
+		name    string
+		params  activities.ValidateFileFormatsParams
+		want    activities.ValidateFileFormatsResult
+		wantErr string
 	}{
 		{
 			name: "Successes with valid formats",
@@ -134,12 +66,7 @@ func TestValidateFileFormats(t *testing.T) {
 					Path:        validFormatsTransferPath,
 					ContentPath: validFormatsContentPath,
 				},
-				PREMISFilePath: fs.NewFile(t, "premis.xml",
-					fs.WithContent(premisValidFormatsContent),
-				).Path(),
-				Agent: premis.AgentDefault(),
 			},
-			expectedPREMISEvents: 2,
 		},
 		{
 			name: "Fails with invalid formats",
@@ -149,10 +76,6 @@ func TestValidateFileFormats(t *testing.T) {
 					Path:        invalidFormatsTransferPath,
 					ContentPath: invalidFormatsContentPath,
 				},
-				PREMISFilePath: fs.NewFile(t, "premis.xml",
-					fs.WithContent(premisInvalidFormatsContent),
-				).Path(),
-				Agent: premis.AgentDefault(),
 			},
 			want: activities.ValidateFileFormatsResult{
 				Failures: []string{
@@ -168,7 +91,6 @@ func TestValidateFileFormats(t *testing.T) {
 					),
 				},
 			},
-			expectedPREMISEvents: 2,
 		},
 		{
 			name: "Fails with an invalid content path",
@@ -177,10 +99,6 @@ func TestValidateFileFormats(t *testing.T) {
 					Type:        enums.SIPTypeDigitizedAIP,
 					ContentPath: "/path/to/missing/dir",
 				},
-				PREMISFilePath: fs.NewFile(t, "premis.xml",
-					fs.WithContent(premis.EmptyXML),
-				).Path(),
-				Agent: premis.AgentDefault(),
 			},
 			wantErr: "activity error (type: validate-file-formats, scheduledEventID: 0, startedEventID: 0, identity: ): ValidateFileFormats: lstat /path/to/missing/dir: no such file or directory",
 		},
@@ -193,10 +111,6 @@ func TestValidateFileFormats(t *testing.T) {
 						fs.WithFile("file.txt", ""),
 					).Path(),
 				},
-				PREMISFilePath: fs.NewFile(t, "premis.xml",
-					fs.WithContent(premis.EmptyXML),
-				).Path(),
-				Agent: premis.AgentDefault(),
 			},
 			wantErr: "activity error (type: validate-file-formats, scheduledEventID: 0, startedEventID: 0, identity: ): ValidateFileFormats: identify format: empty source",
 		},
@@ -227,12 +141,6 @@ func TestValidateFileFormats(t *testing.T) {
 			var result activities.ValidateFileFormatsResult
 			_ = enc.Get(&result)
 			assert.DeepEqual(t, result, tt.want)
-
-			doc, err := premis.ParseFile(tt.params.PREMISFilePath)
-			assert.NilError(t, err)
-
-			objectEls := doc.FindElements("/premis:premis/premis:event")
-			assert.Assert(t, len(objectEls) == tt.expectedPREMISEvents)
 		})
 	}
 }
