@@ -1,6 +1,9 @@
 package activities_test
 
 import (
+	"fmt"
+	pseudorand "math/rand"
+	"os"
 	"testing"
 
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -9,91 +12,73 @@ import (
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 func TestAddPREMISObjects(t *testing.T) {
 	t.Parallel()
 
 	// Normally populated files (for execution expected to work).
-	ContentFilesNormal := fs.NewDir(t, "",
-		fs.WithDir("content",
+	contentFilesNormal := fs.NewDir(t, "",
+		fs.WithDir("digitized_Vecteur_SIP",
+			fs.WithDir("header",
+				fs.WithDir("xsd",
+					fs.WithFile("arelda.xsd", ""),
+				),
+				fs.WithFile("metadata.xml", sipManifest),
+			),
 			fs.WithDir("content",
 				fs.WithDir("d_0000001",
 					fs.WithFile("00000001.jp2", ""),
 					fs.WithFile("00000001_PREMIS.xml", ""),
+					fs.WithFile("00000002.jp2", ""),
+					fs.WithFile("00000002_PREMIS.xml", ""),
+					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
 				),
 			),
 		),
 	)
 
-	PREMISFilePathNormal := ContentFilesNormal.Join("metadata", "premis.xml")
+	premisFilePathNormal := contentFilesNormal.Join("digitized_Vecteur_SIP", "metadata", "premis.xml")
 
 	// No files (for execution expected to work).
-	ContentNoFiles := fs.NewDir(t, "",
-		fs.WithDir("content",
+	contentNoFiles := fs.NewDir(t, "",
+		fs.WithDir("digitized_Vecteur_SIP",
 			fs.WithDir("content",
-				fs.WithDir("d_0000001"),
+				fs.WithDir("content",
+					fs.WithDir("d_0000001"),
+				),
 			),
 		),
 	)
 
-	PREMISFilePathNoFiles := ContentNoFiles.Join("metadata", "premis.xml")
-
-	// Non-existent paths (for execution expected to fail).
-	ContentNonExistent := fs.NewDir(t, "",
-		fs.WithDir("content",
-			fs.WithDir("content",
-				fs.WithDir("d_0000001"),
-			),
-		),
-	)
-
-	PREMISFilePathNonExistent := ContentNonExistent.Join("metadata", "premis.xml")
-
-	ContentNonExistent.Remove()
+	premisFilePathNoFiles := contentNoFiles.Join("digitized_Vecteur_SIP", "metadata", "premis.xml")
 
 	tests := []struct {
-		name    string
-		params  activities.AddPREMISObjectsParams
-		result  activities.AddPREMISObjectsResult
-		wantErr string
+		name       string
+		params     activities.AddPREMISObjectsParams
+		result     activities.AddPREMISObjectsResult
+		wantPREMIS string
+		wantErr    string
 	}{
 		{
 			name: "Add PREMIS objects for normal content",
 			params: activities.AddPREMISObjectsParams{
-				SIP: sip.SIP{
-					Type:        enums.SIPTypeDigitizedAIP,
-					ContentPath: ContentFilesNormal.Path(),
-				},
-				PREMISFilePath: PREMISFilePathNormal,
+				SIP:            testSIP(t, contentFilesNormal.Join("digitized_Vecteur_SIP")),
+				PREMISFilePath: premisFilePathNormal,
 			},
 			result: activities.AddPREMISObjectsResult{},
 		},
 		{
-			name: "Add PREMIS objects for no content",
+			name: "Error when manifest is missing",
 			params: activities.AddPREMISObjectsParams{
-				SIP: sip.SIP{
-					Type:        enums.SIPTypeDigitizedAIP,
-					ContentPath: ContentNoFiles.Path(),
-				},
-				PREMISFilePath: PREMISFilePathNoFiles,
+				SIP:            testSIP(t, contentNoFiles.Join("digitized_Vecteur_SIP")),
+				PREMISFilePath: premisFilePathNoFiles,
 			},
 			result: activities.AddPREMISObjectsResult{},
-		},
-		{
-			name: "Add PREMIS objects for bad path",
-			params: activities.AddPREMISObjectsParams{
-				SIP: sip.SIP{
-					Type:        enums.SIPTypeDigitizedAIP,
-					ContentPath: ContentNonExistent.Path(),
-				},
-				PREMISFilePath: PREMISFilePathNonExistent,
-			},
-			result:  activities.AddPREMISObjectsResult{},
-			wantErr: "no such file or directory",
+			wantErr: fmt.Sprintf(
+				"open manifest file: open %s: no such file or directory",
+				contentNoFiles.Join("digitized_Vecteur_SIP", "header", "metadata.xml"),
+			),
 		},
 	}
 	for _, tt := range tests {
@@ -102,8 +87,9 @@ func TestAddPREMISObjects(t *testing.T) {
 
 			ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 			env := ts.NewTestActivityEnvironment()
+			rng := pseudorand.New(pseudorand.NewSource(1)) // #nosec G404
 			env.RegisterActivityWithOptions(
-				activities.NewAddPREMISObjects().Execute,
+				activities.NewAddPREMISObjects(rng).Execute,
 				temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISObjectsName},
 			)
 
@@ -119,21 +105,87 @@ func TestAddPREMISObjects(t *testing.T) {
 
 				return
 			}
-
 			assert.NilError(t, err)
 
 			future.Get(&res)
-			assert.NilError(t, err)
 			assert.DeepEqual(t, res, tt.result)
 
-			// If the content directory has files, make sure that PREMIS file can be parsed.
-			contentFiles, err := premis.FilesWithinDirectory(tt.params.SIP.ContentPath)
+			b, err := os.ReadFile(tt.params.PREMISFilePath)
 			assert.NilError(t, err)
-
-			if len(contentFiles) > 0 {
-				_, err = premis.ParseFile(tt.params.PREMISFilePath)
-				assert.NilError(t, err)
-			}
+			assert.Equal(t, string(b), `<?xml version="1.0" encoding="UTF-8"?>
+<premis:premis xmlns:premis="http://www.loc.gov/premis/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/premis/v3 https://www.loc.gov/standards/premis/premis.xsd" version="3.0">
+  <premis:object xsi:type="premis:file">
+    <premis:objectIdentifier>
+      <premis:objectIdentifierType>UUID</premis:objectIdentifierType>
+      <premis:objectIdentifierValue>52fdfc07-2182-454f-963f-5f0f9a621d72</premis:objectIdentifierValue>
+    </premis:objectIdentifier>
+    <premis:objectCharacteristics>
+      <premis:format>
+        <premis:formatDesignation>
+          <premis:formatName/>
+        </premis:formatDesignation>
+      </premis:format>
+    </premis:objectCharacteristics>
+    <premis:originalName>data/objects/digitized_Vecteur_SIP/content/d_0000001/00000001.jp2</premis:originalName>
+  </premis:object>
+  <premis:object xsi:type="premis:file">
+    <premis:objectIdentifier>
+      <premis:objectIdentifierType>UUID</premis:objectIdentifierType>
+      <premis:objectIdentifierValue>9566c74d-1003-4c4d-bbbb-0407d1e2c649</premis:objectIdentifierValue>
+    </premis:objectIdentifier>
+    <premis:objectCharacteristics>
+      <premis:format>
+        <premis:formatDesignation>
+          <premis:formatName/>
+        </premis:formatDesignation>
+      </premis:format>
+    </premis:objectCharacteristics>
+    <premis:originalName>data/objects/digitized_Vecteur_SIP/content/d_0000001/00000001_PREMIS.xml</premis:originalName>
+  </premis:object>
+  <premis:object xsi:type="premis:file">
+    <premis:objectIdentifier>
+      <premis:objectIdentifierType>UUID</premis:objectIdentifierType>
+      <premis:objectIdentifierValue>81855ad8-681d-4d86-91e9-1e00167939cb</premis:objectIdentifierValue>
+    </premis:objectIdentifier>
+    <premis:objectCharacteristics>
+      <premis:format>
+        <premis:formatDesignation>
+          <premis:formatName/>
+        </premis:formatDesignation>
+      </premis:format>
+    </premis:objectCharacteristics>
+    <premis:originalName>data/objects/digitized_Vecteur_SIP/content/d_0000001/00000002.jp2</premis:originalName>
+  </premis:object>
+  <premis:object xsi:type="premis:file">
+    <premis:objectIdentifier>
+      <premis:objectIdentifierType>UUID</premis:objectIdentifierType>
+      <premis:objectIdentifierValue>6694d2c4-22ac-4208-a007-2939487f6999</premis:objectIdentifierValue>
+    </premis:objectIdentifier>
+    <premis:objectCharacteristics>
+      <premis:format>
+        <premis:formatDesignation>
+          <premis:formatName/>
+        </premis:formatDesignation>
+      </premis:format>
+    </premis:objectCharacteristics>
+    <premis:originalName>data/objects/digitized_Vecteur_SIP/content/d_0000001/00000002_PREMIS.xml</premis:originalName>
+  </premis:object>
+  <premis:object xsi:type="premis:file">
+    <premis:objectIdentifier>
+      <premis:objectIdentifierType>UUID</premis:objectIdentifierType>
+      <premis:objectIdentifierValue>eb9d18a4-4784-445d-87f3-c67cf22746e9</premis:objectIdentifierValue>
+    </premis:objectIdentifier>
+    <premis:objectCharacteristics>
+      <premis:format>
+        <premis:formatDesignation>
+          <premis:formatName/>
+        </premis:formatDesignation>
+      </premis:format>
+    </premis:objectCharacteristics>
+    <premis:originalName>data/metadata/Prozess_Digitalisierung_PREMIS_d_0000001.xml</premis:originalName>
+  </premis:object>
+</premis:premis>
+`)
 		})
 	}
 }

@@ -13,7 +13,7 @@ import (
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	digitizedAIP := fs.NewDir(t, "",
+	digitizedAIP := fs.NewDir(t, "Test-AIP-Digitization",
 		fs.WithDir("content"),
 		fs.WithDir("additional"),
 	)
@@ -137,4 +137,14 @@ func TestNew(t *testing.T) {
 			assert.DeepEqual(t, s, tt.wantSIP)
 		})
 	}
+}
+
+func TestName(t *testing.T) {
+	t.Parallel()
+
+	s := sip.SIP{
+		Type: enums.SIPTypeDigitizedSIP,
+		Path: "/path/to/SIP_20201201_Vecteur",
+	}
+	assert.Equal(t, s.Name(), "SIP_20201201_Vecteur")
 }

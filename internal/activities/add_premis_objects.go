@@ -2,6 +2,8 @@ package activities
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -20,13 +22,15 @@ type AddPREMISObjectsParams struct {
 
 type AddPREMISObjectsResult struct{}
 
-type AddPREMISObjectsActivity struct{}
-
-func NewAddPREMISObjects() *AddPREMISObjectsActivity {
-	return &AddPREMISObjectsActivity{}
+type AddPREMISObjectsActivity struct {
+	rng io.Reader
 }
 
-func (md *AddPREMISObjectsActivity) Execute(
+func NewAddPREMISObjects(rand io.Reader) *AddPREMISObjectsActivity {
+	return &AddPREMISObjectsActivity{rng: rand}
+}
+
+func (a *AddPREMISObjectsActivity) Execute(
 	ctx context.Context,
 	params *AddPREMISObjectsParams,
 ) (*AddPREMISObjectsResult, error) {
@@ -47,10 +51,21 @@ func (md *AddPREMISObjectsActivity) Execute(
 		return nil, err
 	}
 
+	f, err := os.Open(params.SIP.ManifestPath)
+	if err != nil {
+		return nil, fmt.Errorf("open manifest file: %v", err)
+	}
+	defer f.Close()
+
 	for _, subpath := range subpaths {
+		id, err := uuid.NewRandomFromReader(a.rng)
+		if err != nil {
+			return nil, fmt.Errorf("generate UUID: %v", err)
+		}
+
 		object := premis.Object{
 			IdType:       "UUID",
-			IdValue:      uuid.New().String(),
+			IdValue:      id.String(),
 			OriginalName: premis.OriginalNameForSubpath(params.SIP, subpath),
 		}
 
@@ -60,6 +75,7 @@ func (md *AddPREMISObjectsActivity) Execute(
 		}
 	}
 
+	doc.Indent(2)
 	err = doc.WriteToFile(params.PREMISFilePath)
 	if err != nil {
 		return nil, err

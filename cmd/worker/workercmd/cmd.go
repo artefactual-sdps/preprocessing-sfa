@@ -2,6 +2,7 @@ package workercmd
 
 import (
 	"context"
+	"crypto/rand"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/go-logr/logr"
@@ -76,7 +77,7 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewAddPREMISObjects().Execute,
+		activities.NewAddPREMISObjects(rand.Reader).Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISObjectsName},
 	)
 	w.RegisterActivityWithOptions(
@@ -94,6 +95,10 @@ func (m *Main) Run(ctx context.Context) error {
 	w.RegisterActivityWithOptions(
 		activities.NewTransformSIP().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
+	)
+	w.RegisterActivityWithOptions(
+		activities.NewWriteIdentifierFile().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.WriteIdentifierFileName},
 	)
 	w.RegisterActivityWithOptions(
 		bagcreate.New(m.cfg.Bagit).Execute,

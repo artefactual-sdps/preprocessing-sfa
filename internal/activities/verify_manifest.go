@@ -69,8 +69,8 @@ func (a *VerifyManifest) Execute(ctx context.Context, params *VerifyManifestPara
 }
 
 // manifestFiles parses the SIP manifest and returns a map of file paths
-// (relative to the SIP root directory) to file checksums.
-func manifestFiles(s sip.SIP) (map[string]*manifest.Checksum, error) {
+// (relative to the SIP root directory) to files.
+func manifestFiles(s sip.SIP) (map[string]*manifest.File, error) {
 	f, err := os.Open(s.ManifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("open: %v", err)
@@ -83,7 +83,7 @@ func manifestFiles(s sip.SIP) (map[string]*manifest.Checksum, error) {
 
 	// Prefix "content/" to digitized AIP file paths.
 	if s.Type == enums.SIPTypeDigitizedAIP {
-		m := make(map[string]*manifest.Checksum, len(files))
+		m := make(map[string]*manifest.File, len(files))
 		for k, v := range files {
 			m[filepath.Join("content", k)] = v
 		}
@@ -166,33 +166,38 @@ func unexpectedFiles(manifest, filesys goset.Set[string]) []string {
 // directory of the SIP, and is prefixed to each relative file path in the
 // manifest to create an absolute path the file.
 func verifyChecksums(
-	manifestFiles map[string]*manifest.Checksum,
+	manifestFiles map[string]*manifest.File,
 	sipFiles goset.Set[string],
 	root string,
 ) ([]string, error) {
 	var failures []string
 
-	for path, checksum := range manifestFiles {
+	for path, file := range manifestFiles {
 		// Check if file exists on filesystem.
 		if !sipFiles.Contains(path) {
 			continue
 		}
 
 		// Generate checksum from filesystem file contents.
-		switch checksum.Algorithm {
+		switch file.Checksum.Algorithm {
 		case "MD5":
 			hash, err := md5Hash(filepath.Join(root, path))
 			if err != nil {
 				return nil, fmt.Errorf("generate MD5 hash: %v", err)
 			}
-			if hash != checksum.Hash {
+			if hash != file.Checksum.Hash {
 				failures = append(
 					failures,
-					fmt.Sprintf("Checksum mismatch for %q (expected: %q, got: %q)", path, checksum.Hash, hash),
+					fmt.Sprintf(
+						"Checksum mismatch for %q (expected: %q, got: %q)",
+						path,
+						file.Checksum.Hash,
+						hash,
+					),
 				)
 			}
 		default:
-			return nil, fmt.Errorf("hash algorithm %q is not supported", checksum.Algorithm)
+			return nil, fmt.Errorf("hash algorithm %q is not supported", file.Checksum.Algorithm)
 		}
 	}
 	slices.Sort(failures)

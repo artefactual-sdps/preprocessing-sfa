@@ -1,6 +1,7 @@
 package workflow_test
 
 import (
+	"crypto/rand"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -18,6 +19,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/pips"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflow"
@@ -139,7 +141,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewAddPREMISObjects().Execute,
+		activities.NewAddPREMISObjects(rand.Reader).Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISObjectsName},
 	)
 	s.env.RegisterActivityWithOptions(
@@ -157,6 +159,10 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 	s.env.RegisterActivityWithOptions(
 		activities.NewTransformSIP().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
+	)
+	s.env.RegisterActivityWithOptions(
+		activities.NewWriteIdentifierFile().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.WriteIdentifierFileName},
 	)
 	s.env.RegisterActivityWithOptions(
 		bagcreate.New(cfg.Bagit).Execute,
@@ -213,6 +219,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 	s.SetupTest(&config.Configuration{})
 	sipPath := filepath.Join(s.testDir, relPath)
 	expectedSIP := s.digitizedAIP(sipPath)
+	expectedPIP := pips.NewFromSIP(expectedSIP)
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
@@ -324,8 +331,19 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		sessionCtx,
 		&activities.TransformSIPParams{SIP: expectedSIP},
 	).Return(
-		&activities.TransformSIPResult{}, nil,
+		&activities.TransformSIPResult{PIP: expectedPIP}, nil,
 	)
+
+	s.env.OnActivity(
+		activities.WriteIdentifierFileName,
+		sessionCtx,
+		&activities.WriteIdentifierFileParams{PIP: expectedPIP},
+	).Return(
+		&activities.WriteIdentifierFileResult{
+			Path: filepath.Join(sipPath, "metadata", "identifiers.json"),
+		}, nil,
+	)
+
 	s.env.OnActivity(
 		bagcreate.Name,
 		sessionCtx,
@@ -394,6 +412,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 				{
 					Name:        "Restructure SIP",
 					Message:     "SIP has been restructured",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
+					Name:        "Create identifier.json",
+					Message:     "Created an identifier.json file",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,

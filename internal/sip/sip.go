@@ -97,3 +97,7 @@ func (s SIP) bornDigital() SIP {
 
 	return s
 }
+
+func (s SIP) Name() string {
+	return filepath.Base(s.Path)
+}
