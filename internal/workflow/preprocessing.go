@@ -274,11 +274,32 @@ func (w *PreprocessingWorkflow) Execute(
 		))
 		return systemError(logger, "Restructure SIP", &result, e), nil
 	}
-
 	result.addEvent(restructureSIPEvent.Complete(
 		ctx,
 		enums.EventOutcomeSuccess,
 		"SIP has been restructured",
+	))
+
+	// Write the identifiers.json file.
+	writeIDFileEvent := newEvent(ctx, "Create identifier.json")
+	var writeIDFile activities.WriteIdentifierFileResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withLocalActOpts(ctx),
+		activities.WriteIdentifierFileName,
+		&activities.WriteIdentifierFileParams{PIP: transformSIP.PIP},
+	).Get(ctx, &writeIDFile)
+	if e != nil {
+		result.addEvent(writeIDFileEvent.Complete(
+			ctx,
+			enums.EventOutcomeSystemFailure,
+			"System error: creating identifier.json has failed",
+		))
+		return systemError(logger, "Write identifier file", &result, e), nil
+	}
+	result.addEvent(writeIDFileEvent.Complete(
+		ctx,
+		enums.EventOutcomeSuccess,
+		"Created an identifier.json file",
 	))
 
 	// Bag the SIP for Enduro processing.

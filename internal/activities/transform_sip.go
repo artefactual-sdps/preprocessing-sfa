@@ -11,6 +11,7 @@ import (
 	"go.artefactual.dev/tools/fsutil"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/pips"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
@@ -20,7 +21,9 @@ type TransformSIPParams struct {
 	SIP sip.SIP
 }
 
-type TransformSIPResult struct{}
+type TransformSIPResult struct {
+	PIP pips.PIP
+}
 
 type TransformSIP struct{}
 
@@ -107,5 +110,5 @@ func (a *TransformSIP) Execute(ctx context.Context, params *TransformSIPParams) 
 		return nil, err
 	}
 
-	return &TransformSIPResult{}, nil
+	return &TransformSIPResult{PIP: pips.NewFromSIP(params.SIP)}, nil
 }

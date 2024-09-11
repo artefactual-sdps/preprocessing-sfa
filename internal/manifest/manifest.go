@@ -8,10 +8,22 @@ import (
 	"slices"
 )
 
-type Checksum struct {
-	Algorithm string
-	Hash      string
-}
+type (
+	// Manifest is a map of SIP file paths to File metadata.
+	Manifest map[string]*File
+
+	// File represents manifest metadata about a file.
+	File struct {
+		ID       string
+		Checksum Checksum
+	}
+
+	// Checksum represents a manifest file checksum.
+	Checksum struct {
+		Algorithm string
+		Hash      string
+	}
+)
 
 var relevantElements = []string{
 	"paket",
@@ -23,17 +35,18 @@ var relevantElements = []string{
 	"pruefsumme",
 }
 
-// Files parses r and returns a map of file paths to checksums.
-func Files(r io.Reader) (map[string]*Checksum, error) {
+// Files parses an XML manifest data stream r and returns a Manifest
+// representing the manifest file metadata.
+func Files(r io.Reader) (Manifest, error) {
 	var (
-		checksum *Checksum
-		path     string
+		file *File
+		path string
 	)
 
 	// openElems is a stack representing open elements. It has an arbitrarily
 	// large capacity to avoid unnecessary copies of the underlying array.
-	openElems := make([]string, 100)
-	files := make(map[string]*Checksum)
+	openElems := make([]string, 0, 100)
+	files := make(map[string]*File)
 
 	// decoder is an XML stream parser reading from r.
 	decoder := xml.NewDecoder(r)
@@ -52,7 +65,14 @@ func Files(r io.Reader) (map[string]*Checksum, error) {
 			switch {
 			case slices.Contains(relevantElements, e):
 				if e == "datei" {
-					checksum = &Checksum{} // Create a new checksum.
+					var id string
+					for _, a := range elem.Attr {
+						if a.Name.Local == "id" {
+							id = a.Value
+							break
+						}
+					}
+					file = &File{ID: id} // Create a new file instance.
 				}
 
 				// Add element to openElems stack.
@@ -66,8 +86,8 @@ func Files(r io.Reader) (map[string]*Checksum, error) {
 			if e := elem.Name.Local; e == openElems[len(openElems)-1] {
 				switch e {
 				case "datei":
-					files[path] = checksum
-					checksum = nil // Close checksum instance.
+					files[path] = file
+					file = nil // Close file instance.
 					fallthrough
 				case "ordner":
 					path = filepath.Dir(path) // Remove name from path.
@@ -78,14 +98,18 @@ func Files(r io.Reader) (map[string]*Checksum, error) {
 				openElems = openElems[:len(openElems)-1] // Close element.
 			}
 		case xml.CharData:
+			if len(openElems) == 0 {
+				break
+			}
+
 			switch openElems[len(openElems)-1] {
 			case "name":
 				// Add ordner or datei name to file path.
 				path = filepath.Join(path, string(elem))
 			case "pruefalgorithmus":
-				checksum.Algorithm = string(elem)
+				file.Checksum.Algorithm = string(elem)
 			case "pruefsumme":
-				checksum.Hash = string(elem)
+				file.Checksum.Hash = string(elem)
 			}
 		}
 	}

@@ -125,7 +125,7 @@ var (
 			</ordner>
 		</inhaltsverzeichnis>
 	</paket>
-	`
+`
 )
 
 func TestFiles(t *testing.T) {
@@ -134,66 +134,93 @@ func TestFiles(t *testing.T) {
 	tests := []struct {
 		name    string
 		reader  io.Reader
-		want    map[string]*manifest.Checksum
+		want    manifest.Manifest
 		wantErr string
 	}{
 		{
 			name:   "Returns a digitized AIP file list",
 			reader: strings.NewReader(AIPManifest),
-			want: map[string]*manifest.Checksum{
+			want: manifest.Manifest{
 				"content/d_0000001/00000001.jp2": {
-					Algorithm: "MD5",
-					Hash:      "f7dc1f76a55cbdca0ae4a6dc8ae64644",
+					ID: "_miEf29GTkFR7ymi91IV4fO",
+					Checksum: manifest.Checksum{
+						Algorithm: "MD5",
+						Hash:      "f7dc1f76a55cbdca0ae4a6dc8ae64644",
+					},
 				},
 				"content/d_0000001/00000001_PREMIS.xml": {
-					Algorithm: "MD5",
-					Hash:      "1428a269ff4e5b4894793b68646984b7",
+					ID: "_SRpeVgb4xGImymb23OH1od",
+					Checksum: manifest.Checksum{
+						Algorithm: "MD5",
+						Hash:      "1428a269ff4e5b4894793b68646984b7",
+					},
 				},
 				"content/d_0000001/Prozess_Digitalisierung_PREMIS.xml": {
-					Algorithm: "MD5",
-					Hash:      "8067daaa900eba6dace69572eea8f8f3",
+					ID: "_fZzi3dX2jvrwakvY6jeJS8",
+					Checksum: manifest.Checksum{
+						Algorithm: "MD5",
+						Hash:      "8067daaa900eba6dace69572eea8f8f3",
+					},
 				},
 				"header/old/SIP/metadata.xml": {
-					Algorithm: "MD5",
-					Hash:      "43c533d499c572fca699e77e06295ba3",
+					ID: "OLD_SIP",
+					Checksum: manifest.Checksum{
+						Algorithm: "MD5",
+						Hash:      "43c533d499c572fca699e77e06295ba3",
+					},
 				},
 				"header/xsd/arelda.xsd": {
-					Algorithm: "MD5",
-					Hash:      "f8454632e1ebf97e0aa8d9527ce2641f",
+					ID: "_xAlSBc3dYcypUMvN8HzeN5",
+					Checksum: manifest.Checksum{
+						Algorithm: "MD5",
+						Hash:      "f8454632e1ebf97e0aa8d9527ce2641f",
+					},
 				},
 			},
 		},
 		{
 			name:   "Returns a digitized SIP file list",
 			reader: strings.NewReader(SIPManifest),
-			want: map[string]*manifest.Checksum{
+			want: manifest.Manifest{
 				"content/d_0000001/00000001.jp2": {
-					Algorithm: "MD5",
-					Hash:      "dc29291d0e2a18363d0efd2ec2fe81c9",
+					ID: "_zodSTSD0nv05CpOp6JoV3X",
+					Checksum: manifest.Checksum{
+						Algorithm: "MD5",
+						Hash:      "dc29291d0e2a18363d0efd2ec2fe81c9",
+					},
 				},
 				"content/d_0000001/00000001_PREMIS.xml": {
-					Algorithm: "MD5",
-					Hash:      "1d310772d26138a42eb2d6bebb637457",
+					ID: "_WuDmXAs5UDwKTGVLsCcZxa",
+					Checksum: manifest.Checksum{
+						Algorithm: "MD5",
+						Hash:      "1d310772d26138a42eb2d6bebb637457",
+					},
 				},
 				"content/d_0000001/Prozess_Digitalisierung_PREMIS.xml": {
-					Algorithm: "MD5",
-					Hash:      "21d8e90afdefd2c43386ca1d1658cab0",
+					ID: "_cQ6sm5CChWVqtqmrWvne0W",
+					Checksum: manifest.Checksum{
+						Algorithm: "MD5",
+						Hash:      "21d8e90afdefd2c43386ca1d1658cab0",
+					},
 				},
 				"header/xsd/arelda.xsd": {
-					Algorithm: "MD5",
-					Hash:      "f8454632e1ebf97e0aa8d9527ce2641f",
+					ID: "_ZSANrSklQ9HGn99yjlUumz",
+					Checksum: manifest.Checksum{
+						Algorithm: "MD5",
+						Hash:      "f8454632e1ebf97e0aa8d9527ce2641f",
+					},
 				},
 			},
 		},
 		{
 			name:   "Returns an empty list from an empty manifest",
 			reader: strings.NewReader(""),
-			want:   map[string]*manifest.Checksum{},
+			want:   manifest.Manifest{},
 		},
 		{
 			name:    "Errors on a missing closing tag",
 			reader:  strings.NewReader(`<datei id="_ZSANrSklQ9HGn99yjlUumz"><name>arelda.xsd</name>`),
-			want:    map[string]*manifest.Checksum{},
+			want:    manifest.Manifest{},
 			wantErr: "parse: XML syntax error on line 1: unexpected EOF",
 		},
 	}
