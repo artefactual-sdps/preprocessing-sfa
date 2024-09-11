@@ -2,11 +2,11 @@ package activities
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/google/uuid"
-
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/manifest"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
@@ -47,10 +47,26 @@ func (md *AddPREMISObjectsActivity) Execute(
 		return nil, err
 	}
 
+	f, err := os.Open(params.SIP.ManifestPath)
+	if err != nil {
+		return nil, fmt.Errorf("open manifest file: %v", err)
+	}
+	defer f.Close()
+
+	manifestFiles, err := manifest.Files(f)
+	if err != nil {
+		return nil, fmt.Errorf("parse manifest: %v", err)
+	}
+
 	for _, subpath := range subpaths {
+		var id string
+		if f, ok := manifestFiles[subpathToManifestPath(subpath)]; ok {
+			id = f.ID
+		}
+
 		object := premis.Object{
-			IdType:       "UUID",
-			IdValue:      uuid.New().String(),
+			IdType:       "local",
+			IdValue:      id,
 			OriginalName: premis.OriginalNameForSubpath(params.SIP, subpath),
 		}
 
@@ -60,10 +76,15 @@ func (md *AddPREMISObjectsActivity) Execute(
 		}
 	}
 
+	doc.Indent(2)
 	err = doc.WriteToFile(params.PREMISFilePath)
 	if err != nil {
 		return nil, err
 	}
 
 	return &AddPREMISObjectsResult{}, nil
+}
+
+func subpathToManifestPath(path string) string {
+	return filepath.Join("content", path)
 }
