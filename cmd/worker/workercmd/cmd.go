@@ -73,7 +73,7 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: activities.VerifyManifestName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewValidateFileFormats().Execute,
+		activities.NewValidateFileFormats(m.cfg.FileFormat).Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
 	)
 	w.RegisterActivityWithOptions(
