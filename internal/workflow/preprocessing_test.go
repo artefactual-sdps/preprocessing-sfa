@@ -19,6 +19,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/pips"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
@@ -137,7 +138,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.VerifyManifestName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewValidateFileFormats().Execute,
+		activities.NewValidateFileFormats(fformat.Config{}).Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
 	)
 	s.env.RegisterActivityWithOptions(
