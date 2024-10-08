@@ -1,6 +1,6 @@
 module github.com/artefactual-sdps/preprocessing-sfa
 
-go 1.22.6
+go 1.23.2
 
 require (
 	github.com/artefactual-sdps/temporal-activities v0.0.0-20240821162351-47302711bc7b
