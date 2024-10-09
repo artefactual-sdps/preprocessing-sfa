@@ -2,9 +2,14 @@ package activities
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
+	"io"
 	"io/fs"
+	"os"
 	"path/filepath"
+
+	"go.artefactual.dev/tools/temporal"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
@@ -12,18 +17,22 @@ import (
 
 const ValidateFileFormatsName = "validate-file-formats"
 
-type ValidateFileFormatsParams struct {
-	SIP sip.SIP
-}
+type (
+	ValidateFileFormats struct {
+		cfg fformat.Config
+	}
+	ValidateFileFormatsParams struct {
+		SIP sip.SIP
+	}
+	ValidateFileFormatsResult struct {
+		Failures []string
+	}
+)
 
-type ValidateFileFormatsResult struct {
-	Failures []string
-}
+type formatList map[string]struct{}
 
-type ValidateFileFormats struct{}
-
-func NewValidateFileFormats() *ValidateFileFormats {
-	return &ValidateFileFormats{}
+func NewValidateFileFormats(cfg fformat.Config) *ValidateFileFormats {
+	return &ValidateFileFormats{cfg: cfg}
 }
 
 func (a *ValidateFileFormats) Execute(
@@ -31,46 +40,27 @@ func (a *ValidateFileFormats) Execute(
 	params *ValidateFileFormatsParams,
 ) (*ValidateFileFormatsResult, error) {
 	var failures []string
+	logger := temporal.GetLogger(ctx)
 
-	sf := fformat.NewSiegfriedEmbed()
-	// TODO(daniel): make allowed list configurable.
-	allowed := map[string]struct{}{
-		"fmt/95":    {},
-		"x-fmt/16":  {},
-		"x-fmt/21":  {},
-		"x-fmt/22":  {},
-		"x-fmt/62":  {},
-		"x-fmt/111": {},
-		"x-fmt/282": {},
-		"x-fmt/283": {},
-		"fmt/354":   {},
-		"fmt/476":   {},
-		"fmt/477":   {},
-		"fmt/478":   {},
-		"x-fmt/18":  {},
-		"fmt/161":   {},
-		"fmt/1196":  {},
-		"fmt/1777":  {},
-		"fmt/353":   {},
-		"x-fmt/392": {},
-		"fmt/1":     {},
-		"fmt/2":     {},
-		"fmt/6":     {},
-		"fmt/141":   {},
-		"fmt/569":   {},
-		"fmt/199":   {},
-		"fmt/101":   {},
-		"fmt/142":   {},
-		"x-fmt/280": {},
-		"fmt/1014":  {},
-		"fmt/1012":  {},
-		"fmt/654":   {},
-		"fmt/1013":  {},
-		"fmt/1011":  {},
-		"fmt/653":   {},
+	if a.cfg.AllowlistPath == "" {
+		logger.Info("ValidateFileFormats: No file format allowlist path set, skipping file format validation")
+
+		return nil, nil
 	}
 
-	err := filepath.WalkDir(params.SIP.ContentPath, func(p string, d fs.DirEntry, err error) error {
+	f, err := os.Open(a.cfg.AllowlistPath)
+	if err != nil {
+		return nil, fmt.Errorf("ValidateFileFormats: %v", err)
+	}
+	defer f.Close()
+
+	allowed, err := parseFormatList(f)
+	if err != nil {
+		return nil, fmt.Errorf("ValidateFileFormats: load allowed formats: %v", err)
+	}
+
+	sf := fformat.NewSiegfriedEmbed()
+	err = filepath.WalkDir(params.SIP.ContentPath, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -95,4 +85,35 @@ func (a *ValidateFileFormats) Execute(
 	}
 
 	return &ValidateFileFormatsResult{Failures: failures}, nil
+}
+
+func parseFormatList(r io.Reader) (formatList, error) {
+	var i int
+	formats := make(formatList)
+
+	cr := csv.NewReader(r)
+	for {
+		row, err := cr.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("invalid CSV: %v", err)
+		}
+
+		// Skip the first row.
+		if i > 0 {
+			// Get the file format identifier from the first column of each row
+			// and ignore subsequent columns.
+			formats[row[0]] = struct{}{}
+		}
+
+		i++
+	}
+
+	if len(formats) == 0 {
+		return nil, fmt.Errorf("no allowed file formats")
+	}
+
+	return formats, nil
 }
