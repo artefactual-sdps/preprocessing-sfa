@@ -58,10 +58,21 @@ func TestValidateFileFormats(t *testing.T) {
 	validFormatsTransferPath := filepath.Join(validFormatsDir, "data", "dir")
 	validFormatsContentPath := filepath.Join(validFormatsTransferPath, "content", "content")
 
-	emptyAllowlistDir := fs.NewDir(t, "", fs.WithFile("allowlist.csv", ""))
-	invalidAllowListDir := fs.NewDir(t, "", fs.WithFile("allowlist.csv", `PRONOM_ID
+	emptyList := fs.NewDir(t, "", fs.WithFile("allowlist.csv", "")).Join("allowlist.csv")
+
+	invalidCSVList := fs.NewDir(t, "", fs.WithFile("allowlist.csv", `PRONOM PUID
 fmt/95,fmt/96
-`))
+`)).Join("allowlist.csv")
+
+	noPUIDList := fs.NewDir(t, "", fs.WithFile("allowlist.csv", `pronom id
+fmt/95
+`)).Join("allowlist.csv")
+
+	weirdButValidList := fs.NewDir(t, "", fs.WithFile("allowlist.csv", `Pronom puid,Format
+fmt/95,"PDF/A "
+
+" x-fmt/111 ","text file"
+`)).Join("allowlist.csv")
 
 	tests := []struct {
 		name    string
@@ -72,9 +83,22 @@ fmt/95,fmt/96
 		wantLog string
 	}{
 		{
-			name: "Successes with valid formats",
+			name: "Succeeds with valid formats",
 			cfg: fformat.Config{
 				AllowlistPath: "../testdata/allowed_file_formats.csv",
+			},
+			params: activities.ValidateFileFormatsParams{
+				SIP: sip.SIP{
+					Type:        enums.SIPTypeDigitizedAIP,
+					Path:        validFormatsTransferPath,
+					ContentPath: validFormatsContentPath,
+				},
+			},
+		},
+		{
+			name: "Succeeds with weird but valid CSV values",
+			cfg: fformat.Config{
+				AllowlistPath: weirdButValidList,
 			},
 			params: activities.ValidateFileFormatsParams{
 				SIP: sip.SIP{
@@ -164,7 +188,7 @@ fmt/95,fmt/96
 		},
 		{
 			name: "Errors when allowlist is empty",
-			cfg:  fformat.Config{AllowlistPath: emptyAllowlistDir.Join("allowlist.csv")},
+			cfg:  fformat.Config{AllowlistPath: emptyList},
 			params: activities.ValidateFileFormatsParams{
 				SIP: sip.SIP{
 					Type:        enums.SIPTypeDigitizedAIP,
@@ -175,8 +199,20 @@ fmt/95,fmt/96
 			wantErr: "ValidateFileFormats: load allowed formats: no allowed file formats",
 		},
 		{
+			name: "Errors when no PRONOM PUID column exists",
+			cfg:  fformat.Config{AllowlistPath: noPUIDList},
+			params: activities.ValidateFileFormatsParams{
+				SIP: sip.SIP{
+					Type:        enums.SIPTypeDigitizedAIP,
+					Path:        validFormatsTransferPath,
+					ContentPath: validFormatsContentPath,
+				},
+			},
+			wantErr: "ValidateFileFormats: load allowed formats: missing \"PRONOM PUID\" column",
+		},
+		{
 			name: "Errors when allowlist is not a valid CSV format",
-			cfg:  fformat.Config{AllowlistPath: invalidAllowListDir.Join("allowlist.csv")},
+			cfg:  fformat.Config{AllowlistPath: invalidCSVList},
 			params: activities.ValidateFileFormatsParams{
 				SIP: sip.SIP{
 					Type:        enums.SIPTypeDigitizedAIP,

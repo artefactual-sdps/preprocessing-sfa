@@ -3,11 +3,14 @@ package activities
 import (
 	"context"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	"go.artefactual.dev/tools/temporal"
 
@@ -88,7 +91,7 @@ func (a *ValidateFileFormats) Execute(
 }
 
 func parseFormatList(r io.Reader) (formatList, error) {
-	var i int
+	var i, puidIndex int
 	formats := make(formatList)
 
 	cr := csv.NewReader(r)
@@ -101,11 +104,20 @@ func parseFormatList(r io.Reader) (formatList, error) {
 			return nil, fmt.Errorf("invalid CSV: %v", err)
 		}
 
-		// Skip the first row.
-		if i > 0 {
-			// Get the file format identifier from the first column of each row
-			// and ignore subsequent columns.
-			formats[row[0]] = struct{}{}
+		if i == 0 {
+			// Get the index of the PRONOM PUID column.
+			puidIndex = slices.IndexFunc(row, func(s string) bool {
+				return strings.EqualFold(s, "pronom puid")
+			})
+			if puidIndex == -1 {
+				return nil, errors.New(`missing "PRONOM PUID" column`)
+			}
+		} else {
+			// Get the PRONOM PUID and ignore the rest of the columns.
+			s := strings.TrimSpace(row[puidIndex])
+			if s != "" {
+				formats[s] = struct{}{}
+			}
 		}
 
 		i++
