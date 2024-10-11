@@ -33,7 +33,7 @@ func (a *ValidateMetadata) Execute(
 	c := exec.Command("python3", "xsdval.py", params.SIP.ManifestPath, "arelda.xsd") // #nosec G204
 	out, err := c.CombinedOutput()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("run xsdval.py: %s", out)
 	}
 
 	// The xsdval.py script always outputs the name "metadata.xml" in the
