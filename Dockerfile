@@ -1,6 +1,9 @@
-# syntax = docker/dockerfile:1.4
+# syntax=docker/dockerfile:1
 
-ARG GO_VERSION
+# Use the latest bagit-python commit (as of 2024-10-15) because the last release
+# is from 2020-06-29 and emits deprecation warnings in Python 3.13.
+ARG BAGIT_TAG=56a79001e4cf68cf999fac343bfbfb69f4f73097
+ARG GO_VERSION=1.23.2
 
 FROM golang:${GO_VERSION}-alpine AS build-go
 WORKDIR /src
@@ -22,22 +25,33 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 	-o /out/preprocessing-worker \
 	./cmd/worker
 
-FROM alpine:3.18.2 AS base
+FROM python:3.13-alpine3.20 AS build-bagit
+ARG BAGIT_TAG
+ENV PYTHONUNBUFFERED=1
+RUN apk add --update --no-cache git
+# Install to a venv to keep the compiled artifacts and dependencies together.
+RUN python -m venv /venv
+ENV PATH="/venv/bin:$PATH"
+RUN pip install --no-cache --upgrade \
+	pip \
+	lxml \
+	git+https://github.com/LibraryOfCongress/bagit-python.git@${BAGIT_TAG}
+
+FROM python:3.13-alpine3.20 AS preprocessing-worker
+RUN apk add --update --no-cache libxml2-utils
+
+# Copy the bagit-build venv and add its bin directory to the path.
+COPY --from=build-bagit --chown=preprocessing:preprocessing /venv /venv
+ENV PATH="/venv/bin:$PATH"
+
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 RUN addgroup -g ${GROUP_ID} -S preprocessing
 RUN adduser -u ${USER_ID} -S -D preprocessing preprocessing
-USER preprocessing
-RUN mkdir /home/preprocessing/shared
 
-FROM base AS preprocessing-worker
-ENV PYTHONUNBUFFERED=1
-USER root
-RUN apk add --update --no-cache python3 && \
-	ln -sf python3 /usr/bin/python && \
-	python3 -m ensurepip
 USER preprocessing
-RUN pip3 install --no-cache --upgrade pip lxml bagit==v1.8.1
 COPY --from=build-preprocessing-worker --link /src/hack/sampledata/xsd/* /
 COPY --from=build-preprocessing-worker --link /out/preprocessing-worker /home/preprocessing/bin/preprocessing-worker
+RUN mkdir /home/preprocessing/shared
+
 CMD ["/home/preprocessing/bin/preprocessing-worker"]
