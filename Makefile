@@ -67,8 +67,10 @@ golines: $(GOLINES)
 		.
 
 gosec: # @HELP Run gosec security scanner.
+gosec: GOSEC_VERBOSITY ?= "-terse"
 gosec: $(GOSEC)
 	gosec \
+		$(GOSEC_VERBOSITY) \
 		-exclude-dir=hack \
 		./...
 
@@ -96,7 +98,7 @@ pre-commit:
 	ENDURO_PP_INTEGRATION_TEST=1 $(MAKE) -j \
 	gen-enums \
 	golines \
-	gosec \
+	gosec GOSEC_VERBOSITY="-quiet" \
 	lint \
 	shfmt \
 	test-race
