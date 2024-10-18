@@ -3,7 +3,7 @@ module github.com/artefactual-sdps/preprocessing-sfa
 go 1.23.2
 
 require (
-	github.com/artefactual-sdps/temporal-activities v0.0.0-20240821162351-47302711bc7b
+	github.com/artefactual-sdps/temporal-activities v0.0.0-20241018212855-8ea34d29bdf4
 	github.com/beevik/etree v1.4.0
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/go-logr/logr v1.4.2

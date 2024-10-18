@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
+	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"github.com/go-logr/logr"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -89,8 +90,8 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISAgentName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewValidateMetadata().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.ValidateMetadataName},
+		xmlvalidate.New(xmlvalidate.NewXMLLintValidator()).Execute,
+		temporalsdk_activity.RegisterOptions{Name: xmlvalidate.Name},
 	)
 	w.RegisterActivityWithOptions(
 		activities.NewTransformSIP().Execute,
