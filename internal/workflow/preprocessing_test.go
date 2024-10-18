@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
+	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -154,8 +155,8 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISAgentName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewValidateMetadata().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.ValidateMetadataName},
+		xmlvalidate.New(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: xmlvalidate.Name},
 	)
 	s.env.RegisterActivityWithOptions(
 		activities.NewTransformSIP().Execute,
@@ -255,11 +256,14 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.ValidateFileFormatsResult{}, nil,
 	)
 	s.env.OnActivity(
-		activities.ValidateMetadataName,
+		xmlvalidate.Name,
 		sessionCtx,
-		&activities.ValidateMetadataParams{SIP: expectedSIP},
+		&xmlvalidate.Params{
+			XMLPath: expectedSIP.ManifestPath,
+			XSDPath: expectedSIP.XSDPath,
+		},
 	).Return(
-		&activities.ValidateMetadataResult{}, nil,
+		&xmlvalidate.Result{}, nil,
 	)
 
 	// PREMIS activities.
@@ -536,13 +540,18 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		nil,
 	)
 	s.env.OnActivity(
-		activities.ValidateMetadataName,
+		xmlvalidate.Name,
 		sessionCtx,
-		&activities.ValidateMetadataParams{SIP: expectedSIP},
+		&xmlvalidate.Params{
+			XMLPath: expectedSIP.ManifestPath,
+			XSDPath: expectedSIP.XSDPath,
+		},
 	).Return(
-		&activities.ValidateMetadataResult{Failures: []string{
-			`fake/path/to/sip/additional/UpdatedAreldaMetadata.xml does not match expected metadata requirements`,
-		}}, nil,
+		&xmlvalidate.Result{
+			Failures: []string{
+				`fake/path/to/sip/additional/UpdatedAreldaMetadata.xml does not match expected metadata requirements`,
+			},
+		}, nil,
 	)
 
 	s.env.ExecuteWorkflow(

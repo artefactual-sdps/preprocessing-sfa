@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
+	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_log "go.temporal.io/sdk/log"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
@@ -219,11 +220,14 @@ func (w *PreprocessingWorkflow) Execute(
 
 	// Validate metadata.
 	validateMetadataEvent := newEvent(ctx, "Validate SIP metadata")
-	var validateMetadata activities.ValidateMetadataResult
+	var validateMetadata xmlvalidate.Result
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
-		activities.ValidateMetadataName,
-		&activities.ValidateMetadataParams{SIP: identifySIP.SIP},
+		xmlvalidate.Name,
+		&xmlvalidate.Params{
+			XMLPath: identifySIP.SIP.ManifestPath,
+			XSDPath: identifySIP.SIP.XSDPath,
+		},
 	).Get(ctx, &validateMetadata)
 	if e != nil {
 		validateMetadataEvent.Complete(
