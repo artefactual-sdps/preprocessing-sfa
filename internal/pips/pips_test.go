@@ -84,7 +84,7 @@ func TestConvertSIPPath(t *testing.T) {
 	p := pips.New("/path/to/SIP_20201201_Vecteur", enums.SIPTypeDigitizedSIP)
 	assert.Equal(t,
 		p.ConvertSIPPath("content/d_0000001/Prozess_Digitalisierung_PREMIS.xml"),
-		"metadata/Prozess_Digitalisierung_PREMIS_d_0000001.xml",
+		"metadata/Prozess_Digitalisierung_PREMIS.xml",
 	)
 	assert.Equal(t,
 		p.ConvertSIPPath("header/metadata.xml"),

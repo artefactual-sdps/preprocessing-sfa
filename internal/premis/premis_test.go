@@ -348,5 +348,5 @@ func TestOriginalNameForSubpath(t *testing.T) {
 	)
 
 	assert.Equal(t, metadataOriginalName,
-		"data/metadata/Prozess_Digitalisierung_PREMIS_d_0000001.xml")
+		"data/metadata/Prozess_Digitalisierung_PREMIS.xml")
 }

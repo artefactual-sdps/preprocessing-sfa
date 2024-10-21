@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
@@ -55,7 +54,7 @@ func New(path string) (SIP, error) {
 	if err != nil {
 		return s, fmt.Errorf("SIP: New: %v", err)
 	}
-	if len(f) > 0 && strings.Contains(strings.ToLower(s.Path), "vecteur") {
+	if len(f) > 0 {
 		return s.digitizedSIP(), nil
 	}
 

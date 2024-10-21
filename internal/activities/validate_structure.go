@@ -74,6 +74,18 @@ func (a *ValidateStructure) Execute(
 		failures = append(failures, extras...)
 	}
 
+	// Check that digitized SIPs only have one dossier in the content dir.
+	if params.SIP.Type == enums.SIPTypeDigitizedSIP {
+		entries, err := os.ReadDir(params.SIP.ContentPath)
+		if err != nil {
+			return nil, fmt.Errorf("ValidateStructure: check for unexpected dossiers: %v", err)
+		}
+
+		if len(entries) > 1 {
+			failures = append(failures, "More than one dossier in the content directory")
+		}
+	}
+
 	return &ValidateStructureResult{Failures: failures}, nil
 }
 

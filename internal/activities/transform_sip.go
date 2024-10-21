@@ -3,8 +3,6 @@ package activities
 import (
 	"context"
 	"errors"
-	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -38,31 +36,31 @@ func (a *TransformSIP) Execute(ctx context.Context, params *TransformSIPParams) 
 		return nil, err
 	}
 
-	// Move Prozess_Digitalisierung_PREMIS.xml files to the metadata directory.
-	err := filepath.WalkDir(params.SIP.ContentPath, func(p string, d fs.DirEntry, err error) error {
+	// Move the Prozess_Digitalisierung_PREMIS.xml file to the PIP metadata
+	// directory. Prozess_Digitalisierung_PREMIS.xml is only present in
+	// digitized SIPs, and there can only be one dossier in a digitized SIP.
+	if params.SIP.Type == enums.SIPTypeDigitizedSIP {
+		entries, err := os.ReadDir(params.SIP.ContentPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if d.Name() == "Prozess_Digitalisierung_PREMIS.xml" {
-			// Adding the parent dir to the filename reduces the likelihood of
-			// filename conflicts.
-			dir := filepath.Base(filepath.Dir(p))
-			dest := filepath.Join(mdPath, fmt.Sprintf("Prozess_Digitalisierung_PREMIS_%s.xml", dir))
-			err := fsutil.Move(p, dest)
-			if err != nil {
-				return err
-			}
+
+		p := filepath.Join(
+			params.SIP.ContentPath,
+			entries[0].Name(), // dossier name.
+			"Prozess_Digitalisierung_PREMIS.xml",
+		)
+
+		err = fsutil.Move(p, filepath.Join(mdPath, "Prozess_Digitalisierung_PREMIS.xml"))
+		if err != nil {
+			return nil, err
 		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
 	}
 
 	// Move UpdatedAreldaMetatdata.xml to the metadata directory (Digitized AIP
 	// only)
 	if params.SIP.Type == enums.SIPTypeDigitizedAIP {
-		err = fsutil.Move(
+		err := fsutil.Move(
 			params.SIP.UpdatedAreldaMDPath,
 			filepath.Join(mdPath, filepath.Base(params.SIP.UpdatedAreldaMDPath)),
 		)
@@ -72,13 +70,13 @@ func (a *TransformSIP) Execute(ctx context.Context, params *TransformSIPParams) 
 	}
 
 	// Create objects and [sip-name] sub-directories.
-	objectsPath := filepath.Join(params.SIP.Path, "objects", filepath.Base(params.SIP.Path))
-	if err = os.MkdirAll(objectsPath, 0o700); err != nil {
+	objectsPath := filepath.Join(params.SIP.Path, "objects", params.SIP.Name())
+	if err := os.MkdirAll(objectsPath, 0o700); err != nil {
 		return nil, err
 	}
 
 	// Move the content directory into the objects directory.
-	err = fsutil.Move(params.SIP.ContentPath, filepath.Join(objectsPath, "content"))
+	err := fsutil.Move(params.SIP.ContentPath, filepath.Join(objectsPath, "content"))
 	if err != nil {
 		return nil, err
 	}

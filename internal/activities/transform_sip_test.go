@@ -23,7 +23,7 @@ func TestTransformSIP(t *testing.T) {
 		fmode = os.FileMode(0o600)
 	)
 
-	digitizedAIPPath := fs.NewDir(t, "",
+	digitizedAIPPath := fs.NewDir(t, "Vecteur_Digitized_AIP",
 		fs.WithDir("additional",
 			fs.WithFile("UpdatedAreldaMetadata.xml", ""),
 		),
@@ -32,7 +32,6 @@ func TestTransformSIP(t *testing.T) {
 				fs.WithDir("d_0000001",
 					fs.WithFile("00000001.jp2", ""),
 					fs.WithFile("00000001_PREMIS.xml", ""),
-					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
 				),
 			),
 			fs.WithDir("header",
@@ -48,7 +47,7 @@ func TestTransformSIP(t *testing.T) {
 		),
 	).Path()
 
-	digitizedSIPPath := fs.NewDir(t, "Test_Digitized_SIP",
+	digitizedSIPPath := fs.NewDir(t, "Vecteur_Digitized_SIP",
 		fs.WithDir("content",
 			fs.WithDir("d_0000001",
 				fs.WithFile("00000001.jp2", ""),
@@ -84,7 +83,6 @@ func TestTransformSIP(t *testing.T) {
 			),
 		),
 		fs.WithDir("metadata", fs.WithMode(dmode),
-			fs.WithFile("Prozess_Digitalisierung_PREMIS_d_0000001.xml", "", fs.WithMode(fmode)),
 			fs.WithFile("UpdatedAreldaMetadata.xml", "", fs.WithMode(fmode)),
 		),
 	)
@@ -104,11 +102,11 @@ func TestTransformSIP(t *testing.T) {
 			),
 		),
 		fs.WithDir("metadata", fs.WithMode(dmode),
-			fs.WithFile("Prozess_Digitalisierung_PREMIS_d_0000001.xml", "", fs.WithMode(fmode)),
+			fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "", fs.WithMode(fmode)),
 		),
 	)
 
-	missingMetadataSIP, err := sip.New(fs.NewDir(t, "",
+	missingMetadataSIP, err := sip.New(fs.NewDir(t, "MissingMD_Vecteur_SIP",
 		fs.WithDir("content",
 			fs.WithDir("d_0000001",
 				fs.WithFile("00000001.jp2", ""),
@@ -118,7 +116,8 @@ func TestTransformSIP(t *testing.T) {
 		),
 	).Path())
 	assert.NilError(t, err)
-	missingContentSIP, err := sip.New(fs.NewDir(t, "",
+
+	missingContentSIP, err := sip.New(fs.NewDir(t, "Missing_Content_SIP",
 		fs.WithDir("header",
 			fs.WithFile("metadata.xml", ""),
 		),
@@ -142,7 +141,7 @@ func TestTransformSIP(t *testing.T) {
 			wantSIP: expectedDigitizedSIP,
 		},
 		{
-			name:   "Fails with a SIP missing the metadata file",
+			name:   "Fails when the metadata file is missing",
 			params: activities.TransformSIPParams{SIP: missingMetadataSIP},
 			wantErr: fmt.Sprintf(
 				"rename %s/header/metadata.xml %s/objects/%s/header/metadata.xml: no such file or directory",
@@ -152,11 +151,13 @@ func TestTransformSIP(t *testing.T) {
 			),
 		},
 		{
-			name:   "Fails with a SIP missing the content directory",
+			name:   "Fails when the content directory is missing",
 			params: activities.TransformSIPParams{SIP: missingContentSIP},
 			wantErr: fmt.Sprintf(
-				"lstat %s/content: no such file or directory",
+				"rename %s/content %s/objects/%s/content: no such file or directory (type: LinkError, retryable: true): no such file or directory",
 				missingContentSIP.Path,
+				missingContentSIP.Path,
+				filepath.Base(missingContentSIP.Path),
 			),
 		},
 	}
