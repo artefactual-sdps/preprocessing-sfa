@@ -377,12 +377,10 @@ func FilesWithinDirectory(contentPath string) ([]string, error) {
 }
 
 func OriginalNameForSubpath(sip sip.SIP, subpath string) string {
-	// Handle one file differently (as it gets renamed latest in TransformSIP).
+	// Prozess_Digitalisierung_PREMIS.xml is moved to the metadata directory.
 	if filepath.Base(subpath) == "Prozess_Digitalisierung_PREMIS.xml" {
-		parentDirName := filepath.Base(filepath.Dir(subpath))
-		filename := fmt.Sprintf("Prozess_Digitalisierung_PREMIS_%s.xml", parentDirName)
-		return filepath.Join("data", "metadata", filename)
-	} else {
-		return filepath.Join("data", "objects", filepath.Base(sip.Path), "content", subpath)
+		return filepath.Join("data", "metadata", "Prozess_Digitalisierung_PREMIS.xml")
 	}
+
+	return filepath.Join("data", "objects", sip.Name(), "content", subpath)
 }

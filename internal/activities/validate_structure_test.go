@@ -40,7 +40,11 @@ func TestValidateStructure(t *testing.T) {
 
 	digitizedSIP, err := sip.New(fs.NewDir(t, "",
 		fs.WithDir("content",
-			fs.WithDir("d_0000001"),
+			fs.WithDir("d_0000001",
+				fs.WithFile("00000001.jp2", ""),
+				fs.WithFile("00000001_PREMIS.xml", ""),
+				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+			),
 		),
 		fs.WithDir("header",
 			fs.WithFile("metadata.xml", ""),
@@ -71,6 +75,33 @@ func TestValidateStructure(t *testing.T) {
 
 	missingPiecesAIP, err := sip.New(fs.NewDir(t, "",
 		fs.WithDir("additional"),
+	).Path())
+	assert.NilError(t, err)
+
+	digitizedSIPExtraDossiers, err := sip.New(fs.NewDir(t, "",
+		fs.WithDir("content",
+			fs.WithDir("d_0000001",
+				fs.WithFile("00000001.jp2", ""),
+				fs.WithFile("00000001_PREMIS.xml", ""),
+				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+			),
+			fs.WithDir("d_0000002",
+				fs.WithFile("00000002.jp2", ""),
+				fs.WithFile("00000002_PREMIS.xml", ""),
+				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+			),
+			fs.WithDir("d_0000003",
+				fs.WithFile("00000003.jp2", ""),
+				fs.WithFile("00000003_PREMIS.xml", ""),
+				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+			),
+		),
+		fs.WithDir("header",
+			fs.WithFile("metadata.xml", ""),
+			fs.WithDir("xsd",
+				fs.WithFile("arelda.xsd", ""),
+			),
+		),
 	).Path())
 	assert.NilError(t, err)
 
@@ -119,6 +150,13 @@ func TestValidateStructure(t *testing.T) {
 					"metadata.xml is missing",
 					"UpdatedAreldaMetadata.xml is missing",
 				},
+			},
+		},
+		{
+			name:   "Returns a failure when a digitized SIP has more than one dossier",
+			params: activities.ValidateStructureParams{SIP: digitizedSIPExtraDossiers},
+			want: activities.ValidateStructureResult{
+				Failures: []string{"More than one dossier in the content directory"},
 			},
 		},
 	}

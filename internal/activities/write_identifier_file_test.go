@@ -82,7 +82,7 @@ func TestWriteIdentifierFile(t *testing.T) {
 			},
 			wantJSON: `[
     {
-        "file": "metadata/Prozess_Digitalisierung_PREMIS_d_0000001.xml",
+        "file": "metadata/Prozess_Digitalisierung_PREMIS.xml",
         "identifiers": [
             {
                 "identifier": "_cQ6sm5CChWVqtqmrWvne0W",

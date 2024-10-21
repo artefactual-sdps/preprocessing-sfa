@@ -1,7 +1,6 @@
 package pips
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -42,20 +41,16 @@ func (p PIP) Name() string {
 }
 
 func (p PIP) ConvertSIPPath(path string) string {
-	switch {
-	case filepath.Base(path) == "Prozess_Digitalisierung_PREMIS.xml":
-		parent := filepath.Base(filepath.Dir(path))
-		return filepath.Join(
-			"metadata",
-			fmt.Sprintf("Prozess_Digitalisierung_PREMIS_%s.xml", parent),
-		)
-	case filepath.Base(path) == "metadata.xml":
-		return filepath.Join("objects", p.Name(), "header", "metadata.xml")
-	case filepath.Base(path) == "UpdatedAreldaMetadata.xml":
-		return filepath.Join("metadata", "UpdatedAreldaMetadata.xml")
-	case strings.HasPrefix(path, "content"):
-		return filepath.Join("objects", p.Name(), path)
-	default:
-		return ""
+	switch name := filepath.Base(path); name {
+	case "Prozess_Digitalisierung_PREMIS.xml", "UpdatedAreldaMetadata.xml":
+		return filepath.Join("metadata", name)
+	case "metadata.xml":
+		return filepath.Join("objects", p.Name(), "header", name)
 	}
+
+	if strings.HasPrefix(path, "content") {
+		return filepath.Join("objects", p.Name(), path)
+	}
+
+	return ""
 }
