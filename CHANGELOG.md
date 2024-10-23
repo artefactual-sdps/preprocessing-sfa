@@ -15,11 +15,11 @@ requests.
 - Use xmllint to validate SIP manifests ([#39])
 - Read allowed file formats from a CSV file ([#60])
 
-## Added
+### Added
 
 - [xmllint](https://linux.die.net/man/1/xmllint) dependency ([#39])
 
-## Removed
+### Removed
 
 - Python and lxml dependency ([#39])
 
