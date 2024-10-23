@@ -58,8 +58,9 @@ func (a *ValidateStructure) Execute(
 		))
 	}
 
+	sipBase := params.SIP.Path
 	// Check for unexpected top-level directories.
-	extras, err := extraFiles(params.SIP.Path, params.SIP.TopLevelPaths, true)
+	extras, err := extraNodes(sipBase, params.SIP.Path, params.SIP.TopLevelPaths, true)
 	if err != nil {
 		return nil, fmt.Errorf("ValidateStructure: check for unexpected dirs: %v", err)
 	}
@@ -67,7 +68,7 @@ func (a *ValidateStructure) Execute(
 
 	// Check for unexpected files in the content directory.
 	if hasContentDir {
-		extras, err := extraFiles(params.SIP.ContentPath, []string{}, false)
+		extras, err := extraNodes(sipBase, params.SIP.ContentPath, []string{}, false)
 		if err != nil {
 			return nil, fmt.Errorf("ValidateStructure: check for unexpected files: %v", err)
 		}
@@ -77,7 +78,7 @@ func (a *ValidateStructure) Execute(
 	return &ValidateStructureResult{Failures: failures}, nil
 }
 
-func extraFiles(path string, expected []string, matchDir bool) ([]string, error) {
+func extraNodes(sipBase, path string, expected []string, matchDir bool) ([]string, error) {
 	var extras []string
 
 	ftype := "file"
@@ -93,7 +94,12 @@ func extraFiles(path string, expected []string, matchDir bool) ([]string, error)
 	for _, entry := range entries {
 		fp := filepath.Join(path, entry.Name())
 		if entry.IsDir() == matchDir && !slices.Contains(expected, fp) {
-			extras = append(extras, fmt.Sprintf("Unexpected %s: %q", ftype, fp))
+			rel, err := filepath.Rel(sipBase, fp)
+			if err != nil {
+				return nil, fmt.Errorf("can't determine relative path: %v", err)
+			}
+			rel = filepath.Join(filepath.Base(sipBase), rel)
+			extras = append(extras, fmt.Sprintf("Unexpected %s: %q", ftype, rel))
 		}
 	}
 

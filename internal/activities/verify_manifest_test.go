@@ -1,6 +1,8 @@
 package activities_test
 
 import (
+	"fmt"
+	"path/filepath"
 	"testing"
 
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -166,6 +168,59 @@ func testSIP(t *testing.T, path string) sip.SIP {
 func TestVerifyManifest(t *testing.T) {
 	t.Parallel()
 
+	missingFilesSIP := fs.NewDir(t, "Test_Missing_Files",
+		fs.WithDir("additional",
+			fs.WithFile("UpdatedAreldaMetadata.xml", aipManifest),
+		),
+		fs.WithDir("content",
+			fs.WithDir("content",
+				fs.WithDir("d_0000001",
+					// fs.WithFile("00000001.jp2", "12345"),
+					fs.WithFile("00000001_PREMIS.xml", "abcdef"),
+					fs.WithFile("00000002.jp2", "67890"),
+					fs.WithFile("00000002_PREMIS.xml", "ghijk"),
+					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
+				),
+			),
+			fs.WithDir("header",
+				fs.WithDir("old",
+					fs.WithDir("SIP",
+						fs.WithFile("metadata.xml", "qrstu"),
+					),
+				),
+			),
+		),
+	)
+
+	extraFilesSIP := fs.NewDir(t, "Test_Extra_Files",
+		fs.WithDir("additional",
+			fs.WithFile("UpdatedAreldaMetadata.xml", aipManifest),
+		),
+		fs.WithDir("content",
+			fs.WithDir("content",
+				fs.WithDir("d_0000001",
+					fs.WithFile("extra_file.txt", "I'm an extra file."),
+					fs.WithFile("00000001.jp2", "12345"),
+					fs.WithFile("00000001_PREMIS.xml", "abcdef"),
+					fs.WithFile("00000002.jp2", "67890"),
+					fs.WithFile("00000002_PREMIS.xml", "ghijk"),
+					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
+				),
+			),
+			fs.WithDir("header",
+				fs.WithDir("old",
+					fs.WithDir("SIP",
+						fs.WithFile("metadata.xml", "qrstu"),
+					),
+				),
+				fs.WithDir("xsd",
+					fs.WithFile("arelda.xsd", "vwxyz"),
+					fs.WithFile("extra.xsd", "I'm an extra XSD file."),
+				),
+			),
+		),
+	)
+
 	tests := []struct {
 		name    string
 		params  activities.VerifyManifestParams
@@ -210,36 +265,14 @@ func TestVerifyManifest(t *testing.T) {
 			params: activities.VerifyManifestParams{
 				SIP: testSIP(
 					t,
-					fs.NewDir(t, "Test_Missing_Files",
-						fs.WithDir("additional",
-							fs.WithFile("UpdatedAreldaMetadata.xml", aipManifest),
-						),
-						fs.WithDir("content",
-							fs.WithDir("content",
-								fs.WithDir("d_0000001",
-									// fs.WithFile("00000001.jp2", "12345"),
-									fs.WithFile("00000001_PREMIS.xml", "abcdef"),
-									fs.WithFile("00000002.jp2", "67890"),
-									fs.WithFile("00000002_PREMIS.xml", "ghijk"),
-									fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
-								),
-							),
-							fs.WithDir("header",
-								fs.WithDir("old",
-									fs.WithDir("SIP",
-										fs.WithFile("metadata.xml", "qrstu"),
-									),
-								),
-							),
-						),
-					).Path(),
+					missingFilesSIP.Path(),
 				),
 			},
 			want: activities.VerifyManifestResult{
 				Failed: true,
 				MissingFiles: []string{
-					"Missing file: content/content/d_0000001/00000001.jp2",
-					"Missing file: content/header/xsd/arelda.xsd",
+					fmt.Sprintf("Missing file: %s/content/content/d_0000001/00000001.jp2", filepath.Base(missingFilesSIP.Path())),
+					fmt.Sprintf("Missing file: %s/content/header/xsd/arelda.xsd", filepath.Base(missingFilesSIP.Path())),
 				},
 			},
 		},
@@ -248,41 +281,14 @@ func TestVerifyManifest(t *testing.T) {
 			params: activities.VerifyManifestParams{
 				SIP: testSIP(
 					t,
-					fs.NewDir(t, "Test_Extra_Files",
-						fs.WithDir("additional",
-							fs.WithFile("UpdatedAreldaMetadata.xml", aipManifest),
-						),
-						fs.WithDir("content",
-							fs.WithDir("content",
-								fs.WithDir("d_0000001",
-									fs.WithFile("extra_file.txt", "I'm an extra file."),
-									fs.WithFile("00000001.jp2", "12345"),
-									fs.WithFile("00000001_PREMIS.xml", "abcdef"),
-									fs.WithFile("00000002.jp2", "67890"),
-									fs.WithFile("00000002_PREMIS.xml", "ghijk"),
-									fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
-								),
-							),
-							fs.WithDir("header",
-								fs.WithDir("old",
-									fs.WithDir("SIP",
-										fs.WithFile("metadata.xml", "qrstu"),
-									),
-								),
-								fs.WithDir("xsd",
-									fs.WithFile("arelda.xsd", "vwxyz"),
-									fs.WithFile("extra.xsd", "I'm an extra XSD file."),
-								),
-							),
-						),
-					).Path(),
+					extraFilesSIP.Path(),
 				),
 			},
 			want: activities.VerifyManifestResult{
 				Failed: true,
 				UnexpectedFiles: []string{
-					"Unexpected file: content/content/d_0000001/extra_file.txt",
-					"Unexpected file: content/header/xsd/extra.xsd",
+					fmt.Sprintf("Unexpected file: %s/content/content/d_0000001/extra_file.txt", filepath.Base(extraFilesSIP.Path())),
+					fmt.Sprintf("Unexpected file: %s/content/header/xsd/extra.xsd", filepath.Base(extraFilesSIP.Path())),
 				},
 			},
 		},

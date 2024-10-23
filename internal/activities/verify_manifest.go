@@ -57,8 +57,9 @@ func (a *VerifyManifest) Execute(ctx context.Context, params *VerifyManifestPara
 		return nil, fmt.Errorf("verify checksums: %v", err)
 	}
 
-	missing := missingFiles(manifestSet, sipFiles)
-	unexpected := unexpectedFiles(manifestSet, sipFiles)
+	sipBase := filepath.Base(params.SIP.Path)
+	missing := missingFiles(sipBase, manifestSet, sipFiles)
+	unexpected := unexpectedFiles(sipBase, manifestSet, sipFiles)
 
 	return &VerifyManifestResult{
 		Failed:           len(missing) > 0 || len(unexpected) > 0 || len(badChecksums) > 0,
@@ -135,12 +136,13 @@ func sipFiles(s sip.SIP) (goset.Set[string], error) {
 
 // missingFiles returns the list of all files that are in manifest but not
 // filesys.
-func missingFiles(manifest, filesys goset.Set[string]) []string {
+func missingFiles(base string, manifest, filesys goset.Set[string]) []string {
 	var missing []string
 	if s := manifest.Difference(filesys).ToSlice(); len(s) > 0 {
 		slices.Sort(s)
 		for _, p := range s {
-			missing = append(missing, fmt.Sprintf("Missing file: %s", p))
+			fp := filepath.Join(base, p)
+			missing = append(missing, fmt.Sprintf("Missing file: %s", fp))
 		}
 	}
 	return missing
@@ -148,12 +150,13 @@ func missingFiles(manifest, filesys goset.Set[string]) []string {
 
 // unexpectedFiles returns the list of all files that are in filesys but not
 // manifest.
-func unexpectedFiles(manifest, filesys goset.Set[string]) []string {
+func unexpectedFiles(base string, manifest, filesys goset.Set[string]) []string {
 	var unexpected []string
 	if s := filesys.Difference(manifest).ToSlice(); len(s) > 0 {
 		slices.Sort(s)
 		for _, p := range s {
-			unexpected = append(unexpected, fmt.Sprintf("Unexpected file: %s", p))
+			fp := filepath.Join(base, p)
+			unexpected = append(unexpected, fmt.Sprintf("Unexpected file: %s", fp))
 		}
 	}
 	return unexpected
