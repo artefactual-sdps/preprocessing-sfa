@@ -2,6 +2,7 @@ package activities_test
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -124,8 +125,8 @@ func TestValidateStructure(t *testing.T) {
 			params: activities.ValidateStructureParams{SIP: unexpectedPiecesSIP},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
-					fmt.Sprintf("Unexpected directory: %q", unexpectedPiecesSIP.Path+"/unexpected"),
-					fmt.Sprintf("Unexpected file: %q", unexpectedPiecesSIP.Path+"/content/unexpected.txt"),
+					fmt.Sprintf("Unexpected directory: %q", filepath.Base(unexpectedPiecesSIP.Path)+"/unexpected"),
+					fmt.Sprintf("Unexpected file: %q", filepath.Base(unexpectedPiecesSIP.Path)+"/content/unexpected.txt"),
 				},
 			},
 		},

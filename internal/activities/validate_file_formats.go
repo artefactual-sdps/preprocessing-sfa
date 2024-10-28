@@ -77,8 +77,14 @@ func (a *ValidateFileFormats) Execute(
 			return fmt.Errorf("identify format: %v", err)
 		}
 
+		rel, err := filepath.Rel(params.SIP.Path, p)
+		if err != nil {
+			return fmt.Errorf("get relative path: %v", err)
+		}
+		rel = filepath.Join(filepath.Base(params.SIP.Path), rel)
+
 		if _, ok := allowed[ff.ID]; !ok {
-			failures = append(failures, fmt.Sprintf("file format %q not allowed: %q", ff.ID, p))
+			failures = append(failures, fmt.Sprintf("file format %q not allowed: %q", ff.ID, rel))
 		}
 
 		return nil

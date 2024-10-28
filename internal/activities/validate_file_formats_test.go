@@ -123,14 +123,12 @@ fmt/95,"PDF/A "
 			want: activities.ValidateFileFormatsResult{
 				Failures: []string{
 					fmt.Sprintf(
-						`file format %q not allowed: "%s/dir/file1.png"`,
+						`file format %q not allowed: "test_transfer/content/content/dir/file1.png"`,
 						"fmt/11",
-						invalidFormatsContentPath,
 					),
 					fmt.Sprintf(
-						`file format %q not allowed: "%s/file2.png"`,
+						`file format %q not allowed: "test_transfer/content/content/file2.png"`,
 						"fmt/11",
-						invalidFormatsContentPath,
 					),
 				},
 			},
