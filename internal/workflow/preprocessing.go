@@ -10,7 +10,6 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"go.artefactual.dev/tools/temporal"
-	temporalsdk_log "go.temporal.io/sdk/log"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
@@ -29,25 +28,21 @@ const (
 	OutcomeContentError
 )
 
-type PreprocessingWorkflowParams struct {
-	RelativePath string
-}
-
-type PreprocessingWorkflowResult struct {
-	Outcome           Outcome
-	RelativePath      string
-	PreservationTasks []eventlog.Event
-}
-
-func (r *PreprocessingWorkflowResult) addEvent(e *eventWrapper) {
-	if e != nil && e.Event != nil {
-		r.PreservationTasks = append(r.PreservationTasks, *e.Event)
+type (
+	PreprocessingWorkflow struct {
+		sharedPath string
 	}
-}
 
-type PreprocessingWorkflow struct {
-	sharedPath string
-}
+	PreprocessingWorkflowParams struct {
+		RelativePath string
+	}
+
+	PreprocessingWorkflowResult struct {
+		Outcome           Outcome
+		RelativePath      string
+		PreservationTasks []*eventlog.Event
+	}
+)
 
 func NewPreprocessingWorkflow(sharedPath string) *PreprocessingWorkflow {
 	return &PreprocessingWorkflow{
@@ -55,17 +50,55 @@ func NewPreprocessingWorkflow(sharedPath string) *PreprocessingWorkflow {
 	}
 }
 
+func (r *PreprocessingWorkflowResult) newEvent(ctx temporalsdk_workflow.Context, name string) *eventWrapper {
+	ev := newWrappedEvent(ctx, name)
+	r.PreservationTasks = append(r.PreservationTasks, ev.Event)
+
+	return ev
+}
+
+func (r *PreprocessingWorkflowResult) validationError(
+	ctx temporalsdk_workflow.Context,
+	ev *eventWrapper,
+	msg string,
+	failures []string,
+) {
+	r.Outcome = OutcomeContentError
+	ev.Complete(
+		ctx,
+		enums.EventOutcomeValidationFailure,
+		"Content error: %s:\n%s",
+		msg,
+		strings.Join(failures, "\n"),
+	)
+}
+
+func (r *PreprocessingWorkflowResult) systemError(
+	ctx temporalsdk_workflow.Context,
+	err error,
+	ev *eventWrapper,
+	msg string,
+) {
+	logger := temporalsdk_workflow.GetLogger(ctx)
+	logger.Error("System error", "message", err.Error())
+
+	// Complete last preservation task event.
+	ev.Complete(ctx, enums.EventOutcomeSystemFailure, "System error: %s", msg)
+	r.Outcome = OutcomeSystemError
+}
+
 func (w *PreprocessingWorkflow) Execute(
 	ctx temporalsdk_workflow.Context,
 	params *PreprocessingWorkflowParams,
-) (r *PreprocessingWorkflowResult, e error) {
-	var result PreprocessingWorkflowResult
+) (*PreprocessingWorkflowResult, error) {
+	var e error
+	result := &PreprocessingWorkflowResult{}
 
 	logger := temporalsdk_workflow.GetLogger(ctx)
 	logger.Debug("Preprocessing workflow running!", "params", params)
 
 	defer func() {
-		logger.Debug("Preprocessing workflow finished!", "result", r, "error", e)
+		logger.Debug("Preprocessing workflow finished!", "result", result, "error", e)
 	}()
 
 	if params == nil || params.RelativePath == "" {
@@ -77,7 +110,7 @@ func (w *PreprocessingWorkflow) Execute(
 	localPath := filepath.Join(w.sharedPath, filepath.Clean(params.RelativePath))
 
 	// Identify SIP.
-	identifySIPEvent := newEvent(ctx, "Identify SIP structure")
+	ev := result.newEvent(ctx, "Identify SIP structure")
 	var identifySIP activities.IdentifySIPResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
@@ -85,23 +118,13 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.IdentifySIPParams{Path: localPath},
 	).Get(ctx, &identifySIP)
 	if e != nil {
-		result.addEvent(identifySIPEvent.Complete(
-			ctx,
-			enums.EventOutcomeSystemFailure,
-			"System error: SIP structure identification has failed",
-		))
-		return systemError(logger, "Identify SIP", &result, e), nil
+		result.systemError(ctx, e, ev, "SIP structure identification has failed")
+		return result, nil
 	}
-
-	result.addEvent(identifySIPEvent.Complete(
-		ctx,
-		enums.EventOutcomeSuccess,
-		"SIP structure identified: %s",
-		identifySIP.SIP.Type.String(),
-	))
+	ev.Succeed(ctx, "SIP structure identified: %s", identifySIP.SIP.Type.String())
 
 	// Validate structure.
-	validateStructureEvent := newEvent(ctx, "Validate SIP structure")
+	ev = result.newEvent(ctx, "Validate SIP structure")
 	var validateStructure activities.ValidateStructureResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
@@ -109,33 +132,18 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.ValidateStructureParams{SIP: identifySIP.SIP},
 	).Get(ctx, &validateStructure)
 	if e != nil {
-		result.addEvent(validateStructureEvent.Complete(
-			ctx,
-			enums.EventOutcomeSystemFailure,
-			"System error: SIP structure validation has failed",
-		))
-		return systemError(logger, "Validate structure", &result, e), nil
+		result.systemError(ctx, e, ev, "SIP structure validation has failed")
+		return result, nil
 	}
-
 	if validateStructure.Failures != nil {
-		validateStructureEvent.Complete(
-			ctx,
-			enums.EventOutcomeValidationFailure,
-			"Content error: SIP structure validation has failed:\n%s",
-			strings.Join(validateStructure.Failures, "\n"),
-		)
+		result.validationError(ctx, ev, "SIP structure validation has failed", validateStructure.Failures)
 	} else {
-		validateStructureEvent.Complete(
-			ctx,
-			enums.EventOutcomeSuccess,
-			"SIP structure matches validation criteria",
-		)
+		ev.Succeed(ctx, "SIP structure matches validation criteria")
 	}
-	result.addEvent(validateStructureEvent)
 
 	// Verify that package contents match the manifest.
-	verifyManifestEvent := newEvent(ctx, "Verify SIP manifest")
-	verifyChecksumsEvent := newEvent(ctx, "Verify SIP checksums")
+	manifestEv := result.newEvent(ctx, "Verify SIP manifest")
+	checksumEv := result.newEvent(ctx, "Verify SIP checksums")
 	var verifyManifest activities.VerifyManifestResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
@@ -143,50 +151,36 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.VerifyManifestParams{SIP: identifySIP.SIP},
 	).Get(ctx, &verifyManifest)
 	if e != nil {
-		result.addEvent(verifyManifestEvent.Complete(
-			ctx,
-			enums.EventOutcomeSystemFailure,
-			"System error: manifest verification has failed",
-		))
-		return systemError(logger, "Verify manifest", &result, e), nil
+		checksumEv.Complete(ctx, enums.EventOutcomeSystemFailure, "checksum verification has failed")
+		result.systemError(ctx, e, manifestEv, "manifest verification has failed")
+		return result, nil
 	}
 
 	if len(verifyManifest.MissingFiles) > 0 || len(verifyManifest.UnexpectedFiles) > 0 {
 		failures := slices.Concat(verifyManifest.MissingFiles, verifyManifest.UnexpectedFiles)
-		verifyManifestEvent.Complete(
+		result.validationError(
 			ctx,
-			enums.EventOutcomeValidationFailure,
-			"Content error: SIP contents do not match %q:\n%s",
-			filepath.Base(identifySIP.SIP.ManifestPath),
-			strings.Join(failures, "\n"),
+			manifestEv,
+			fmt.Sprintf("SIP contents do not match %q", filepath.Base(identifySIP.SIP.ManifestPath)),
+			failures,
 		)
 	} else {
-		verifyManifestEvent.Complete(
-			ctx,
-			enums.EventOutcomeSuccess,
-			"SIP contents match manifest",
-		)
+		manifestEv.Succeed(ctx, "SIP contents match manifest")
 	}
-	result.addEvent(verifyManifestEvent)
 
 	if len(verifyManifest.ChecksumFailures) > 0 {
-		verifyChecksumsEvent.Complete(
+		result.validationError(
 			ctx,
-			enums.EventOutcomeValidationFailure,
-			"Content error: SIP checksums do not match file contents:\n%s",
-			strings.Join(verifyManifest.ChecksumFailures, "\n"),
+			checksumEv,
+			"SIP checksums do not match file contents",
+			verifyManifest.ChecksumFailures,
 		)
 	} else {
-		verifyChecksumsEvent.Complete(
-			ctx,
-			enums.EventOutcomeSuccess,
-			"SIP checksums match file contents",
-		)
+		checksumEv.Succeed(ctx, "SIP checksums match file contents")
 	}
-	result.addEvent(verifyChecksumsEvent)
 
 	// Validate file formats.
-	validateFileFormatsEvent := newEvent(ctx, "Validate SIP file formats")
+	ev = result.newEvent(ctx, "Validate SIP file formats")
 	var validateFileFormats activities.ValidateFileFormatsResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
@@ -194,32 +188,22 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.ValidateFileFormatsParams{SIP: identifySIP.SIP},
 	).Get(ctx, &validateFileFormats)
 	if e != nil {
-		result.addEvent(validateFileFormatsEvent.Complete(
-			ctx,
-			enums.EventOutcomeSystemFailure,
-			"System error: file format validation has failed",
-		))
-		return systemError(logger, "Validate file formats", &result, e), nil
+		result.systemError(ctx, e, ev, "System error: file format validation has failed")
+		return result, nil
 	}
 
 	if validateFileFormats.Failures != nil {
-		validateFileFormatsEvent.Complete(
+		result.validationError(
 			ctx,
-			enums.EventOutcomeValidationFailure,
-			"Content error: file format validation has failed. One or more file formats are not allowed:\n%s",
-			strings.Join(validateFileFormats.Failures, "\n"),
+			ev,
+			"file format validation has failed. One or more file formats are not allowed", validateFileFormats.Failures,
 		)
 	} else {
-		validateFileFormatsEvent.Complete(
-			ctx,
-			enums.EventOutcomeSuccess,
-			"No disallowed file formats found",
-		)
+		ev.Succeed(ctx, "No disallowed file formats found")
 	}
-	result.addEvent(validateFileFormatsEvent)
 
 	// Validate metadata.
-	validateMetadataEvent := newEvent(ctx, "Validate SIP metadata")
+	ev = result.newEvent(ctx, "Validate SIP metadata")
 	var validateMetadata xmlvalidate.Result
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
@@ -230,32 +214,19 @@ func (w *PreprocessingWorkflow) Execute(
 		},
 	).Get(ctx, &validateMetadata)
 	if e != nil {
-		validateMetadataEvent.Complete(
-			ctx,
-			enums.EventOutcomeSystemFailure,
-			"System error: metadata validation has failed",
-		)
-		result.addEvent(validateMetadataEvent)
-		return systemError(logger, "Validate metadata", &result, e), nil
+		result.systemError(ctx, e, ev, "metadata validation has failed")
+		return result, nil
 	}
 
 	if validateMetadata.Failures != nil {
-		validateMetadataEvent.Complete(
-			ctx,
-			enums.EventOutcomeValidationFailure,
-			"Content error: metadata validation has failed: %s",
-			strings.Join(validateMetadata.Failures, "\n"),
-		)
+		result.validationError(ctx, ev, "metadata validation has failed", validateMetadata.Failures)
 	} else {
-		validateMetadataEvent.Complete(ctx, enums.EventOutcomeSuccess, "Metadata validation successful")
+		ev.Succeed(ctx, "Metadata validation successful")
 	}
-	result.addEvent(validateMetadataEvent)
 
 	// Stop here if the SIP content isn't valid.
-	for _, t := range result.PreservationTasks {
-		if !t.IsSuccess() {
-			return contentError(&result), nil
-		}
+	if result.Outcome == OutcomeContentError {
+		return result, nil
 	}
 
 	if e = writePREMISFile(ctx, identifySIP.SIP); e != nil {
@@ -263,7 +234,7 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 
 	// Re-structure SIP.
-	restructureSIPEvent := newEvent(ctx, "Restructure SIP")
+	ev = result.newEvent(ctx, "Restructure SIP")
 	var transformSIP activities.TransformSIPResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
@@ -271,21 +242,13 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.TransformSIPParams{SIP: identifySIP.SIP},
 	).Get(ctx, &transformSIP)
 	if e != nil {
-		result.addEvent(restructureSIPEvent.Complete(
-			ctx,
-			enums.EventOutcomeSystemFailure,
-			"System error: restructuring has failed",
-		))
-		return systemError(logger, "Restructure SIP", &result, e), nil
+		result.systemError(ctx, e, ev, "restructuring has failed")
+		return result, nil
 	}
-	result.addEvent(restructureSIPEvent.Complete(
-		ctx,
-		enums.EventOutcomeSuccess,
-		"SIP has been restructured",
-	))
+	ev.Succeed(ctx, "SIP has been restructured")
 
 	// Write the identifiers.json file.
-	writeIDFileEvent := newEvent(ctx, "Create identifier.json")
+	ev = result.newEvent(ctx, "Create identifier.json")
 	var writeIDFile activities.WriteIdentifierFileResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
@@ -293,21 +256,13 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.WriteIdentifierFileParams{PIP: transformSIP.PIP},
 	).Get(ctx, &writeIDFile)
 	if e != nil {
-		result.addEvent(writeIDFileEvent.Complete(
-			ctx,
-			enums.EventOutcomeSystemFailure,
-			"System error: creating identifier.json has failed",
-		))
-		return systemError(logger, "Write identifier file", &result, e), nil
+		result.systemError(ctx, e, ev, "creating identifier.json has failed")
+		return result, nil
 	}
-	result.addEvent(writeIDFileEvent.Complete(
-		ctx,
-		enums.EventOutcomeSuccess,
-		"Created an identifier.json file",
-	))
+	ev.Succeed(ctx, "Created an identifier.json file")
 
 	// Bag the SIP for Enduro processing.
-	createBagEvent := newEvent(ctx, "Bag SIP")
+	ev = result.newEvent(ctx, "Bag SIP")
 	var createBag bagcreate.Result
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
@@ -315,21 +270,12 @@ func (w *PreprocessingWorkflow) Execute(
 		&bagcreate.Params{SourcePath: localPath},
 	).Get(ctx, &createBag)
 	if e != nil {
-		result.addEvent(createBagEvent.Complete(
-			ctx,
-			enums.EventOutcomeSystemFailure,
-			"System error: bagging has failed",
-		))
-		return systemError(logger, "Create bag", &result, e), nil
+		result.systemError(ctx, e, ev, "bagging has failed")
+		return result, nil
 	}
+	ev.Succeed(ctx, "SIP has been bagged")
 
-	result.addEvent(createBagEvent.Complete(
-		ctx,
-		enums.EventOutcomeSuccess,
-		"SIP has been bagged",
-	))
-
-	return &result, nil
+	return result, nil
 }
 
 func withLocalActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
@@ -339,22 +285,6 @@ func withLocalActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Con
 			MaximumAttempts: 1,
 		},
 	})
-}
-
-func contentError(r *PreprocessingWorkflowResult) *PreprocessingWorkflowResult {
-	r.Outcome = OutcomeContentError
-	return r
-}
-
-func systemError(
-	logger temporalsdk_log.Logger,
-	activityName string,
-	r *PreprocessingWorkflowResult,
-	err error,
-) *PreprocessingWorkflowResult {
-	logger.Error(activityName, "system error", err.Error())
-	r.Outcome = OutcomeSystemError
-	return r
 }
 
 func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
