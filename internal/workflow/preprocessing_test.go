@@ -371,7 +371,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&workflow.PreprocessingWorkflowResult{
 			Outcome:      workflow.OutcomeSuccess,
 			RelativePath: relPath,
-			PreservationTasks: []eventlog.Event{
+			PreservationTasks: []*eventlog.Event{
 				{
 					Name:        "Identify SIP structure",
 					Message:     "SIP structure identified: DigitizedAIP",
@@ -469,7 +469,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowIdentifySIPFails() {
 		&workflow.PreprocessingWorkflowResult{
 			Outcome:      workflow.OutcomeSystemError,
 			RelativePath: relPath,
-			PreservationTasks: []eventlog.Event{
+			PreservationTasks: []*eventlog.Event{
 				{
 					Name:        "Identify SIP structure",
 					Message:     "System error: SIP structure identification has failed",
@@ -568,7 +568,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		&workflow.PreprocessingWorkflowResult{
 			Outcome:      workflow.OutcomeContentError,
 			RelativePath: relPath,
-			PreservationTasks: []eventlog.Event{
+			PreservationTasks: []*eventlog.Event{
 				{
 					Name:        "Identify SIP structure",
 					Message:     "SIP structure identified: DigitizedAIP",
@@ -613,7 +613,7 @@ file format fmt/11 not allowed: "fake/path/to/sip/file2.png"`,
 				},
 				{
 					Name:        "Validate SIP metadata",
-					Message:     "Content error: metadata validation has failed: fake/path/to/sip/additional/UpdatedAreldaMetadata.xml does not match expected metadata requirements",
+					Message:     "Content error: metadata validation has failed:\nfake/path/to/sip/additional/UpdatedAreldaMetadata.xml does not match expected metadata requirements",
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
