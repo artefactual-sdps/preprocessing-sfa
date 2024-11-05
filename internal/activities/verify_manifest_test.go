@@ -271,8 +271,14 @@ func TestVerifyManifest(t *testing.T) {
 			want: activities.VerifyManifestResult{
 				Failed: true,
 				MissingFiles: []string{
-					fmt.Sprintf("Missing file: %s/content/content/d_0000001/00000001.jp2", filepath.Base(missingFilesSIP.Path())),
-					fmt.Sprintf("Missing file: %s/content/header/xsd/arelda.xsd", filepath.Base(missingFilesSIP.Path())),
+					fmt.Sprintf(
+						"Missing file: %s/content/content/d_0000001/00000001.jp2",
+						filepath.Base(missingFilesSIP.Path()),
+					),
+					fmt.Sprintf(
+						"Missing file: %s/content/header/xsd/arelda.xsd",
+						filepath.Base(missingFilesSIP.Path()),
+					),
 				},
 			},
 		},
@@ -287,8 +293,14 @@ func TestVerifyManifest(t *testing.T) {
 			want: activities.VerifyManifestResult{
 				Failed: true,
 				UnexpectedFiles: []string{
-					fmt.Sprintf("Unexpected file: %s/content/content/d_0000001/extra_file.txt", filepath.Base(extraFilesSIP.Path())),
-					fmt.Sprintf("Unexpected file: %s/content/header/xsd/extra.xsd", filepath.Base(extraFilesSIP.Path())),
+					fmt.Sprintf(
+						"Unexpected file: %s/content/content/d_0000001/extra_file.txt",
+						filepath.Base(extraFilesSIP.Path()),
+					),
+					fmt.Sprintf(
+						"Unexpected file: %s/content/header/xsd/extra.xsd",
+						filepath.Base(extraFilesSIP.Path()),
+					),
 				},
 			},
 		},

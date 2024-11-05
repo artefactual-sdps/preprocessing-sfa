@@ -126,7 +126,10 @@ func TestValidateStructure(t *testing.T) {
 			want: activities.ValidateStructureResult{
 				Failures: []string{
 					fmt.Sprintf("Unexpected directory: %q", filepath.Base(unexpectedPiecesSIP.Path)+"/unexpected"),
-					fmt.Sprintf("Unexpected file: %q", filepath.Base(unexpectedPiecesSIP.Path)+"/content/unexpected.txt"),
+					fmt.Sprintf(
+						"Unexpected file: %q",
+						filepath.Base(unexpectedPiecesSIP.Path)+"/content/unexpected.txt",
+					),
 				},
 			},
 		},
