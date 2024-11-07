@@ -174,6 +174,8 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 		return "", errors.New("UpdatedAreldaMetadata.xml and metadata.xml files not found in METS")
 	}
 
+	metadataPath := filepath.Join(localDir, filepath.Base(metadataRelPath))
+
 	var fetchMetadataResult FetchActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withActivityOptsForLongLivedRequest(ctx),
@@ -181,9 +183,23 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 		&FetchActivityParams{
 			AIPUUID:      aipUUID,
 			RelativePath: fmt.Sprintf("%s/data/%s", aipDirName, metadataRelPath),
-			Destination:  filepath.Join(localDir, filepath.Base(metadataRelPath)),
+			Destination:  metadataPath,
 		},
 	).Get(ctx, &fetchMetadataResult)
+	if e != nil {
+		return "", e
+	}
+
+	var combineMDResult CombineMDActivityResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withFilesystemActivityOpts(ctx),
+		CombineMDActivityName,
+		&CombineMDActivityParams{
+			AreldaPath: metadataPath,
+			METSPath:   metsPath,
+			LocalDir:   localDir,
+		},
+	).Get(ctx, &combineMDResult)
 	if e != nil {
 		return "", e
 	}
@@ -230,6 +246,10 @@ func RegisterWorkflow(ctx context.Context, tw temporalsdk_worker.Worker, config 
 	tw.RegisterActivityWithOptions(
 		NewParseActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: ParseActivityName},
+	)
+	tw.RegisterActivityWithOptions(
+		NewCombineMDActivity().Execute,
+		temporalsdk_activity.RegisterOptions{Name: CombineMDActivityName},
 	)
 	tw.RegisterActivityWithOptions(
 		archivezip.New().Execute,
