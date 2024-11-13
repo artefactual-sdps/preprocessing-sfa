@@ -25,15 +25,24 @@ type Main struct {
 	bucket         *blob.Bucket
 }
 
-func NewMain(logger logr.Logger, cfg ais.Config, tc temporalsdk_client.Client) *Main {
+func NewMain(logger logr.Logger, cfg ais.Config) *Main {
 	return &Main{
-		logger:         logger,
-		cfg:            cfg,
-		temporalClient: tc,
+		logger: logger,
+		cfg:    cfg,
 	}
 }
 
 func (m *Main) Run(ctx context.Context) error {
+	tc, err := temporalsdk_client.Dial(temporalsdk_client.Options{
+		HostPort:  m.cfg.Temporal.Address,
+		Namespace: m.cfg.Temporal.Namespace,
+		Logger:    temporal.Logger(m.logger.WithName("ais-temporal")),
+	})
+	if err != nil {
+		return fmt.Errorf("Unable to create AIS Temporal client: %w", err)
+	}
+	m.temporalClient = tc
+
 	w := temporalsdk_worker.New(m.temporalClient, m.cfg.Temporal.TaskQueue, temporalsdk_worker.Options{
 		EnableSessionWorker:               true,
 		MaxConcurrentSessionExecutionSize: m.cfg.Worker.MaxConcurrentSessions,
@@ -54,7 +63,7 @@ func (m *Main) Run(ctx context.Context) error {
 	}
 
 	if err := w.Start(); err != nil {
-		m.logger.Error(err, "Worker failed to start.")
+		m.logger.Error(err, "AIS worker failed to start.")
 		return err
 	}
 
@@ -64,6 +73,10 @@ func (m *Main) Run(ctx context.Context) error {
 func (m *Main) Close() error {
 	if m.temporalWorker != nil {
 		m.temporalWorker.Stop()
+	}
+
+	if m.temporalClient != nil {
+		m.temporalClient.Close()
 	}
 
 	if m.bucket != nil {

@@ -107,7 +107,7 @@ func (m *Main) Run(ctx context.Context) error {
 	)
 
 	if err := w.Start(); err != nil {
-		m.logger.Error(err, "Worker failed to start.")
+		m.logger.Error(err, "Preprocessing worker failed to start.")
 		return err
 	}
 

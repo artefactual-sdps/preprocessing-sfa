@@ -16,7 +16,6 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tonglil/buflogr v1.1.1
 	go.artefactual.dev/tools v0.14.0
-	go.temporal.io/api v1.32.0
 	go.temporal.io/sdk v1.26.1
 	gocloud.dev v0.39.0
 	gotest.tools/v3 v3.5.1
@@ -80,6 +79,7 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
+	go.temporal.io/api v1.32.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20231219180239-dc181d75b848 // indirect

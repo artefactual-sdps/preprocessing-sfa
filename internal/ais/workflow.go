@@ -5,27 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/archivezip"
 	"github.com/artefactual-sdps/temporal-activities/bucketupload"
 	"github.com/artefactual-sdps/temporal-activities/removepaths"
-	"github.com/google/uuid"
-	temporalsdk_api_enums "go.temporal.io/api/enums/v1"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
-	temporalsdk_client "go.temporal.io/sdk/client"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 	"gocloud.dev/blob"
 )
 
-// We use this constant to represent a long period of time (10 years).
-const forever = time.Hour * 24 * 365 * 10
-
 type WorkflowParams struct {
-	AIPUUID uuid.UUID
-	AIPName string
+	AIPUUID string
 }
 
 type WorkflowResult struct {
@@ -33,12 +27,15 @@ type WorkflowResult struct {
 }
 
 type Workflow struct {
-	workingDir string
 	config     Config
+	amssClient *AMSSClient
 }
 
-func NewWorkflow(workingDir string) *Workflow {
-	return &Workflow{workingDir: workingDir}
+func NewWorkflow(config Config, amssClient *AMSSClient) *Workflow {
+	return &Workflow{
+		config:     config,
+		amssClient: amssClient,
+	}
 }
 
 func (w *Workflow) Execute(ctx temporalsdk_workflow.Context, params *WorkflowParams) (r *WorkflowResult, e error) {
@@ -46,6 +43,23 @@ func (w *Workflow) Execute(ctx temporalsdk_workflow.Context, params *WorkflowPar
 
 	logger := temporalsdk_workflow.GetLogger(ctx)
 	logger.Debug("AIS workflow running!", "params", params)
+
+	defer func() {
+		logger.Debug("AIS workflow finished!", "result", r, "error", e)
+	}()
+
+	var getAIPPathResult GetAIPPathActivityResult
+	err := temporalsdk_workflow.ExecuteLocalActivity(
+		withLocalActivityOpts(ctx),
+		GetAIPPathActivity,
+		&GetAIPPathActivityParams{
+			AMSSClient: w.amssClient,
+			AIPUUID:    params.AIPUUID,
+		},
+	).Get(ctx, &getAIPPathResult)
+	if err != nil {
+		return nil, err
+	}
 
 	// Activities running within a session.
 	{
@@ -62,10 +76,10 @@ func (w *Workflow) Execute(ctx temporalsdk_workflow.Context, params *WorkflowPar
 				ExecutionTimeout: forever,
 			})
 			if err != nil {
-				return r, fmt.Errorf("error creating session: %v", err)
+				return nil, fmt.Errorf("error creating session: %v", err)
 			}
 
-			r.Key, sessErr = w.SessionHandler(sessCtx, params)
+			r.Key, sessErr = w.SessionHandler(sessCtx, params.AIPUUID, getAIPPathResult.Path)
 
 			// We want to retry the session if it has been canceled as a result
 			// of losing the worker but not otherwise. This scenario seems to be
@@ -75,7 +89,7 @@ func (w *Workflow) Execute(ctx temporalsdk_workflow.Context, params *WorkflowPar
 				(errors.Is(sessErr, temporalsdk_workflow.ErrSessionFailed) || temporalsdk_temporal.IsCanceledError(sessErr)) {
 				// Root context canceled, hence workflow canceled.
 				if ctx.Err() == temporalsdk_workflow.ErrCanceled {
-					return r, nil
+					return nil, nil
 				}
 
 				logger.Error(
@@ -94,22 +108,20 @@ func (w *Workflow) Execute(ctx temporalsdk_workflow.Context, params *WorkflowPar
 		}
 
 		if sessErr != nil {
-			return r, sessErr
+			return nil, sessErr
 		}
 	}
-
-	logger.Debug("AIS workflow finished!", "result", r, "error", e)
 
 	return r, nil
 }
 
-func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, params *WorkflowParams) (s string, e error) {
+func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aipPath string) (s string, e error) {
 	removePaths := []string{}
 
 	defer func() {
 		var removeResult removepaths.Result
 		err := temporalsdk_workflow.ExecuteActivity(
-			withLocalActOpts(ctx),
+			withFilesystemActivityOpts(ctx),
 			removepaths.Name,
 			&removepaths.Params{Paths: removePaths},
 		).Get(ctx, &removeResult)
@@ -120,19 +132,21 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, params *Work
 		temporalsdk_workflow.CompleteSession(ctx)
 	}()
 
-	aipDirName := fmt.Sprintf("%s-%s", params.AIPName, params.AIPUUID.String())
-	localDir := filepath.Join(w.workingDir, fmt.Sprintf("search-md_%s", aipDirName))
-	metsName := fmt.Sprintf("METS.%s.xml", params.AIPUUID.String())
+	// In case the AIP is compressed, remove its UUID and the possible
+	// extension from the directory/file name, and append the UUID back.
+	aipDirName := strings.Split(filepath.Base(aipPath), aipUUID)[0] + aipUUID
+	localDir := filepath.Join(w.config.WorkingDir, fmt.Sprintf("search-md_%s", aipDirName))
+	metsName := fmt.Sprintf("METS.%s.xml", aipUUID)
 	metsPath := filepath.Join(localDir, metsName)
 
 	removePaths = append(removePaths, localDir)
 
 	var fetchMETSResult FetchActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withRemoteActOpts(ctx),
+		withActivityOptsForLongLivedRequest(ctx),
 		FetchActivityName,
 		&FetchActivityParams{
-			AIPUUID:      params.AIPUUID,
+			AIPUUID:      aipUUID,
 			RelativePath: fmt.Sprintf("%s/data/%s", aipDirName, metsName),
 			Destination:  metsPath,
 		},
@@ -143,7 +157,7 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, params *Work
 
 	var parseResult ParseActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withLocalActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		ParseActivityName,
 		&ParseActivityParams{METSPath: metsPath},
 	).Get(ctx, &parseResult)
@@ -151,41 +165,32 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, params *Work
 		return "", e
 	}
 
+	var metadataRelPath string
 	if parseResult.UpdatedAreldaMetadataRelPath != "" {
-		var fetchMetadataResult FetchActivityResult
-		e = temporalsdk_workflow.ExecuteActivity(
-			withRemoteActOpts(ctx),
-			FetchActivityName,
-			&FetchActivityParams{
-				AIPUUID:      params.AIPUUID,
-				RelativePath: fmt.Sprintf("%s/data/%s", aipDirName, parseResult.UpdatedAreldaMetadataRelPath),
-				Destination:  filepath.Join(localDir, filepath.Base(parseResult.UpdatedAreldaMetadataRelPath)),
-			},
-		).Get(ctx, &fetchMetadataResult)
-		if e != nil {
-			return "", e
-		}
+		metadataRelPath = parseResult.UpdatedAreldaMetadataRelPath
+	} else if parseResult.MetadataRelPath != "" {
+		metadataRelPath = parseResult.MetadataRelPath
+	} else {
+		return "", errors.New("UpdatedAreldaMetadata.xml and metadata.xml files not found in METS")
 	}
 
-	if parseResult.UpdatedAreldaMetadataRelPath == "" && parseResult.MetadataRelPath != "" {
-		var fetchMetadataResult FetchActivityResult
-		e = temporalsdk_workflow.ExecuteActivity(
-			withRemoteActOpts(ctx),
-			FetchActivityName,
-			&FetchActivityParams{
-				AIPUUID:      params.AIPUUID,
-				RelativePath: fmt.Sprintf("%s/data/%s", aipDirName, parseResult.MetadataRelPath),
-				Destination:  filepath.Join(localDir, filepath.Base(parseResult.MetadataRelPath)),
-			},
-		).Get(ctx, &fetchMetadataResult)
-		if e != nil {
-			return "", e
-		}
+	var fetchMetadataResult FetchActivityResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withActivityOptsForLongLivedRequest(ctx),
+		FetchActivityName,
+		&FetchActivityParams{
+			AIPUUID:      aipUUID,
+			RelativePath: fmt.Sprintf("%s/data/%s", aipDirName, metadataRelPath),
+			Destination:  filepath.Join(localDir, filepath.Base(metadataRelPath)),
+		},
+	).Get(ctx, &fetchMetadataResult)
+	if e != nil {
+		return "", e
 	}
 
 	var zipResult archivezip.Result
 	e = temporalsdk_workflow.ExecuteActivity(
-		withLocalActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		archivezip.Name,
 		&archivezip.Params{SourceDir: localDir},
 	).Get(ctx, &zipResult)
@@ -197,7 +202,7 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, params *Work
 
 	var uploadResult bucketupload.Result
 	e = temporalsdk_workflow.ExecuteActivity(
-		withRemoteActOpts(ctx),
+		withActivityOptsForLongLivedRequest(ctx),
 		bucketupload.Name,
 		&bucketupload.Params{Path: zipResult.Path},
 	).Get(ctx, &uploadResult)
@@ -208,25 +213,6 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, params *Work
 	return uploadResult.Key, nil
 }
 
-func StartWorkflow(
-	ctx context.Context,
-	tc temporalsdk_client.Client,
-	cfg TemporalConfig,
-	params *WorkflowParams,
-) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
-
-	opts := temporalsdk_client.StartWorkflowOptions{
-		ID:                    fmt.Sprintf("%s-%s", cfg.WorkflowName, params.AIPUUID.String()),
-		TaskQueue:             cfg.TaskQueue,
-		WorkflowIDReusePolicy: temporalsdk_api_enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
-	}
-	_, err := tc.ExecuteWorkflow(ctx, opts, cfg.WorkflowName, params)
-
-	return err
-}
-
 func RegisterWorkflow(ctx context.Context, tw temporalsdk_worker.Worker, config Config, bucket *blob.Bucket) error {
 	amssclient, err := NewAMSSClient(config.AMSS)
 	if err != nil {
@@ -234,7 +220,7 @@ func RegisterWorkflow(ctx context.Context, tw temporalsdk_worker.Worker, config 
 	}
 
 	tw.RegisterWorkflowWithOptions(
-		NewWorkflow(config.WorkingDir).Execute,
+		NewWorkflow(config, amssclient).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: config.Temporal.WorkflowName},
 	)
 	tw.RegisterActivityWithOptions(
@@ -259,24 +245,4 @@ func RegisterWorkflow(ctx context.Context, tw temporalsdk_worker.Worker, config 
 	)
 
 	return nil
-}
-
-func withLocalActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
-	return temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
-		ScheduleToCloseTimeout: 5 * time.Minute,
-		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
-			MaximumAttempts: 1,
-		},
-	})
-}
-
-func withRemoteActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
-	return temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
-		HeartbeatTimeout:    time.Minute,
-		StartToCloseTimeout: 15 * time.Minute,
-		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
-			MaximumAttempts: 5,
-			InitialInterval: time.Minute,
-		},
-	})
 }

@@ -8,17 +8,13 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
-	"time"
 
 	"github.com/oklog/run"
 	"github.com/spf13/pflag"
 	"go.artefactual.dev/tools/log"
-	"go.artefactual.dev/tools/temporal"
-	temporalsdk_client "go.temporal.io/sdk/client"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/cmd/worker/aiscmd"
 	"github.com/artefactual-sdps/preprocessing-sfa/cmd/worker/workercmd"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/version"
 )
@@ -96,22 +92,10 @@ func main() {
 		)
 	}
 
-	// AIS Temporal client.
-	atc, err := temporalsdk_client.Dial(temporalsdk_client.Options{
-		HostPort:  cfg.AIS.Temporal.Address,
-		Namespace: cfg.AIS.Temporal.Namespace,
-		Logger:    temporal.Logger(logger.WithName("ais-temporal")),
-	})
-	if err != nil {
-		logger.Error(err, "Unable to create AIS Temporal client.")
-		os.Exit(1)
-	}
-	defer atc.Close()
-
 	// AIS worker.
 	{
 		done := make(chan struct{})
-		m := aiscmd.NewMain(logger, cfg.AIS, atc)
+		m := aiscmd.NewMain(logger, cfg.AIS)
 		g.Add(
 			func() error {
 				if err := m.Run(ctx); err != nil {
@@ -125,22 +109,6 @@ func main() {
 					logger.Error(err, "Failed to close AIS worker.")
 				}
 				close(done)
-			},
-		)
-	}
-
-	// AIS API server.
-	{
-		srv := ais.NewAPIServer(ctx, atc, cfg.AIS)
-		g.Add(
-			func() error {
-				logger.Info("API server running", "listen", cfg.AIS.Listen)
-				return srv.ListenAndServe()
-			},
-			func(err error) {
-				ctx, cancel := context.WithTimeout(ctx, time.Second*5)
-				defer cancel()
-				_ = srv.Shutdown(ctx)
 			},
 		)
 	}

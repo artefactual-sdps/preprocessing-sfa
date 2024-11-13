@@ -27,7 +27,6 @@ k8s_yaml(kustomize("hack/kube/overlays/dev"))
 # Preprocessing resources
 k8s_resource(
   "preprocessing-worker",
-  port_forwards="0.0.0.0:9035:9035",
   labels=["01-Preprocessing"],
   trigger_mode=trigger_mode
 )

@@ -3,7 +3,6 @@ package ais
 import "go.artefactual.dev/tools/bucket"
 
 type Config struct {
-	Listen     string
 	WorkingDir string
 	Temporal   TemporalConfig
 	Worker     WorkerConfig

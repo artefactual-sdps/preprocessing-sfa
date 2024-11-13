@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/google/uuid"
 	"go.artefactual.dev/tools/temporal"
 )
 
@@ -14,7 +13,7 @@ const FetchActivityName = "fetch-amss-file"
 
 type (
 	FetchActivityParams struct {
-		AIPUUID      uuid.UUID
+		AIPUUID      string
 		RelativePath string
 		Destination  string
 	}
@@ -42,7 +41,7 @@ func (a *FetchActivity) Execute(ctx context.Context, params *FetchActivityParams
 	}
 	defer file.Close()
 
-	err = a.amssclient.DownloadAIPFile(ctx, params.AIPUUID.String(), params.RelativePath, file)
+	err = a.amssclient.DownloadAIPFile(ctx, params.AIPUUID, params.RelativePath, file)
 	if err != nil {
 		return nil, fmt.Errorf("FetchActivity: download file: %w", err)
 	}
