@@ -86,15 +86,13 @@ func (s *TestSuite) TestWorkflowSuccess() {
 	err := s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 
-	s.Equal(result, ais.WorkflowResult{Key: "test-" + aipUUID + ".zip"})
+	s.Equal(result, ais.WorkflowResult{Key: "search-md_test-" + aipUUID + ".zip"})
 }
 
 func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 	aipName := "test-" + aipUUID
-	aipPath := "9390/594f/84c2/457d/bd6a/618f/21f7/c954/test-9390594f-84c2-457d-bd6a-618f21f7c954.zip"
-	localDir := filepath.Join(s.testDir, fmt.Sprintf("search-md_%s", aipName))
-	metsName := fmt.Sprintf("METS.%s.xml", aipUUID)
-	metsPath := filepath.Join(localDir, metsName)
+	searchMDName := fmt.Sprintf("search-md_%s", aipName)
+	localDir := filepath.Join(s.testDir, searchMDName)
 
 	// Mock activities.
 	s.env.OnActivity(
@@ -102,11 +100,15 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 		mock.AnythingOfType("*context.valueCtx"),
 		&ais.GetAIPPathActivityParams{AIPUUID: aipUUID},
 	).Return(
-		&ais.GetAIPPathActivityResult{Path: aipPath}, nil,
+		&ais.GetAIPPathActivityResult{
+			Path: "9390/594f/84c2/457d/bd6a/618f/21f7/c954/test-9390594f-84c2-457d-bd6a-618f21f7c954.zip",
+		}, nil,
 	)
 
 	// Mock session activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
+	metsName := fmt.Sprintf("METS.%s.xml", aipUUID)
+	metsPath := filepath.Join(localDir, metsName)
 	s.env.OnActivity(
 		ais.FetchActivityName,
 		sessionCtx,
@@ -119,13 +121,13 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 		&ais.FetchActivityResult{}, nil,
 	)
 
-	mdpath := "objects/header/metadata.xml"
+	mdRelPath := "objects/header/metadata.xml"
 	s.env.OnActivity(
 		ais.ParseActivityName,
 		sessionCtx,
 		&ais.ParseActivityParams{METSPath: metsPath},
 	).Return(
-		&ais.ParseActivityResult{MetadataRelPath: mdpath}, nil,
+		&ais.ParseActivityResult{MetadataRelPath: mdRelPath}, nil,
 	)
 
 	areldaPath := filepath.Join(localDir, "metadata.xml")
@@ -134,7 +136,7 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 		sessionCtx,
 		&ais.FetchActivityParams{
 			AIPUUID:      aipUUID,
-			RelativePath: fmt.Sprintf("%s/data/%s", aipName, mdpath),
+			RelativePath: fmt.Sprintf("%s/data/%s", aipName, mdRelPath),
 			Destination:  areldaPath,
 		},
 	).Return(
@@ -153,7 +155,7 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 		&ais.CombineMDActivityResult{Path: filepath.Join(localDir, "AIS_1000_893_3251903")}, nil,
 	)
 
-	zipPath := filepath.Join(s.testDir, aipName+".zip")
+	zipPath := localDir + ".zip"
 	s.env.OnActivity(
 		archivezip.Name,
 		sessionCtx,
@@ -167,6 +169,6 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 		sessionCtx,
 		&bucketupload.Params{Path: zipPath},
 	).Return(
-		&bucketupload.Result{Key: aipName + ".zip"}, nil,
+		&bucketupload.Result{Key: searchMDName + ".zip"}, nil,
 	)
 }
