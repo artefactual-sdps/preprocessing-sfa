@@ -38,8 +38,8 @@ func (a *TransformSIP) Execute(ctx context.Context, params *TransformSIPParams) 
 
 	// Move the Prozess_Digitalisierung_PREMIS.xml file to the PIP metadata
 	// directory. Prozess_Digitalisierung_PREMIS.xml is only present in
-	// digitized SIPs, and there can only be one dossier in a digitized SIP.
-	if params.SIP.Type == enums.SIPTypeDigitizedSIP {
+	// digitized SIPs/AIPs, and there can only be one dossier in a digitized SIP/AIP.
+	if params.SIP.Type == enums.SIPTypeDigitizedSIP || params.SIP.Type == enums.SIPTypeDigitizedAIP {
 		entries, err := os.ReadDir(params.SIP.ContentPath)
 		if err != nil {
 			return nil, err

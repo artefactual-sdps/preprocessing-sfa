@@ -61,13 +61,13 @@ func TestNewFromSIP(t *testing.T) {
 	t.Parallel()
 
 	s := sip.SIP{
-		Path: "/path/to/born_digital_AIP_12345",
-		Type: enums.SIPTypeBornDigital,
+		Path: "/path/to/born_digital_SIP_12345",
+		Type: enums.SIPTypeBornDigitalSIP,
 	}
 	assert.DeepEqual(t, pips.NewFromSIP(s), pips.PIP{
-		Path:         "/path/to/born_digital_AIP_12345",
-		Type:         enums.SIPTypeBornDigital,
-		ManifestPath: "/path/to/born_digital_AIP_12345/objects/born_digital_AIP_12345/header/metadata.xml",
+		Path:         "/path/to/born_digital_SIP_12345",
+		Type:         enums.SIPTypeBornDigitalSIP,
+		ManifestPath: "/path/to/born_digital_SIP_12345/objects/born_digital_SIP_12345/header/metadata.xml",
 	})
 }
 

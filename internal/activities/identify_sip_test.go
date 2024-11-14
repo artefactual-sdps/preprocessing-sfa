@@ -17,7 +17,13 @@ import (
 func TestIdentifySIP(t *testing.T) {
 	t.Parallel()
 
-	path := fs.NewDir(t, "", fs.WithDir("content"), fs.WithDir("additional")).Path()
+	path := fs.NewDir(t, "",
+		fs.WithDir("content",
+			fs.WithDir("d_0000001",
+				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+			),
+		),
+		fs.WithDir("additional")).Path()
 
 	tests := []struct {
 		name    string

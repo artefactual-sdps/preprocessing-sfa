@@ -328,7 +328,7 @@ func TestOriginalNameForSubpath(t *testing.T) {
 
 	// Check for correct adjustment of born digital SIP file path in PREMIS.
 	bornDigitalSIP := sip.SIP{
-		Type:        enums.SIPTypeBornDigital,
+		Type:        enums.SIPTypeBornDigitalSIP,
 		Path:        "test_transfer",
 		ContentPath: "test_transfer/content",
 	}
