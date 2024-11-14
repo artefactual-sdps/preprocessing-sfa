@@ -46,19 +46,27 @@ func New(path string) (SIP, error) {
 	}
 	s.Path = path
 
-	if fsutil.FileExists(filepath.Join(s.Path, "additional")) {
-		return s.digitizedAIP(), nil
-	}
-
 	f, err := fsutil.FindFilename(s.Path, "Prozess_Digitalisierung_PREMIS.xml")
 	if err != nil {
 		return s, fmt.Errorf("SIP: New: %v", err)
 	}
-	if len(f) > 0 {
-		return s.digitizedSIP(), nil
-	}
+	hasProzessFile := len(f) > 0
 
-	return s.bornDigital(), nil
+	hasAdditionalDir := fsutil.FileExists(filepath.Join(s.Path, "additional"))
+
+	if hasProzessFile {
+		if hasAdditionalDir {
+			return s.digitizedAIP(), nil
+		} else {
+			return s.digitizedSIP(), nil
+		}
+	} else {
+		if hasAdditionalDir {
+			return s.bornDigitalAIP(), nil
+		} else {
+			return s.bornDigitalSIP(), nil
+		}
+	}
 }
 
 func (s SIP) digitizedAIP() SIP {
@@ -77,14 +85,21 @@ func (s SIP) digitizedAIP() SIP {
 }
 
 func (s SIP) digitizedSIP() SIP {
-	s = s.bornDigital()
+	s = s.bornDigitalSIP()
 	s.Type = enums.SIPTypeDigitizedSIP
 
 	return s
 }
 
-func (s SIP) bornDigital() SIP {
-	s.Type = enums.SIPTypeBornDigital
+func (s SIP) bornDigitalAIP() SIP {
+	s = s.bornDigitalSIP()
+	s.Type = enums.SIPTypeBornDigitalAIP
+
+	return s
+}
+
+func (s SIP) bornDigitalSIP() SIP {
+	s.Type = enums.SIPTypeBornDigitalSIP
 	s.ContentPath = filepath.Join(s.Path, "content")
 	s.MetadataPath = filepath.Join(s.Path, "header", "metadata.xml")
 	s.ManifestPath = s.MetadataPath

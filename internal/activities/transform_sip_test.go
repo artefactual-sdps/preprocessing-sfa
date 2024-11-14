@@ -32,6 +32,7 @@ func TestTransformSIP(t *testing.T) {
 				fs.WithDir("d_0000001",
 					fs.WithFile("00000001.jp2", ""),
 					fs.WithFile("00000001_PREMIS.xml", ""),
+					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
 				),
 			),
 			fs.WithDir("header",
@@ -84,6 +85,7 @@ func TestTransformSIP(t *testing.T) {
 		),
 		fs.WithDir("metadata", fs.WithMode(dmode),
 			fs.WithFile("UpdatedAreldaMetadata.xml", "", fs.WithMode(fmode)),
+			fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "", fs.WithMode(fmode)),
 		),
 	)
 

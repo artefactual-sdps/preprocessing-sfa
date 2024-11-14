@@ -14,7 +14,11 @@ func TestNew(t *testing.T) {
 	t.Parallel()
 
 	digitizedAIP := fs.NewDir(t, "Test-AIP-Digitization",
-		fs.WithDir("content"),
+		fs.WithDir("content",
+			fs.WithDir("d_0000001",
+				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+			),
+		),
 		fs.WithDir("additional"),
 	)
 
@@ -36,7 +40,13 @@ func TestNew(t *testing.T) {
 		fs.WithDir("header"),
 	)
 
-	bornDigital := fs.NewDir(t, "",
+	bornDigitalAIP := fs.NewDir(t, "",
+		fs.WithDir("additional"),
+		fs.WithDir("content"),
+		fs.WithDir("header"),
+	)
+
+	bornDigitalSIP := fs.NewDir(t, "",
 		fs.WithDir("content"),
 		fs.WithDir("header"),
 	)
@@ -97,18 +107,34 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			name: "Creates a new born digital SIP",
-			path: bornDigital.Path(),
+			name: "Creates a new born digital AIP",
+			path: bornDigitalAIP.Path(),
 			wantSIP: sip.SIP{
-				Type:         enums.SIPTypeBornDigital,
-				Path:         bornDigital.Path(),
-				ContentPath:  bornDigital.Join("content"),
-				ManifestPath: bornDigital.Join("header", "metadata.xml"),
-				MetadataPath: bornDigital.Join("header", "metadata.xml"),
-				XSDPath:      bornDigital.Join("header", "xsd", "arelda.xsd"),
+				Type:         enums.SIPTypeBornDigitalAIP,
+				Path:         bornDigitalAIP.Path(),
+				ContentPath:  bornDigitalAIP.Join("content"),
+				ManifestPath: bornDigitalAIP.Join("header", "metadata.xml"),
+				MetadataPath: bornDigitalAIP.Join("header", "metadata.xml"),
+				XSDPath:      bornDigitalAIP.Join("header", "xsd", "arelda.xsd"),
 				TopLevelPaths: []string{
-					bornDigital.Join("content"),
-					bornDigital.Join("header"),
+					bornDigitalAIP.Join("content"),
+					bornDigitalAIP.Join("header"),
+				},
+			},
+		},
+		{
+			name: "Creates a new born digital SIP",
+			path: bornDigitalSIP.Path(),
+			wantSIP: sip.SIP{
+				Type:         enums.SIPTypeBornDigitalSIP,
+				Path:         bornDigitalSIP.Path(),
+				ContentPath:  bornDigitalSIP.Join("content"),
+				ManifestPath: bornDigitalSIP.Join("header", "metadata.xml"),
+				MetadataPath: bornDigitalSIP.Join("header", "metadata.xml"),
+				XSDPath:      bornDigitalSIP.Join("header", "xsd", "arelda.xsd"),
+				TopLevelPaths: []string{
+					bornDigitalSIP.Join("content"),
+					bornDigitalSIP.Join("header"),
 				},
 			},
 		},

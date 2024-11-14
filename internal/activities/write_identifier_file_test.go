@@ -35,7 +35,7 @@ func TestWriteIdentifierFile(t *testing.T) {
 		enums.SIPTypeDigitizedSIP,
 	)
 
-	pipNoManifest := pips.New(fs.NewDir(t, "").Path(), enums.SIPTypeBornDigital)
+	pipNoManifest := pips.New(fs.NewDir(t, "").Path(), enums.SIPTypeBornDigitalSIP)
 
 	pipEmptyManifest := pips.New(
 		fs.NewDir(t, "",

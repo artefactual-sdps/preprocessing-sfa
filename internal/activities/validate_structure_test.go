@@ -23,7 +23,9 @@ func TestValidateStructure(t *testing.T) {
 		),
 		fs.WithDir("content",
 			fs.WithDir("content",
-				fs.WithDir("d_0000001"),
+				fs.WithDir("d_0000001",
+					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+				),
 			),
 			fs.WithDir("header",
 				fs.WithDir("old",
@@ -76,6 +78,7 @@ func TestValidateStructure(t *testing.T) {
 
 	missingPiecesAIP, err := sip.New(fs.NewDir(t, "",
 		fs.WithDir("additional"),
+		fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
 	).Path())
 	assert.NilError(t, err)
 
