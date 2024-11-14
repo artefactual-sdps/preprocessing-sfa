@@ -50,7 +50,7 @@ func (a *CombineMDActivity) Execute(
 
 	dest := filepath.Join(params.LocalDir, name)
 
-	// Combine metadata files into AIS file.
+	// Create AIS file.
 	w, err := os.Create(dest) // #nosec G304 -- generated path.
 	if err != nil {
 		return nil, fmt.Errorf("create AIS file: %v", err)
@@ -61,7 +61,8 @@ func (a *CombineMDActivity) Execute(
 		return nil, fmt.Errorf("set AIS file permissions: %v", err)
 	}
 
-	if err = concat(w, filepath.Join(params.AreldaPath), filepath.Join(params.METSPath)); err != nil {
+	// Append Arelda and METS file contents to AIS file.
+	if err = concat(w, params.AreldaPath, params.METSPath); err != nil {
 		return nil, fmt.Errorf("concat: %v", err)
 	}
 
