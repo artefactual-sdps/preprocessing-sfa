@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
+	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -20,7 +21,6 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/pips"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
@@ -139,8 +139,8 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.VerifyManifestName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewValidateFileFormats(fformat.Config{}).Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
+		ffvalidate.New(ffvalidate.Config{}).Execute,
+		temporalsdk_activity.RegisterOptions{Name: ffvalidate.Name},
 	)
 	s.env.RegisterActivityWithOptions(
 		activities.NewAddPREMISObjects(rand.Reader).Execute,
@@ -249,11 +249,11 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.VerifyManifestResult{}, nil,
 	)
 	s.env.OnActivity(
-		activities.ValidateFileFormatsName,
+		ffvalidate.Name,
 		sessionCtx,
-		&activities.ValidateFileFormatsParams{SIP: expectedSIP},
+		&ffvalidate.Params{Path: expectedSIP.ContentPath},
 	).Return(
-		&activities.ValidateFileFormatsResult{}, nil,
+		&ffvalidate.Result{}, nil,
 	)
 	s.env.OnActivity(
 		xmlvalidate.Name,
@@ -527,13 +527,11 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		nil,
 	)
 	s.env.OnActivity(
-		activities.ValidateFileFormatsName,
+		ffvalidate.Name,
 		sessionCtx,
-		&activities.ValidateFileFormatsParams{
-			SIP: expectedSIP,
-		},
+		&ffvalidate.Params{Path: expectedSIP.ContentPath},
 	).Return(
-		&activities.ValidateFileFormatsResult{Failures: []string{
+		&ffvalidate.Result{Failures: []string{
 			`file format fmt/11 not allowed: "fake/path/to/sip/dir/file1.png"`,
 			`file format fmt/11 not allowed: "fake/path/to/sip/file2.png"`,
 		}},

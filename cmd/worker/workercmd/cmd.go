@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
+	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"github.com/go-logr/logr"
 	"go.artefactual.dev/tools/temporal"
@@ -74,8 +75,8 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: activities.VerifyManifestName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewValidateFileFormats(m.cfg.FileFormat).Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFileFormatsName},
+		ffvalidate.New(m.cfg.FileFormat).Execute,
+		temporalsdk_activity.RegisterOptions{Name: ffvalidate.Name},
 	)
 	w.RegisterActivityWithOptions(
 		activities.NewAddPREMISObjects(rand.Reader).Execute,
