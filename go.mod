@@ -4,18 +4,16 @@ go 1.23.2
 
 require (
 	github.com/antchfx/xmlquery v1.4.2
-	github.com/artefactual-sdps/temporal-activities v0.0.0-20241018212855-8ea34d29bdf4
+	github.com/artefactual-sdps/temporal-activities v0.0.0-20241105002718-bc4a9d85ce42
 	github.com/beevik/etree v1.4.0
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/oklog/run v1.1.0
-	github.com/richardlehane/siegfried v1.11.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
-	github.com/tonglil/buflogr v1.1.1
 	go.artefactual.dev/tools v0.14.0
 	go.temporal.io/sdk v1.26.1
 	gocloud.dev v0.39.0
@@ -69,6 +67,7 @@ require (
 	github.com/richardlehane/match v1.0.5 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.3 // indirect
+	github.com/richardlehane/siegfried v1.11.1 // indirect
 	github.com/richardlehane/xmldetect v1.0.2 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/ross-spencer/spargo v0.4.1 // indirect
@@ -85,7 +84,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20231219180239-dc181d75b848 // indirect
-	golang.org/x/image v0.14.0 // indirect
+	golang.org/x/image v0.17.0 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.24.0 // indirect

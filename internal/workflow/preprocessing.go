@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
+	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
@@ -181,22 +182,22 @@ func (w *PreprocessingWorkflow) Execute(
 
 	// Validate file formats.
 	ev = result.newEvent(ctx, "Validate SIP file formats")
-	var validateFileFormats activities.ValidateFileFormatsResult
+	var ffvalidateResult ffvalidate.Result
 	e = temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
-		activities.ValidateFileFormatsName,
-		&activities.ValidateFileFormatsParams{SIP: identifySIP.SIP},
-	).Get(ctx, &validateFileFormats)
+		ffvalidate.Name,
+		&ffvalidate.Params{Path: identifySIP.SIP.ContentPath},
+	).Get(ctx, &ffvalidateResult)
 	if e != nil {
 		result.systemError(ctx, e, ev, "System error: file format validation has failed")
 		return result, nil
 	}
 
-	if validateFileFormats.Failures != nil {
+	if ffvalidateResult.Failures != nil {
 		result.validationError(
 			ctx,
 			ev,
-			"file format validation has failed. One or more file formats are not allowed", validateFileFormats.Failures,
+			"file format validation has failed. One or more file formats are not allowed", ffvalidateResult.Failures,
 		)
 	} else {
 		ev.Succeed(ctx, "No disallowed file formats found")

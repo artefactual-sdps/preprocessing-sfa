@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
+	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/spf13/viper"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 )
 
 type ConfigurationValidator interface {
@@ -38,7 +38,7 @@ type Configuration struct {
 	Worker     WorkerConfig
 	Bagit      bagcreate.Config
 	AIS        ais.Config
-	FileFormat fformat.Config
+	FileFormat ffvalidate.Config
 }
 
 type Temporal struct {
