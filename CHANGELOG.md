@@ -8,6 +8,17 @@ requests.
 
 ## [Unreleased]
 
+## [0.4.0] - 2024-11-15
+
+### Changed
+
+- Metadata files are combined into one in the AIS workflow ([#77])
+- AIS workflow is started by Enduro instead of AMSS and the API server ([#78])
+
+### Removed
+
+- API server used for AIS integration AMSS post-store callback ([#78])
+
 ## [0.3.0] - 2024-10-29
 
 ### Changed
@@ -34,10 +45,13 @@ requests.
 
 Initial release.
 
-[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/artefactual-sdps/preprocessing-sfa/releases/tag/v0.1.0
+[#78]: https://github.com/artefactual-sdps/preprocessing-sfa/pull/78
+[#77]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/77
 [#60]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/60
 [#59]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/59
 [#58]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/58
