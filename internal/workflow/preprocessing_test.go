@@ -423,7 +423,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 				},
 				{
 					Name:        "Create identifier.json",
-					Message:     "Created an identifier.json file",
+					Message:     "Created an identifier.json and stored in metadata directory",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,

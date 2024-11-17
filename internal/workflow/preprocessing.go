@@ -259,7 +259,7 @@ func (w *PreprocessingWorkflow) Execute(
 		result.systemError(ctx, e, ev, "creating identifier.json has failed")
 		return result, nil
 	}
-	ev.Succeed(ctx, "Created an identifier.json file")
+	ev.Succeed(ctx, "Created an identifier.json and stored in metadata directory")
 
 	// Bag the SIP for Enduro processing.
 	ev = result.newEvent(ctx, "Bag SIP")
