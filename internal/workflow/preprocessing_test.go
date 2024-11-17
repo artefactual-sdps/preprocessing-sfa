@@ -415,6 +415,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 					CompletedAt: testTime,
 				},
 				{
+					Name:        "Create premis.xml",
+					Message:     "Created a premis.xml and stored in metadata directory",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
 					Name:        "Restructure SIP",
 					Message:     "SIP has been restructured",
 					Outcome:     enums.EventOutcomeSuccess,

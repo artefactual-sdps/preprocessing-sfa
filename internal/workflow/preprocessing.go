@@ -230,8 +230,12 @@ func (w *PreprocessingWorkflow) Execute(
 		return result, nil
 	}
 
+	// Write PREMIS XML.
+	ev = result.newEvent(ctx, "Create premis.xml")
 	if e = writePREMISFile(ctx, identifySIP.SIP); e != nil {
-		return nil, e
+		result.systemError(ctx, e, ev, "premis.xml creation has failed")
+	} else {
+		ev.Succeed(ctx, "Created a premis.xml and stored in metadata directory")
 	}
 
 	// Re-structure SIP.
