@@ -219,7 +219,11 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 
 	if validateMetadata.Failures != nil {
-		result.validationError(ctx, ev, "metadata validation has failed", validateMetadata.Failures)
+		escapedFailures := make([]string, len(validateMetadata.Failures))
+		for _, f := range validateMetadata.Failures {
+			escapedFailures = append(escapedFailures, strings.ReplaceAll(f, identifySIP.SIP.Path, ""))
+		}
+		result.validationError(ctx, ev, "metadata validation has failed", escapedFailures)
 	} else {
 		ev.Succeed(ctx, "Metadata validation successful")
 	}

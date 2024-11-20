@@ -549,7 +549,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 	).Return(
 		&xmlvalidate.Result{
 			Failures: []string{
-				`fake/path/to/sip/additional/UpdatedAreldaMetadata.xml does not match expected metadata requirements`,
+				`/additional/UpdatedAreldaMetadata.xml does not match expected metadata requirements`,
 			},
 		}, nil,
 	)
@@ -613,7 +613,7 @@ file format fmt/11 not allowed: "fake/path/to/sip/file2.png"`,
 				},
 				{
 					Name:        "Validate SIP metadata",
-					Message:     "Content error: metadata validation has failed:\nfake/path/to/sip/additional/UpdatedAreldaMetadata.xml does not match expected metadata requirements",
+					Message:     "Content error: metadata validation has failed:\n\n/additional/UpdatedAreldaMetadata.xml does not match expected metadata requirements",
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
