@@ -11,11 +11,13 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/oklog/run v1.1.0
+	github.com/richardlehane/siegfried v1.11.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
 	go.artefactual.dev/tools v0.14.0
 	go.temporal.io/sdk v1.26.1
+	go.uber.org/mock v0.4.0
 	gocloud.dev v0.39.0
 	gotest.tools/v3 v3.5.1
 )
@@ -67,7 +69,6 @@ require (
 	github.com/richardlehane/match v1.0.5 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.3 // indirect
-	github.com/richardlehane/siegfried v1.11.1 // indirect
 	github.com/richardlehane/xmldetect v1.0.2 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/ross-spencer/spargo v0.4.1 // indirect

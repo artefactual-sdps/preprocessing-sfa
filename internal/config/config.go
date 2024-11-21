@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 )
 
 type ConfigurationValidator interface {
@@ -34,11 +35,12 @@ type Configuration struct {
 	// Enduro and preservation processing.
 	SharedPath string
 
-	Temporal   Temporal
-	Worker     WorkerConfig
-	Bagit      bagcreate.Config
-	AIS        ais.Config
-	FileFormat ffvalidate.Config
+	Temporal     Temporal
+	Worker       WorkerConfig
+	Bagit        bagcreate.Config
+	AIS          ais.Config
+	FileFormat   ffvalidate.Config
+	FileValidate fvalidate.Config
 }
 
 type Temporal struct {

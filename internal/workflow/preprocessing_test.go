@@ -143,6 +143,10 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: ffvalidate.Name},
 	)
 	s.env.RegisterActivityWithOptions(
+		activities.NewValidateFiles(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFilesName},
+	)
+	s.env.RegisterActivityWithOptions(
 		activities.NewAddPREMISObjects(rand.Reader).Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISObjectsName},
 	)
@@ -254,6 +258,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&ffvalidate.Params{Path: expectedSIP.ContentPath},
 	).Return(
 		&ffvalidate.Result{}, nil,
+	)
+	s.env.OnActivity(
+		activities.ValidateFilesName,
+		sessionCtx,
+		&activities.ValidateFilesParams{SIP: expectedSIP},
+	).Return(
+		&activities.ValidateFilesResult{}, nil,
 	)
 	s.env.OnActivity(
 		xmlvalidate.Name,
@@ -408,6 +419,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 					CompletedAt: testTime,
 				},
 				{
+					Name:        "Validate SIP files",
+					Message:     "No invalid files found",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
 					Name:        "Validate SIP metadata",
 					Message:     "Metadata validation successful",
 					Outcome:     enums.EventOutcomeSuccess,
@@ -539,9 +557,19 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		&ffvalidate.Params{Path: expectedSIP.ContentPath},
 	).Return(
 		&ffvalidate.Result{Failures: []string{
-			`file format fmt/11 not allowed: "fake/path/to/sip/dir/file1.png"`,
-			`file format fmt/11 not allowed: "fake/path/to/sip/file2.png"`,
+			`file format fmt/11 not allowed: "content/content/d_0000001/00000010.png"`,
+			`file format fmt/11 not allowed: "content/content/d_0000001/00000011.png"`,
 		}},
+		nil,
+	)
+	s.env.OnActivity(
+		activities.ValidateFilesName,
+		sessionCtx,
+		&activities.ValidateFilesParams{SIP: expectedSIP},
+	).Return(
+		&activities.ValidateFilesResult{
+			Failures: []string{`invalid PDF/A: "contents/contents/d_0000001/test.pdf"`},
+		},
 		nil,
 	)
 	s.env.OnActivity(
@@ -610,8 +638,16 @@ Checksum mismatch for "content/content/d_0000001/00000001.jp2" (expected: "827cc
 				{
 					Name: "Validate SIP file formats",
 					Message: `Content error: file format validation has failed. One or more file formats are not allowed:
-file format fmt/11 not allowed: "fake/path/to/sip/dir/file1.png"
-file format fmt/11 not allowed: "fake/path/to/sip/file2.png"`,
+file format fmt/11 not allowed: "content/content/d_0000001/00000010.png"
+file format fmt/11 not allowed: "content/content/d_0000001/00000011.png"`,
+					Outcome:     enums.EventOutcomeValidationFailure,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
+					Name: "Validate SIP files",
+					Message: `Content error: file validation has failed. One or more files are invalid:
+invalid PDF/A: "contents/contents/d_0000001/test.pdf"`,
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
