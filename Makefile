@@ -21,6 +21,7 @@ include hack/make/dep_golines.mk
 include hack/make/dep_gomajor.mk
 include hack/make/dep_gosec.mk
 include hack/make/dep_gotestsum.mk
+include hack/make/dep_mockgen.mk
 include hack/make/dep_shfmt.mk
 include hack/make/dep_tparse.mk
 include hack/make/enums.mk
@@ -30,6 +31,7 @@ TOOLS = $(GOLANGCI_LINT) \
 	$(GOMAJOR) \
 	$(GOSEC) \
 	$(GOTESTSUM) \
+	$(MOCKGEN) \
 	$(SHFMT) \
 	$(TPARSE)
 
@@ -40,7 +42,9 @@ endef
 
 IGNORED_PACKAGES := \
 	github.com/artefactual-sdps/preprocessing-sfa/hack/% \
+	github.com/artefactual-sdps/preprocessing-sfa/internal/%/fake \
 	github.com/artefactual-sdps/preprocessing-sfa/internal/enums
+
 PACKAGES := $(shell go list ./...)
 TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
 TEST_IGNORED_PACKAGES := $(filter $(IGNORED_PACKAGES),$(PACKAGES))
@@ -54,6 +58,11 @@ env:
 deps: # @HELP List available module dependency updates.
 deps: $(GOMAJOR)
 	gomajor list
+
+gen-mock: # @HELP Generate mocks.
+gen-mock: $(MOCKGEN)
+	mockgen -typed -destination=./internal/fformat/fake/mock_identifier.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/fformat Identifier
+	mockgen -typed -destination=./internal/fvalidate/fake/mock_validator.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate Validator
 
 golines: # @HELP Run the golines formatter to fix long lines.
 golines: GOLINES_OUT_MODE ?= write-output

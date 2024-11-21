@@ -180,7 +180,7 @@ func (w *PreprocessingWorkflow) Execute(
 		checksumEv.Succeed(ctx, "SIP checksums match file contents")
 	}
 
-	// Validate file formats.
+	// Verify that SIP file formats are on allowlist.
 	ev = result.newEvent(ctx, "Validate SIP file formats")
 	var ffvalidateResult ffvalidate.Result
 	e = temporalsdk_workflow.ExecuteActivity(
@@ -201,6 +201,37 @@ func (w *PreprocessingWorkflow) Execute(
 		)
 	} else {
 		ev.Succeed(ctx, "No disallowed file formats found")
+	}
+
+	// Validate the SIP files.
+	ev = result.newEvent(ctx, "Validate SIP files")
+	var validateFilesResult activities.ValidateFilesResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		temporalsdk_workflow.WithActivityOptions(
+			ctx,
+			temporalsdk_workflow.ActivityOptions{
+				ScheduleToCloseTimeout: time.Hour,
+				RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+					MaximumAttempts: 1,
+				},
+			},
+		),
+		activities.ValidateFilesName,
+		&activities.ValidateFilesParams{SIP: identifySIP.SIP},
+	).Get(ctx, &validateFilesResult)
+	if e != nil {
+		result.systemError(ctx, e, ev, "System error: file validation has failed")
+		return result, nil
+	}
+
+	if validateFilesResult.Failures != nil {
+		result.validationError(
+			ctx,
+			ev,
+			"file validation has failed. One or more files are invalid", validateFilesResult.Failures,
+		)
+	} else {
+		ev.Succeed(ctx, "No invalid files found")
 	}
 
 	// Validate metadata.

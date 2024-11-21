@@ -17,6 +17,8 @@ import (
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflow"
 )
 
@@ -77,6 +79,13 @@ func (m *Main) Run(ctx context.Context) error {
 	w.RegisterActivityWithOptions(
 		ffvalidate.New(m.cfg.FileFormat).Execute,
 		temporalsdk_activity.RegisterOptions{Name: ffvalidate.Name},
+	)
+	w.RegisterActivityWithOptions(
+		activities.NewValidateFiles(
+			fformat.NewSiegfriedEmbed(),
+			fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path, m.logger),
+		).Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFilesName},
 	)
 	w.RegisterActivityWithOptions(
 		activities.NewAddPREMISObjects(rand.Reader).Execute,
