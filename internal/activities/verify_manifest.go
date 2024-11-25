@@ -2,9 +2,13 @@ package activities
 
 import (
 	"context"
-	"crypto/md5" // #nosec: 501 -- not used for security.
+	"crypto/md5"    // #nosec: 501 -- not used for security.
+	"crypto/sha1"   // #nosec: 501 -- not used for security.
+	"crypto/sha256" // #nosec: 501 -- not used for security.
+	"crypto/sha512" // #nosec: 501 -- not used for security.
 	"encoding/hex"
 	"fmt"
+	"hash"
 	"io"
 	"io/fs"
 	"os"
@@ -181,26 +185,23 @@ func verifyChecksums(
 			continue
 		}
 
-		// Generate checksum from filesystem file contents.
-		switch file.Checksum.Algorithm {
-		case "MD5":
-			hash, err := md5Hash(filepath.Join(root, path))
-			if err != nil {
-				return nil, fmt.Errorf("generate MD5 hash: %v", err)
-			}
-			if hash != file.Checksum.Hash {
-				failures = append(
-					failures,
-					fmt.Sprintf(
-						"Checksum mismatch for %q (expected: %q, got: %q)",
-						path,
-						file.Checksum.Hash,
-						hash,
-					),
-				)
-			}
-		default:
-			return nil, fmt.Errorf("hash algorithm %q is not supported", file.Checksum.Algorithm)
+		// Attempt to generate hash from filesystem file contents.
+		hashResult, err := generateHash(filepath.Join(root, path), file.Checksum.Algorithm)
+		if err != nil {
+			return nil, err
+		}
+
+		// Compare hash to expected value.
+		if hashResult != file.Checksum.Hash {
+			failures = append(
+				failures,
+				fmt.Sprintf(
+					"Checksum mismatch for %q (expected: %q, got: %q)",
+					path,
+					file.Checksum.Hash,
+					hashResult,
+				),
+			)
 		}
 	}
 	slices.Sort(failures)
@@ -208,16 +209,30 @@ func verifyChecksums(
 	return failures, nil
 }
 
-// md5Hash returns a hexadecimal encoded hash string generated from the contents
+// Return a hexadecimal encoded hash string generated from the contents
 // of the file at path.
-func md5Hash(path string) (string, error) {
+func generateHash(path, alg string) (string, error) {
+	var h hash.Hash
+
+	switch alg {
+	case "MD5":
+		h = md5.New() // #nosec: G401 -- not used for security.
+	case "SHA-1":
+		h = sha1.New() // #nosec: G401 -- not used for security.
+	case "SHA-256":
+		h = sha256.New() // #nosec: G401 -- not used for security.
+	case "SHA-512":
+		h = sha512.New() // #nosec: G401 -- not used for security.
+	default:
+		return "", fmt.Errorf("hash algorithm %q is not supported", alg)
+	}
+
 	f, err := os.Open(path) // #nosec: G304 -- trusted path.
 	if err != nil {
 		return "", fmt.Errorf("open file: %v", err)
 	}
 	defer f.Close()
 
-	h := md5.New() // #nosec: G401 -- not used for security.
 	if _, err := io.Copy(h, f); err != nil {
 		return "", fmt.Errorf("copy contents: %v", err)
 	}

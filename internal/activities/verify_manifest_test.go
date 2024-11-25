@@ -86,6 +86,24 @@ const (
 					<pruefalgorithmus>MD5</pruefalgorithmus>
 					<pruefsumme>1e01ba3e07ac48cbdab2d3284d1dd0fa</pruefsumme>
 				</datei>
+				<datei id="_m1Xw3hINt3zY6WvKQOfYmk">
+					<name>00000003.jp2</name>
+					<originalName>00000003.jp2</originalName>
+					<pruefalgorithmus>SHA-256</pruefalgorithmus>
+					<pruefsumme>e2217d3e4e120c6a3372a1890f03e232b35ad659d71f7a62501a4ee204a3e66d</pruefsumme>
+				</datei>
+				<datei id="_m2Xw3hINt3zY6WvKQOfYmk">
+					<name>00000004.jp2</name>
+					<originalName>00000004.jp2</originalName>
+					<pruefalgorithmus>SHA-512</pruefalgorithmus>
+					<pruefsumme>21d906a2e95ee518e5423f8536941272bdc81f48d0e0c33cd358a6c3c5bdd26b9beb87e72b99574b4b1e72e0993565c7205aeed3c7ddc0af553408ed035d47f2</pruefsumme>
+				</datei>
+				<datei id="_m3Xw3hINt3zY6WvKQOfYmk">
+					<name>00000005.jp2</name>
+					<originalName>00000005.jp2</originalName>
+					<pruefalgorithmus>SHA-1</pruefalgorithmus>
+					<pruefsumme>230991abcd77e8173edb0af392e1f11120051e29</pruefsumme>
+				</datei>
 			</ordner>
 		</ordner>
 	</inhaltsverzeichnis>
@@ -178,6 +196,9 @@ func TestVerifyManifest(t *testing.T) {
 					// fs.WithFile("00000001.jp2", "12345"),
 					fs.WithFile("00000001_PREMIS.xml", "abcdef"),
 					fs.WithFile("00000002.jp2", "67890"),
+					fs.WithFile("00000003.jp2", "67890"),
+					fs.WithFile("00000004.jp2", "67890"),
+					fs.WithFile("00000005.jp2", "67890"),
 					fs.WithFile("00000002_PREMIS.xml", "ghijk"),
 					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
 				),
@@ -203,6 +224,9 @@ func TestVerifyManifest(t *testing.T) {
 					fs.WithFile("00000001.jp2", "12345"),
 					fs.WithFile("00000001_PREMIS.xml", "abcdef"),
 					fs.WithFile("00000002.jp2", "67890"),
+					fs.WithFile("00000003.jp2", "67890"),
+					fs.WithFile("00000004.jp2", "67890"),
+					fs.WithFile("00000005.jp2", "67890"),
 					fs.WithFile("00000002_PREMIS.xml", "ghijk"),
 					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
 				),
@@ -319,6 +343,9 @@ func TestVerifyManifest(t *testing.T) {
 									fs.WithFile("00000001.jp2", "wrong checksum"),
 									fs.WithFile("00000001_PREMIS.xml", "abcdef"),
 									fs.WithFile("00000002.jp2", "67890"),
+									fs.WithFile("00000003.jp2", "567890"),
+									fs.WithFile("00000004.jp2", "567890"),
+									fs.WithFile("00000005.jp2", "567890"),
 									fs.WithFile("00000002_PREMIS.xml", "ghijk"),
 									fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
 								),
@@ -341,6 +368,9 @@ func TestVerifyManifest(t *testing.T) {
 				Failed: true,
 				ChecksumFailures: []string{
 					`Checksum mismatch for "content/content/d_0000001/00000001.jp2" (expected: "827ccb0eea8a706c4c34a16891f84e7b", got: "2714364e3a0ac68e8bf9b898b31ff303")`,
+					`Checksum mismatch for "content/content/d_0000001/00000003.jp2" (expected: "e2217d3e4e120c6a3372a1890f03e232b35ad659d71f7a62501a4ee204a3e66d", got: "b39667cf64cd5bc6cd7adbfc711cd8446036f9144c1cceb604897b0e824a027d")`,
+					`Checksum mismatch for "content/content/d_0000001/00000004.jp2" (expected: "21d906a2e95ee518e5423f8536941272bdc81f48d0e0c33cd358a6c3c5bdd26b9beb87e72b99574b4b1e72e0993565c7205aeed3c7ddc0af553408ed035d47f2", got: "6f81f85d16cdb32c7cde06266545f19fc31657c77db15e8b075414931843d99376c4cbd64f3682e78deebf849dd5b78ca9d0d23b6fdffd990c5170d92ece694a")`,
+					`Checksum mismatch for "content/content/d_0000001/00000005.jp2" (expected: "230991abcd77e8173edb0af392e1f11120051e29", got: "cce4229d3a446c687f23de7b5ee34c057cfc9d90")`,
 					`Checksum mismatch for "content/header/old/SIP/metadata.xml" (expected: "636351dce76b47b3d40712813b9a34f3", got: "dff24b6a34ff7ab645cb477e090bee5f")`,
 				},
 			},
