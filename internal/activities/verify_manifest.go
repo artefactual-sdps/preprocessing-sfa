@@ -86,8 +86,8 @@ func manifestFiles(s sip.SIP) (map[string]*manifest.File, error) {
 		return nil, err
 	}
 
-	// Prefix "content/" to digitized AIP file paths.
-	if s.Type == enums.SIPTypeDigitizedAIP {
+	// Prefix "content/" to AIP file paths.
+	if isAIP(s.Type) {
 		m := make(map[string]*manifest.File, len(files))
 		for k, v := range files {
 			m[filepath.Join("content", k)] = v
@@ -102,7 +102,7 @@ func manifestFiles(s sip.SIP) (map[string]*manifest.File, error) {
 // (excluding directory) paths found.
 func sipFiles(s sip.SIP) (goset.Set[string], error) {
 	root := s.Path
-	if s.Type == enums.SIPTypeDigitizedAIP {
+	if isAIP(s.Type) {
 		root = filepath.Join(s.Path, "content")
 	}
 
@@ -121,9 +121,9 @@ func sipFiles(s sip.SIP) (goset.Set[string], error) {
 			return err
 		}
 
-		// Digitized SIPs and born-digital SIPs don't include metadata.xml in
-		// the manifest, so ignore the file here.
-		if s.Type != enums.SIPTypeDigitizedAIP && p == "header/metadata.xml" {
+		// SIPs don't include metadata.xml in the manifest, so ignore the file
+		// here.
+		if isSIP(s.Type) && p == "header/metadata.xml" {
 			return nil
 		}
 
@@ -238,4 +238,12 @@ func generateHash(path, alg string) (string, error) {
 	}
 
 	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+func isAIP(t enums.SIPType) bool {
+	return t == enums.SIPTypeBornDigitalAIP || t == enums.SIPTypeDigitizedAIP
+}
+
+func isSIP(t enums.SIPType) bool {
+	return t == enums.SIPTypeBornDigitalSIP || t == enums.SIPTypeDigitizedSIP
 }
