@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	aipManifest = `
+	digitizedAIPUpdatedArelda = `
 <?xml version="1.0" encoding="UTF-8"?>
 <paket
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -38,7 +38,7 @@ const (
 						<name>metadata.xml</name>
 						<originalName>metadata.xml</originalName>
 						<pruefalgorithmus>MD5</pruefalgorithmus>
-						<pruefsumme>636351dce76b47b3d40712813b9a34f3</pruefsumme>
+						<pruefsumme>2c5afa141670292c96c3c111c47b83b5</pruefsumme>
 					</datei>
 				</ordner>
 			</ordner>
@@ -86,23 +86,76 @@ const (
 					<pruefalgorithmus>MD5</pruefalgorithmus>
 					<pruefsumme>1e01ba3e07ac48cbdab2d3284d1dd0fa</pruefsumme>
 				</datei>
-				<datei id="_m1Xw3hINt3zY6WvKQOfYmk">
-					<name>00000003.jp2</name>
-					<originalName>00000003.jp2</originalName>
-					<pruefalgorithmus>SHA-256</pruefalgorithmus>
-					<pruefsumme>e2217d3e4e120c6a3372a1890f03e232b35ad659d71f7a62501a4ee204a3e66d</pruefsumme>
+			</ordner>
+		</ordner>
+	</inhaltsverzeichnis>
+</paket>
+`
+
+	bornDigitalAIPUpdatedArelda = `
+<?xml version="1.0" encoding="UTF-8"?>
+<paket
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:xip="http://www.tessella.com/XIP/v4"
+	xmlns="http://bar.admin.ch/arelda/v4"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:submissionTests="http://bar.admin.ch/submissionTestResult" xsi:type="paketAIP" schemaVersion="5.0">
+	<paketTyp>AIP</paketTyp>
+	<globaleAIPId>909c56e9-e334-4c0a-9736-f92c732149d9</globaleAIPId>
+	<lokaleAIPId>fa5fb285-fa45-44e4-8d85-77ec1d774403</lokaleAIPId>
+	<version>1</version>
+	<inhaltsverzeichnis>
+		<ordner>
+			<name>header</name>
+			<ordner>
+				<name>old</name>
+				<ordner>
+					<name>SIP</name>
+					<datei id="OLD_SIP">
+						<name>metadata.xml</name>
+						<originalName>metadata.xml</originalName>
+						<pruefalgorithmus>MD5</pruefalgorithmus>
+						<pruefsumme>2c5afa141670292c96c3c111c47b83b5</pruefsumme>
+					</datei>
+				</ordner>
+			</ordner>
+			<ordner>
+				<name>xsd</name>
+				<datei id="_xAlSBc3dYcypUMvN8HzeN5">
+					<name>arelda.xsd</name>
+					<originalName>arelda.xsd</originalName>
+					<pruefalgorithmus>MD5</pruefalgorithmus>
+					<pruefsumme>661c2df1b1e76d1446e90a54816d91ae</pruefsumme>
 				</datei>
-				<datei id="_m2Xw3hINt3zY6WvKQOfYmk">
-					<name>00000004.jp2</name>
-					<originalName>00000004.jp2</originalName>
-					<pruefalgorithmus>SHA-512</pruefalgorithmus>
-					<pruefsumme>21d906a2e95ee518e5423f8536941272bdc81f48d0e0c33cd358a6c3c5bdd26b9beb87e72b99574b4b1e72e0993565c7205aeed3c7ddc0af553408ed035d47f2</pruefsumme>
+			</ordner>
+		</ordner>
+		<ordner>
+			<name>content</name>
+			<ordner>
+				<name>d_0000001</name>
+				<datei id="_SRpeVgb4xGImymb23OH1od">
+					<name>00000001_PREMIS.xml</name>
+					<originalName>00000001_PREMIS.xml</originalName>
+					<pruefalgorithmus>MD5</pruefalgorithmus>
+					<pruefsumme>e80b5017098950fc58aad83c8c14978e</pruefsumme>
 				</datei>
-				<datei id="_m3Xw3hINt3zY6WvKQOfYmk">
-					<name>00000005.jp2</name>
-					<originalName>00000005.jp2</originalName>
-					<pruefalgorithmus>SHA-1</pruefalgorithmus>
-					<pruefsumme>230991abcd77e8173edb0af392e1f11120051e29</pruefsumme>
+				<datei id="_MKhAIC639MxzyOn8ji3tN5">
+					<name>00000002_PREMIS.xml</name>
+					<originalName>00000002_PREMIS.xml</originalName>
+					<pruefalgorithmus>MD5</pruefalgorithmus>
+					<pruefsumme>33f12195e0fc136bc17de332c6b92b0d</pruefsumme>
+				</datei>
+				<datei id="_miEf29GTkFR7ymi91IV4fO">
+					<name>00000001.jp2</name>
+					<originalName>00000001.jp2</originalName>
+					<pruefalgorithmus>MD5</pruefalgorithmus>
+					<pruefsumme>827ccb0eea8a706c4c34a16891f84e7b</pruefsumme>
+				</datei>
+				<datei id="_mOXw3hINt3zY6WvKQOfYmk">
+					<name>00000002.jp2</name>
+					<originalName>00000002.jp2</originalName>
+					<pruefalgorithmus>MD5</pruefalgorithmus>
+					<pruefsumme>1e01ba3e07ac48cbdab2d3284d1dd0fa</pruefsumme>
 				</datei>
 			</ordner>
 		</ordner>
@@ -110,7 +163,57 @@ const (
 </paket>
 `
 
-	sipManifest = `
+	digitizedAIPMetadata = `<?xml version="1.0" encoding="UTF-8"?>
+<paket xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://bar.admin.ch/arelda/v4" xsi:type="paketSIP" schemaVersion="4.0">
+  <paketTyp>SIP</paketTyp>
+  <inhaltsverzeichnis>
+    <ordner>
+      <name>header</name>
+      <ordner>
+        <name>xsd</name>
+        <datei id="XSD3">
+          <name>arelda.xsd</name>
+          <originalName>arelda.xsd</originalName>
+          <pruefalgorithmus>MD5</pruefalgorithmus>
+          <pruefsumme>f8454632e1ebf97e0aa8d9527ce2641f</pruefsumme>
+        </datei>
+      </ordner>
+    </ordner>
+    <ordner>
+      <name>content</name>
+      <ordner>
+        <name>d0001</name>
+        <datei id="_SRpeVgb4xGImymb23OH1od">
+			<name>00000001_PREMIS.xml</name>
+			<originalName>00000001_PREMIS.xml</originalName>
+			<pruefalgorithmus>MD5</pruefalgorithmus>
+			<pruefsumme>e80b5017098950fc58aad83c8c14978e</pruefsumme>
+		</datei>
+		<datei id="_MKhAIC639MxzyOn8ji3tN5">
+			<name>00000002_PREMIS.xml</name>
+			<originalName>00000002_PREMIS.xml</originalName>
+			<pruefalgorithmus>MD5</pruefalgorithmus>
+			<pruefsumme>33f12195e0fc136bc17de332c6b92b0d</pruefsumme>
+		</datei>
+		<datei id="_miEf29GTkFR7ymi91IV4fO">
+			<name>00000001.jp2</name>
+			<originalName>00000001.jp2</originalName>
+			<pruefalgorithmus>MD5</pruefalgorithmus>
+			<pruefsumme>827ccb0eea8a706c4c34a16891f84e7b</pruefsumme>
+		</datei>
+		<datei id="_mOXw3hINt3zY6WvKQOfYmk">
+			<name>00000002.jp2</name>
+			<originalName>00000002.jp2</originalName>
+			<pruefalgorithmus>MD5</pruefalgorithmus>
+			<pruefsumme>1e01ba3e07ac48cbdab2d3284d1dd0fa</pruefsumme>
+		</datei>
+      </ordner>
+    </ordner>
+  </inhaltsverzeichnis>
+</paket>
+`
+
+	digitizedSIPMetadata = `
 <?xml version="1.0" encoding="UTF-8"?>
 <paket
 	xmlns="http://bar.admin.ch/arelda/v4"
@@ -172,6 +275,63 @@ const (
 	</inhaltsverzeichnis>
 </paket>
 `
+
+	bornDigitalSIPMetadataXML = `
+<?xml version="1.0" encoding="UTF-8"?>
+<paket
+	xmlns="http://bar.admin.ch/arelda/v4"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" schemaVersion="4.0" xsi:type="paketSIP">
+	<paketTyp>SIP</paketTyp>
+	<inhaltsverzeichnis>
+		<ordner>
+			<name>header</name>
+			<originalName>header</originalName>
+			<ordner>
+				<name>xsd</name>
+				<originalName>xsd</originalName>
+				<datei id="_ZSANrSklQ9HGn99yjlUumz">
+					<name>arelda.xsd</name>
+					<originalName>arelda.xsd</originalName>
+					<pruefalgorithmus>MD5</pruefalgorithmus>
+					<pruefsumme>661c2df1b1e76d1446e90a54816d91ae</pruefsumme>
+				</datei>
+			</ordner>
+		</ordner>
+		<ordner>
+			<name>content</name>
+			<originalName>content</originalName>
+			<ordner>
+				<name>d_0000001</name>
+				<originalName>d_0000001</originalName>
+				<datei id="_zodSTSD0nv05CpOp6JoV3X">
+					<name>00000001.jp2</name>
+					<originalName>00000001.jp2</originalName>
+					<pruefalgorithmus>MD5</pruefalgorithmus>
+					<pruefsumme>827ccb0eea8a706c4c34a16891f84e7b</pruefsumme>
+				</datei>
+				<datei id="_rlPKJX9ZcAl4ooc4IfoIkM">
+					<name>00000002.jp2</name>
+					<originalName>00000002.jp2</originalName>
+					<pruefalgorithmus>MD5</pruefalgorithmus>
+					<pruefsumme>1e01ba3e07ac48cbdab2d3284d1dd0fa</pruefsumme>
+				</datei>
+				<datei id="_WuDmXAs5UDwKTGVLsCcZxa">
+					<name>00000001_PREMIS.xml</name>
+					<originalName>00000001_PREMIS.xml</originalName>
+					<pruefalgorithmus>MD5</pruefalgorithmus>
+					<pruefsumme>e80b5017098950fc58aad83c8c14978e</pruefsumme>
+				</datei>
+				<datei id="_Ohk77y2DJa82RXqsWG4S90">
+					<name>00000002_PREMIS.xml</name>
+					<originalName>00000002_PREMIS.xml</originalName>
+					<pruefalgorithmus>MD5</pruefalgorithmus>
+					<pruefsumme>33f12195e0fc136bc17de332c6b92b0d</pruefsumme>
+				</datei>
+			</ordner>
+		</ordner>
+	</inhaltsverzeichnis>
+</paket>
+`
 )
 
 func testSIP(t *testing.T, path string) sip.SIP {
@@ -188,7 +348,7 @@ func TestVerifyManifest(t *testing.T) {
 
 	missingFilesSIP := fs.NewDir(t, "Test_Missing_Files",
 		fs.WithDir("additional",
-			fs.WithFile("UpdatedAreldaMetadata.xml", aipManifest),
+			fs.WithFile("UpdatedAreldaMetadata.xml", digitizedAIPUpdatedArelda),
 		),
 		fs.WithDir("content",
 			fs.WithDir("content",
@@ -196,9 +356,6 @@ func TestVerifyManifest(t *testing.T) {
 					// fs.WithFile("00000001.jp2", "12345"),
 					fs.WithFile("00000001_PREMIS.xml", "abcdef"),
 					fs.WithFile("00000002.jp2", "67890"),
-					fs.WithFile("00000003.jp2", "67890"),
-					fs.WithFile("00000004.jp2", "67890"),
-					fs.WithFile("00000005.jp2", "67890"),
 					fs.WithFile("00000002_PREMIS.xml", "ghijk"),
 					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
 				),
@@ -206,7 +363,7 @@ func TestVerifyManifest(t *testing.T) {
 			fs.WithDir("header",
 				fs.WithDir("old",
 					fs.WithDir("SIP",
-						fs.WithFile("metadata.xml", "qrstu"),
+						fs.WithFile("metadata.xml", digitizedAIPMetadata),
 					),
 				),
 			),
@@ -215,7 +372,7 @@ func TestVerifyManifest(t *testing.T) {
 
 	extraFilesSIP := fs.NewDir(t, "Test_Extra_Files",
 		fs.WithDir("additional",
-			fs.WithFile("UpdatedAreldaMetadata.xml", aipManifest),
+			fs.WithFile("UpdatedAreldaMetadata.xml", digitizedAIPUpdatedArelda),
 		),
 		fs.WithDir("content",
 			fs.WithDir("content",
@@ -224,9 +381,6 @@ func TestVerifyManifest(t *testing.T) {
 					fs.WithFile("00000001.jp2", "12345"),
 					fs.WithFile("00000001_PREMIS.xml", "abcdef"),
 					fs.WithFile("00000002.jp2", "67890"),
-					fs.WithFile("00000003.jp2", "67890"),
-					fs.WithFile("00000004.jp2", "67890"),
-					fs.WithFile("00000005.jp2", "67890"),
 					fs.WithFile("00000002_PREMIS.xml", "ghijk"),
 					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
 				),
@@ -234,7 +388,7 @@ func TestVerifyManifest(t *testing.T) {
 			fs.WithDir("header",
 				fs.WithDir("old",
 					fs.WithDir("SIP",
-						fs.WithFile("metadata.xml", "qrstu"),
+						fs.WithFile("metadata.xml", digitizedAIPMetadata),
 					),
 				),
 				fs.WithDir("xsd",
@@ -277,7 +431,66 @@ func TestVerifyManifest(t *testing.T) {
 							fs.WithDir("xsd",
 								fs.WithFile("arelda.xsd", "vwxyz"),
 							),
-							fs.WithFile("metadata.xml", sipManifest),
+							fs.WithFile("metadata.xml", digitizedSIPMetadata),
+						),
+					).Path(),
+				),
+			},
+			want: activities.VerifyManifestResult{},
+		},
+		{
+			name: "Verifies a born digital AIP manifest",
+			params: activities.VerifyManifestParams{
+				SIP: testSIP(
+					t,
+					fs.NewDir(t, "Test_Born_Digital_AIP",
+						fs.WithDir("additional",
+							fs.WithFile("UpdatedAreldaMetadata.xml", bornDigitalAIPUpdatedArelda),
+						),
+						fs.WithDir("content",
+							fs.WithDir("content",
+								fs.WithDir("d_0000001",
+									fs.WithFile("00000001.jp2", "12345"),
+									fs.WithFile("00000001_PREMIS.xml", "abcdef"),
+									fs.WithFile("00000002.jp2", "67890"),
+									fs.WithFile("00000002_PREMIS.xml", "ghijk"),
+								),
+							),
+							fs.WithDir("header",
+								fs.WithDir("xsd",
+									fs.WithFile("arelda.xsd", "vwxyz"),
+								),
+								fs.WithDir("old",
+									fs.WithDir("SIP",
+										fs.WithFile("metadata.xml", digitizedAIPMetadata),
+									),
+								),
+							),
+						),
+					).Path(),
+				),
+			},
+			want: activities.VerifyManifestResult{},
+		},
+		{
+			name: "Verifies a born digital SIP manifest",
+			params: activities.VerifyManifestParams{
+				SIP: testSIP(
+					t,
+					fs.NewDir(t, "Test_Born_Digital_SIP",
+						fs.WithDir("content",
+							fs.WithDir("d_0000001",
+								fs.WithFile("00000001.jp2", "12345"),
+								fs.WithFile("00000001_PREMIS.xml", "abcdef"),
+								fs.WithFile("00000002.jp2", "67890"),
+								fs.WithFile("00000002_PREMIS.xml", "ghijk"),
+							),
+						),
+						fs.WithDir("header",
+							fs.WithDir("xsd",
+								fs.WithFile("arelda.xsd", "vwxyz"),
+							),
+							fs.WithFile("metadata.xml", bornDigitalSIPMetadataXML),
 						),
 					).Path(),
 				),
@@ -335,7 +548,7 @@ func TestVerifyManifest(t *testing.T) {
 					t,
 					fs.NewDir(t, "Test_Extra_Files",
 						fs.WithDir("additional",
-							fs.WithFile("UpdatedAreldaMetadata.xml", aipManifest),
+							fs.WithFile("UpdatedAreldaMetadata.xml", digitizedAIPUpdatedArelda),
 						),
 						fs.WithDir("content",
 							fs.WithDir("content",
@@ -343,9 +556,6 @@ func TestVerifyManifest(t *testing.T) {
 									fs.WithFile("00000001.jp2", "wrong checksum"),
 									fs.WithFile("00000001_PREMIS.xml", "abcdef"),
 									fs.WithFile("00000002.jp2", "67890"),
-									fs.WithFile("00000003.jp2", "567890"),
-									fs.WithFile("00000004.jp2", "567890"),
-									fs.WithFile("00000005.jp2", "567890"),
 									fs.WithFile("00000002_PREMIS.xml", "ghijk"),
 									fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", "lmnop"),
 								),
@@ -368,10 +578,7 @@ func TestVerifyManifest(t *testing.T) {
 				Failed: true,
 				ChecksumFailures: []string{
 					`Checksum mismatch for "content/content/d_0000001/00000001.jp2" (expected: "827ccb0eea8a706c4c34a16891f84e7b", got: "2714364e3a0ac68e8bf9b898b31ff303")`,
-					`Checksum mismatch for "content/content/d_0000001/00000003.jp2" (expected: "e2217d3e4e120c6a3372a1890f03e232b35ad659d71f7a62501a4ee204a3e66d", got: "b39667cf64cd5bc6cd7adbfc711cd8446036f9144c1cceb604897b0e824a027d")`,
-					`Checksum mismatch for "content/content/d_0000001/00000004.jp2" (expected: "21d906a2e95ee518e5423f8536941272bdc81f48d0e0c33cd358a6c3c5bdd26b9beb87e72b99574b4b1e72e0993565c7205aeed3c7ddc0af553408ed035d47f2", got: "6f81f85d16cdb32c7cde06266545f19fc31657c77db15e8b075414931843d99376c4cbd64f3682e78deebf849dd5b78ca9d0d23b6fdffd990c5170d92ece694a")`,
-					`Checksum mismatch for "content/content/d_0000001/00000005.jp2" (expected: "230991abcd77e8173edb0af392e1f11120051e29", got: "cce4229d3a446c687f23de7b5ee34c057cfc9d90")`,
-					`Checksum mismatch for "content/header/old/SIP/metadata.xml" (expected: "636351dce76b47b3d40712813b9a34f3", got: "dff24b6a34ff7ab645cb477e090bee5f")`,
+					`Checksum mismatch for "content/header/old/SIP/metadata.xml" (expected: "2c5afa141670292c96c3c111c47b83b5", got: "dff24b6a34ff7ab645cb477e090bee5f")`,
 				},
 			},
 		},

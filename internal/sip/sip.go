@@ -51,7 +51,6 @@ func New(path string) (SIP, error) {
 		return s, fmt.Errorf("SIP: New: %v", err)
 	}
 	hasProzessFile := len(f) > 0
-
 	hasAdditionalDir := fsutil.FileExists(filepath.Join(s.Path, "additional"))
 
 	if hasProzessFile {
@@ -85,21 +84,7 @@ func (s SIP) digitizedAIP() SIP {
 }
 
 func (s SIP) digitizedSIP() SIP {
-	s = s.bornDigitalSIP()
 	s.Type = enums.SIPTypeDigitizedSIP
-
-	return s
-}
-
-func (s SIP) bornDigitalAIP() SIP {
-	s = s.bornDigitalSIP()
-	s.Type = enums.SIPTypeBornDigitalAIP
-
-	return s
-}
-
-func (s SIP) bornDigitalSIP() SIP {
-	s.Type = enums.SIPTypeBornDigitalSIP
 	s.ContentPath = filepath.Join(s.Path, "content")
 	s.MetadataPath = filepath.Join(s.Path, "header", "metadata.xml")
 	s.ManifestPath = s.MetadataPath
@@ -108,6 +93,20 @@ func (s SIP) bornDigitalSIP() SIP {
 		filepath.Join(s.Path, "content"),
 		filepath.Join(s.Path, "header"),
 	}
+
+	return s
+}
+
+func (s SIP) bornDigitalAIP() SIP {
+	s = s.digitizedAIP()
+	s.Type = enums.SIPTypeBornDigitalAIP
+
+	return s
+}
+
+func (s SIP) bornDigitalSIP() SIP {
+	s = s.digitizedSIP()
+	s.Type = enums.SIPTypeBornDigitalSIP
 
 	return s
 }

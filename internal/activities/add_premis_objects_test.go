@@ -24,7 +24,7 @@ func TestAddPREMISObjects(t *testing.T) {
 				fs.WithDir("xsd",
 					fs.WithFile("arelda.xsd", ""),
 				),
-				fs.WithFile("metadata.xml", sipManifest),
+				fs.WithFile("metadata.xml", digitizedSIPMetadata),
 			),
 			fs.WithDir("content",
 				fs.WithDir("d_0000001",
