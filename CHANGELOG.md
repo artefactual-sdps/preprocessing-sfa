@@ -8,6 +8,19 @@ requests.
 
 ## [Unreleased]
 
+## [0.5.0] - 2024-11-29
+
+### Fixed
+
+- Note for identifier.json creation task ([#74])
+- Born Digital AIPs identification ([#79] and [#90])
+- Use relative paths in metadata validation errors ([#87])
+
+### Added
+
+- PREMIS creation task to preprocessing workflow result ([#73])
+- Support for SHA-1, SHA-256, and SHA-512 checksums in manifest ([#88])
+
 ## [0.4.0] - 2024-11-15
 
 ### Changed
@@ -45,13 +58,20 @@ requests.
 
 Initial release.
 
-[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/artefactual-sdps/preprocessing-sfa/releases/tag/v0.1.0
+[#90]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/90
+[#88]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/88
+[#87]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/87
+[#79]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/79
 [#78]: https://github.com/artefactual-sdps/preprocessing-sfa/pull/78
 [#77]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/77
+[#74]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/74
+[#73]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/73
 [#60]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/60
 [#59]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/59
 [#58]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/58
