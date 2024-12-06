@@ -19,7 +19,8 @@ import (
 )
 
 type WorkflowParams struct {
-	AIPUUID string
+	AIPUUID         string
+	PreprocessingID string
 }
 
 type WorkflowResult struct {
