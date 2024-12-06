@@ -58,7 +58,7 @@ func (m *Main) Run(ctx context.Context) error {
 	m.temporalWorker = w
 
 	w.RegisterWorkflowWithOptions(
-		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath).Execute,
+		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath, workflow.GenUUID).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Temporal.WorkflowName},
 	)
 
