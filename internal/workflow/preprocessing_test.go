@@ -3,6 +3,7 @@ package workflow_test
 import (
 	"crypto/rand"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/localact"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/pips"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
@@ -116,6 +118,7 @@ type PreprocessingTestSuite struct {
 	env      *temporalsdk_testsuite.TestWorkflowEnvironment
 	workflow *workflow.PreprocessingWorkflow
 	testDir  string
+	sipPath  string
 }
 
 func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
@@ -125,7 +128,17 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 	s.testDir = s.T().TempDir()
 	cfg.SharedPath = s.testDir
 
+	sp := filepath.Join(s.testDir, relPath)
+	if err := os.Mkdir(sp, os.FileMode(0o700)); err != nil {
+		s.T().Fatalf("create sip dir: %v", err)
+	}
+	s.sipPath = sp
+
 	// Register activities.
+	s.env.RegisterActivityWithOptions(
+		activities.NewUnbag().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.UnbagName},
+	)
 	s.env.RegisterActivityWithOptions(
 		activities.NewIdentifySIP().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.IdentifySIPName},
@@ -221,20 +234,49 @@ func TestPreprocessingWorkflow(t *testing.T) {
 	suite.Run(t, new(PreprocessingTestSuite))
 }
 
+func (s *PreprocessingTestSuite) writeBagitTxt(path string) {
+	if err := os.WriteFile(
+		filepath.Join(path, "bagit.txt"),
+		[]byte(`
+BagIt-Version: 0.97
+Tag-File-Character-Encoding: UTF-8
+`),
+		os.FileMode(0o640),
+	); err != nil {
+		s.T().Fatalf("write bagit.txt: %v", err)
+	}
+}
+
 func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 	s.SetupTest(&config.Configuration{})
-	sipPath := filepath.Join(s.testDir, relPath)
-	expectedSIP := s.digitizedAIP(sipPath)
+	s.writeBagitTxt(s.sipPath)
+
+	expectedSIP := s.digitizedAIP(s.sipPath)
 	expectedPIP := pips.NewFromSIP(expectedSIP)
 
 	// Mock activities.
+	ctx := mock.AnythingOfType("*context.valueCtx")
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
 	premisFilePath := filepath.Join(expectedSIP.Path, "metadata", "premis.xml")
 
 	s.env.OnActivity(
+		localact.IsBag,
+		ctx,
+		&localact.IsBagParams{Path: s.sipPath},
+	).Return(
+		&localact.IsBagResult{IsBag: true}, nil,
+	)
+	s.env.OnActivity(
+		activities.UnbagName,
+		sessionCtx,
+		&activities.UnbagParams{Path: s.sipPath},
+	).Return(
+		&activities.UnbagResult{Path: s.sipPath}, nil,
+	)
+	s.env.OnActivity(
 		activities.IdentifySIPName,
 		sessionCtx,
-		&activities.IdentifySIPParams{Path: sipPath},
+		&activities.IdentifySIPParams{Path: s.sipPath},
 	).Return(
 		&activities.IdentifySIPResult{SIP: expectedSIP}, nil,
 	)
@@ -356,14 +398,14 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.WriteIdentifierFileParams{PIP: expectedPIP},
 	).Return(
 		&activities.WriteIdentifierFileResult{
-			Path: filepath.Join(sipPath, "metadata", "identifiers.json"),
+			Path: filepath.Join(s.sipPath, "metadata", "identifiers.json"),
 		}, nil,
 	)
 
 	s.env.OnActivity(
 		bagcreate.Name,
 		sessionCtx,
-		&bagcreate.Params{SourcePath: sipPath},
+		&bagcreate.Params{SourcePath: s.sipPath},
 	).Return(
 		&bagcreate.Result{}, nil,
 	)
@@ -383,6 +425,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 			Outcome:      workflow.OutcomeSuccess,
 			RelativePath: relPath,
 			PreservationTasks: []*eventlog.Event{
+				{
+					Name:        "Unbag SIP",
+					Message:     "SIP unbagged",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
 				{
 					Name:        "Identify SIP structure",
 					Message:     "SIP structure identified: DigitizedAIP",
