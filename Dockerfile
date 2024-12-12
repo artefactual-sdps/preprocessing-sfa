@@ -29,7 +29,7 @@ RUN apk add --update --no-cache libxml2-utils
 # Copy the JRE (Eclipse Temurin v11) from the verapdf/cli image
 ENV JAVA_HOME=/opt/java/openjdk
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
-COPY --from=ghcr.io/verapdf/cli:v1.27.96 --link $JAVA_HOME $JAVA_HOME
+COPY --from=ghcr.io/verapdf/cli:latest --link $JAVA_HOME $JAVA_HOME
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
@@ -44,7 +44,7 @@ USER preprocessing
 COPY --from=build-preprocessing-worker --link /out/preprocessing-worker /home/preprocessing/bin/preprocessing-worker
 RUN mkdir /home/preprocessing/shared
 
-# Copy the veraPDF application (v1.26.2) from the verapdf/cli image
-COPY --from=ghcr.io/verapdf/cli:v1.27.96 --link /opt/verapdf/ /opt/verapdf/
+# Copy the veraPDF application from the verapdf/cli image
+COPY --from=ghcr.io/verapdf/cli:latest --link /opt/verapdf/ /opt/verapdf/
 
 CMD ["/home/preprocessing/bin/preprocessing-worker"]
