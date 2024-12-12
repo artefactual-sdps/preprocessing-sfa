@@ -65,6 +65,10 @@ func (m *Main) Run(ctx context.Context) error {
 	)
 
 	w.RegisterActivityWithOptions(
+		activities.NewUnbag().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.UnbagName},
+	)
+	w.RegisterActivityWithOptions(
 		activities.NewIdentifySIP().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.IdentifySIPName},
 	)
