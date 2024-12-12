@@ -17,6 +17,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
@@ -109,6 +110,29 @@ func (w *PreprocessingWorkflow) Execute(
 	result.RelativePath = params.RelativePath
 
 	localPath := filepath.Join(w.sharedPath, filepath.Clean(params.RelativePath))
+
+	// Unbag the SIP if it's a BagIt bag.
+	if fsutil.FileExists(filepath.Join(localPath, "bagit.txt")) {
+		ev := result.newEvent(ctx, "Unbag SIP")
+		var unbagResult activities.UnbagResult
+		e = temporalsdk_workflow.ExecuteActivity(
+			withLocalActOpts(ctx),
+			activities.UnbagName,
+			&activities.UnbagParams{Path: localPath},
+		).Get(ctx, &unbagResult)
+		if e != nil {
+			result.systemError(ctx, e, ev, "Unbagging the SIP has failed")
+			return result, nil
+		}
+		ev.Succeed(ctx, "SIP Unbagged")
+
+		localPath = unbagResult.Path
+		rp, err := filepath.Rel(w.sharedPath, localPath)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid path")
+		}
+		result.RelativePath = rp
+	}
 
 	// Identify SIP.
 	ev := result.newEvent(ctx, "Identify SIP structure")
