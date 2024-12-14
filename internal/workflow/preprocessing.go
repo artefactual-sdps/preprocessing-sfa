@@ -10,6 +10,7 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
+	"github.com/google/uuid"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
@@ -31,8 +32,11 @@ const (
 )
 
 type (
+	UUIDGenerator func(ctx temporalsdk_workflow.Context) (uuid.UUID, error)
+
 	PreprocessingWorkflow struct {
-		sharedPath string
+		sharedPath    string
+		uuidGenerator UUIDGenerator
 	}
 
 	PreprocessingWorkflowParams struct {
@@ -43,12 +47,14 @@ type (
 		Outcome           Outcome
 		RelativePath      string
 		PreservationTasks []*eventlog.Event
+		PreprocessingID   string
 	}
 )
 
-func NewPreprocessingWorkflow(sharedPath string) *PreprocessingWorkflow {
+func NewPreprocessingWorkflow(sharedPath string, uuidGenerator UUIDGenerator) *PreprocessingWorkflow {
 	return &PreprocessingWorkflow{
-		sharedPath: sharedPath,
+		sharedPath:    sharedPath,
+		uuidGenerator: uuidGenerator,
 	}
 }
 
@@ -107,6 +113,13 @@ func (w *PreprocessingWorkflow) Execute(
 		e = temporal.NewNonRetryableError(fmt.Errorf("error calling workflow with unexpected inputs"))
 		return nil, e
 	}
+
+	id, err := w.uuidGenerator(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result.PreprocessingID = id.String()
 	result.RelativePath = params.RelativePath
 
 	localPath := filepath.Join(w.sharedPath, filepath.Clean(params.RelativePath))
