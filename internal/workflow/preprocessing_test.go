@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
+	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"github.com/stretchr/testify/mock"
@@ -135,6 +136,10 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 	s.sipPath = sp
 
 	// Register activities.
+	s.env.RegisterActivityWithOptions(
+		bagvalidate.New(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: bagvalidate.Name},
+	)
 	s.env.RegisterActivityWithOptions(
 		activities.NewUnbag().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.UnbagName},
@@ -269,6 +274,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&localact.IsBagParams{Path: s.sipPath},
 	).Return(
 		&localact.IsBagResult{IsBag: true}, nil,
+	)
+	s.env.OnActivity(
+		bagvalidate.Name,
+		sessionCtx,
+		&bagvalidate.Params{Path: s.sipPath},
+	).Return(
+		&bagvalidate.Result{Valid: true}, nil,
 	)
 	s.env.OnActivity(
 		activities.UnbagName,
@@ -437,6 +449,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 			Outcome:      workflow.OutcomeSuccess,
 			RelativePath: relPath,
 			PreservationTasks: []*eventlog.Event{
+				{
+					Name:        "Validate Bag",
+					Message:     "Bag validated",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
 				{
 					Name:        "Unbag SIP",
 					Message:     "SIP unbagged",
