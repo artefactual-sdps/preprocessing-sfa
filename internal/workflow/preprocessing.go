@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
+	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"go.artefactual.dev/tools/temporal"
@@ -124,7 +125,24 @@ func (w *PreprocessingWorkflow) Execute(
 
 	// Unbag the SIP if it is a bag.
 	if isBag.IsBag {
-		ev := result.newEvent(ctx, "Unbag SIP")
+		ev := result.newEvent(ctx, "Validate Bag")
+		var bagValidateResult bagvalidate.Result
+		e = temporalsdk_workflow.ExecuteActivity(
+			withFilesysActOpts(ctx),
+			bagvalidate.Name,
+			&bagvalidate.Params{Path: localPath},
+		).Get(ctx, &bagValidateResult)
+		if e != nil {
+			result.systemError(ctx, e, ev, "Error attempting to validate the Bag")
+			return result, nil
+		}
+		if bagValidateResult.Error != "" {
+			result.validationError(ctx, ev, "Bag validation has failed", []string{bagValidateResult.Error})
+		} else {
+			ev.Succeed(ctx, "Bag validated")
+		}
+
+		ev = result.newEvent(ctx, "Unbag SIP")
 		var unbagResult activities.UnbagResult
 		e = temporalsdk_workflow.ExecuteActivity(
 			withFilesysActOpts(ctx),
