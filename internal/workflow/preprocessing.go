@@ -294,6 +294,31 @@ func (w *PreprocessingWorkflow) Execute(
 		ev.Succeed(ctx, "Metadata validation successful")
 	}
 
+	// Validate logical metadata if SIP is an AIP type.
+	if identifySIP.SIP.IsAIP() {
+		ev = result.newEvent(ctx, "Validate logical metadata")
+		var validateLMD activities.ValidatePREMISResult
+		e = temporalsdk_workflow.ExecuteActivity(
+			withFilesysActOpts(ctx),
+			activities.ValidatePREMISName,
+			activities.ValidatePREMISParams{Path: identifySIP.SIP.LogicalMDPath},
+		).Get(ctx, &validateLMD)
+		if e != nil {
+			result.systemError(ctx, e, ev, "logical metadata validation has failed")
+			return result, nil
+		}
+		if validateLMD.Failures != nil {
+			result.validationError(
+				ctx,
+				ev,
+				"logical metadata validation has failed",
+				validateLMD.Failures,
+			)
+		} else {
+			ev.Succeed(ctx, "Logical metadata validation successful")
+		}
+	}
+
 	// Stop here if the SIP content isn't valid.
 	if result.Outcome == OutcomeContentError {
 		return result, nil
