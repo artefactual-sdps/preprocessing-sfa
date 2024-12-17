@@ -1,6 +1,7 @@
 package sip_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -13,14 +14,17 @@ import (
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	digitizedAIP := fs.NewDir(t, "Test-AIP-Digitization",
-		fs.WithDir("content",
-			fs.WithDir("d_0000001",
-				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+	digitizedAIP := fs.NewDir(t, "",
+		fs.WithDir("Digitized-AIP",
+			fs.WithDir("content",
+				fs.WithDir("d_0000001",
+					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+				),
 			),
+			fs.WithDir("additional"),
 		),
-		fs.WithDir("additional"),
 	)
+	digiAIPPath := digitizedAIP.Join("Digitized-AIP")
 
 	digitizedSIP := fs.NewDir(t, "SIP_20201201_Vecteur",
 		fs.WithDir("content",
@@ -41,21 +45,25 @@ func TestNew(t *testing.T) {
 	)
 
 	bornDigitalAIP := fs.NewDir(t, "",
-		fs.WithDir("additional",
-			fs.WithFile("UpdatedAreldaMetadata.xml", ""),
-		),
-		fs.WithDir("content",
-			fs.WithDir("content"),
-			fs.WithDir("header",
-				fs.WithDir("old",
-					fs.WithDir("SIP",
-						fs.WithFile("metadata.xml", ""),
+		fs.WithDir("Born-Digital-AIP",
+			fs.WithDir("additional",
+				fs.WithFile("UpdatedAreldaMetadata.xml", ""),
+				fs.WithFile("Born-Digital-AIP-premis.xml", ""),
+			),
+			fs.WithDir("content",
+				fs.WithDir("content"),
+				fs.WithDir("header",
+					fs.WithDir("old",
+						fs.WithDir("SIP",
+							fs.WithFile("metadata.xml", ""),
+						),
 					),
+					fs.WithDir("xsd"),
 				),
-				fs.WithDir("xsd"),
 			),
 		),
 	)
+	bdAIPPath := bornDigitalAIP.Join("Born-Digital-AIP")
 
 	bornDigitalSIP := fs.NewDir(t, "",
 		fs.WithDir("content"),
@@ -70,18 +78,37 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			name: "Creates a new digitized AIP",
-			path: digitizedAIP.Path(),
+			path: digiAIPPath,
 			wantSIP: sip.SIP{
 				Type:                enums.SIPTypeDigitizedAIP,
-				Path:                digitizedAIP.Path(),
-				ContentPath:         digitizedAIP.Join("content", "content"),
-				ManifestPath:        digitizedAIP.Join("additional", "UpdatedAreldaMetadata.xml"),
-				MetadataPath:        digitizedAIP.Join("content", "header", "old", "SIP", "metadata.xml"),
-				UpdatedAreldaMDPath: digitizedAIP.Join("additional", "UpdatedAreldaMetadata.xml"),
-				XSDPath:             digitizedAIP.Join("content", "header", "xsd", "arelda.xsd"),
+				Path:                digiAIPPath,
+				ContentPath:         filepath.Join(digiAIPPath, "content", "content"),
+				LogicalMDPath:       filepath.Join(digiAIPPath, "additional", "Digitized-AIP-premis.xml"),
+				ManifestPath:        filepath.Join(digiAIPPath, "additional", "UpdatedAreldaMetadata.xml"),
+				MetadataPath:        filepath.Join(digiAIPPath, "content", "header", "old", "SIP", "metadata.xml"),
+				UpdatedAreldaMDPath: filepath.Join(digiAIPPath, "additional", "UpdatedAreldaMetadata.xml"),
+				XSDPath:             filepath.Join(digiAIPPath, "content", "header", "xsd", "arelda.xsd"),
 				TopLevelPaths: []string{
-					digitizedAIP.Join("content"),
-					digitizedAIP.Join("additional"),
+					filepath.Join(digiAIPPath, "content"),
+					filepath.Join(digiAIPPath, "additional"),
+				},
+			},
+		},
+		{
+			name: "Creates a new born digital AIP",
+			path: bdAIPPath,
+			wantSIP: sip.SIP{
+				Type:                enums.SIPTypeBornDigitalAIP,
+				Path:                bdAIPPath,
+				ContentPath:         filepath.Join(bdAIPPath, "content", "content"),
+				LogicalMDPath:       filepath.Join(bdAIPPath, "additional", "Born-Digital-AIP-premis.xml"),
+				ManifestPath:        filepath.Join(bdAIPPath, "additional", "UpdatedAreldaMetadata.xml"),
+				MetadataPath:        filepath.Join(bdAIPPath, "content", "header", "old", "SIP", "metadata.xml"),
+				UpdatedAreldaMDPath: filepath.Join(bdAIPPath, "additional", "UpdatedAreldaMetadata.xml"),
+				XSDPath:             filepath.Join(bdAIPPath, "content", "header", "xsd", "arelda.xsd"),
+				TopLevelPaths: []string{
+					filepath.Join(bdAIPPath, "content"),
+					filepath.Join(bdAIPPath, "additional"),
 				},
 			},
 		},
@@ -114,23 +141,6 @@ func TestNew(t *testing.T) {
 				TopLevelPaths: []string{
 					digitizedSIPCase.Join("content"),
 					digitizedSIPCase.Join("header"),
-				},
-			},
-		},
-		{
-			name: "Creates a new born digital AIP",
-			path: bornDigitalAIP.Path(),
-			wantSIP: sip.SIP{
-				Type:                enums.SIPTypeBornDigitalAIP,
-				Path:                bornDigitalAIP.Path(),
-				ContentPath:         bornDigitalAIP.Join("content", "content"),
-				ManifestPath:        bornDigitalAIP.Join("additional", "UpdatedAreldaMetadata.xml"),
-				MetadataPath:        bornDigitalAIP.Join("content", "header", "old", "SIP", "metadata.xml"),
-				UpdatedAreldaMDPath: bornDigitalAIP.Join("additional", "UpdatedAreldaMetadata.xml"),
-				XSDPath:             bornDigitalAIP.Join("content", "header", "xsd", "arelda.xsd"),
-				TopLevelPaths: []string{
-					bornDigitalAIP.Join("content"),
-					bornDigitalAIP.Join("additional"),
 				},
 			},
 		},
@@ -185,4 +195,36 @@ func TestName(t *testing.T) {
 		Path: "/path/to/SIP_20201201_Vecteur",
 	}
 	assert.Equal(t, s.Name(), "SIP_20201201_Vecteur")
+}
+
+func TestIsAIP(t *testing.T) {
+	t.Parallel()
+
+	s := sip.SIP{
+		Type: enums.SIPTypeBornDigitalAIP,
+		Path: "/path/to/AIP_20201201",
+	}
+	assert.Assert(t, s.IsAIP())
+
+	s = sip.SIP{
+		Type: enums.SIPTypeBornDigitalSIP,
+		Path: "/path/to/SIP_20201201_Vecteur",
+	}
+	assert.Assert(t, !s.IsAIP())
+}
+
+func TestIsSIP(t *testing.T) {
+	t.Parallel()
+
+	s := sip.SIP{
+		Type: enums.SIPTypeBornDigitalSIP,
+		Path: "/path/to/SIP_20201201_Vecteur",
+	}
+	assert.Assert(t, s.IsSIP())
+
+	s = sip.SIP{
+		Type: enums.SIPTypeBornDigitalAIP,
+		Path: "/path/to/AIP_20201201",
+	}
+	assert.Assert(t, !s.IsSIP())
 }

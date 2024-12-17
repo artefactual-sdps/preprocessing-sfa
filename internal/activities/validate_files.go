@@ -73,7 +73,7 @@ func (a *ValidateFiles) identifyFormats(ctx context.Context, sip sip.SIP) (fileF
 
 		ff, err := a.identifier.Identify(path)
 		if err != nil {
-			logger.Info("format identication failed", "path", path)
+			logger.Info("format identification failed", "path", path)
 		} else {
 			formats[path] = ff
 		}

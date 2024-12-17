@@ -18,27 +18,30 @@ func TestValidateStructure(t *testing.T) {
 	t.Parallel()
 
 	digitizedAIP, err := sip.New(fs.NewDir(t, "",
-		fs.WithDir("additional",
-			fs.WithFile("UpdatedAreldaMetadata.xml", ""),
-		),
-		fs.WithDir("content",
-			fs.WithDir("content",
-				fs.WithDir("d_0000001",
-					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
-				),
+		fs.WithDir("AIP-1234",
+			fs.WithDir("additional",
+				fs.WithFile("UpdatedAreldaMetadata.xml", ""),
+				fs.WithFile("AIP-1234-premis.xml", ""),
 			),
-			fs.WithDir("header",
-				fs.WithDir("old",
-					fs.WithDir("SIP",
-						fs.WithFile("metadata.xml", ""),
+			fs.WithDir("content",
+				fs.WithDir("content",
+					fs.WithDir("d_0000001",
+						fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
 					),
 				),
-				fs.WithDir("xsd",
-					fs.WithFile("arelda.xsd", ""),
+				fs.WithDir("header",
+					fs.WithDir("old",
+						fs.WithDir("SIP",
+							fs.WithFile("metadata.xml", ""),
+						),
+					),
+					fs.WithDir("xsd",
+						fs.WithFile("arelda.xsd", ""),
+					),
 				),
 			),
 		),
-	).Path())
+	).Join("AIP-1234"))
 	assert.NilError(t, err)
 
 	digitizedSIP, err := sip.New(fs.NewDir(t, "",
@@ -76,10 +79,14 @@ func TestValidateStructure(t *testing.T) {
 	missingPiecesSIP, err := sip.New(fs.NewDir(t, "").Path())
 	assert.NilError(t, err)
 
-	missingPiecesAIP, err := sip.New(fs.NewDir(t, "",
-		fs.WithDir("additional"),
-		fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
-	).Path())
+	missingPiecesAIP, err := sip.New(
+		fs.NewDir(t, "",
+			fs.WithDir("AIP-1234",
+				fs.WithDir("additional"),
+				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+			),
+		).Join("AIP-1234"),
+	)
 	assert.NilError(t, err)
 
 	digitizedSIPExtraDossiers, err := sip.New(fs.NewDir(t, "",
@@ -156,6 +163,7 @@ func TestValidateStructure(t *testing.T) {
 					"XSD folder is missing",
 					"metadata.xml is missing",
 					"UpdatedAreldaMetadata.xml is missing",
+					"AIP-1234-premis.xml is missing",
 				},
 			},
 		},
@@ -188,11 +196,10 @@ func TestValidateStructure(t *testing.T) {
 
 				return
 			}
+			assert.NilError(t, err)
 
 			var result activities.ValidateStructureResult
 			_ = enc.Get(&result)
-
-			assert.NilError(t, err)
 			assert.DeepEqual(t, result, tt.want)
 		})
 	}
