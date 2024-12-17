@@ -36,9 +36,10 @@ func (a *TransformSIP) Execute(ctx context.Context, params *TransformSIPParams) 
 		return nil, err
 	}
 
-	// Move the Prozess_Digitalisierung_PREMIS.xml file to the PIP metadata
+	// Move the Prozess_Digitalisierung_PREMIS.xml file to the metadata
 	// directory. Prozess_Digitalisierung_PREMIS.xml is only present in
-	// digitized SIPs/AIPs, and there can only be one dossier in a digitized SIP/AIP.
+	// digitized SIPs/AIPs, and there can only be one dossier in a digitized
+	// SIP/AIP.
 	if params.SIP.Type == enums.SIPTypeDigitizedSIP || params.SIP.Type == enums.SIPTypeDigitizedAIP {
 		entries, err := os.ReadDir(params.SIP.ContentPath)
 		if err != nil {
@@ -57,12 +58,20 @@ func (a *TransformSIP) Execute(ctx context.Context, params *TransformSIPParams) 
 		}
 	}
 
-	// Move UpdatedAreldaMetatdata.xml to the metadata directory (Digitized AIP
-	// only)
-	if params.SIP.Type == enums.SIPTypeDigitizedAIP {
+	// Move the UpdatedAreldaMetatdata.xml and logical metadata files to the
+	// metadata directory (AIP only).
+	if params.SIP.IsAIP() {
 		err := fsutil.Move(
 			params.SIP.UpdatedAreldaMDPath,
 			filepath.Join(mdPath, filepath.Base(params.SIP.UpdatedAreldaMDPath)),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		err = fsutil.Move(
+			params.SIP.LogicalMDPath,
+			filepath.Join(mdPath, filepath.Base(params.SIP.LogicalMDPath)),
 		)
 		if err != nil {
 			return nil, err
