@@ -18,12 +18,15 @@ func TestIdentifySIP(t *testing.T) {
 	t.Parallel()
 
 	path := fs.NewDir(t, "",
-		fs.WithDir("content",
-			fs.WithDir("d_0000001",
-				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+		fs.WithDir("Digitized-AIP",
+			fs.WithDir("content",
+				fs.WithDir("d_0000001",
+					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+				),
 			),
+			fs.WithDir("additional"),
 		),
-		fs.WithDir("additional")).Path()
+	).Join("Digitized-AIP")
 
 	tests := []struct {
 		name    string
@@ -39,6 +42,7 @@ func TestIdentifySIP(t *testing.T) {
 					Type:                enums.SIPTypeDigitizedAIP,
 					Path:                path,
 					ContentPath:         filepath.Join(path, "content", "content"),
+					LogicalMDPath:       filepath.Join(path, "additional", "Digitized-AIP-premis.xml"),
 					ManifestPath:        filepath.Join(path, "additional", "UpdatedAreldaMetadata.xml"),
 					MetadataPath:        filepath.Join(path, "content", "header", "old", "SIP", "metadata.xml"),
 					UpdatedAreldaMDPath: filepath.Join(path, "additional", "UpdatedAreldaMetadata.xml"),

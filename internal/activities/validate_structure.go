@@ -34,12 +34,14 @@ func (a *ValidateStructure) Execute(
 ) (*ValidateStructureResult, error) {
 	var failures []string
 
-	// Check existence of content and XSD folders.
+	// Check existence of the content directory.
 	hasContentDir := true
 	if !fsutil.FileExists(params.SIP.ContentPath) {
 		failures = append(failures, "Content folder is missing")
 		hasContentDir = false
 	}
+
+	// Check existence of the XSD directory.
 	if !fsutil.FileExists(params.SIP.XSDPath) {
 		failures = append(failures, "XSD folder is missing")
 	}
@@ -51,15 +53,20 @@ func (a *ValidateStructure) Execute(
 		))
 	}
 
-	// Check existence of UpdatedAreldaMetadata file (digitized AIP only).
-	if params.SIP.Type == enums.SIPTypeDigitizedAIP && !fsutil.FileExists(params.SIP.UpdatedAreldaMDPath) {
+	// Check existence of UpdatedAreldaMetadata file (AIPs only).
+	if params.SIP.IsAIP() && !fsutil.FileExists(params.SIP.UpdatedAreldaMDPath) {
 		failures = append(failures, fmt.Sprintf(
 			"%s is missing", filepath.Base(params.SIP.UpdatedAreldaMDPath),
 		))
 	}
 
-	sipBase := params.SIP.Path
+	// Check existence of logical metadata file (AIPs only).
+	if params.SIP.IsAIP() && !fsutil.FileExists(params.SIP.LogicalMDPath) {
+		failures = append(failures, fmt.Sprintf("%s is missing", filepath.Base(params.SIP.LogicalMDPath)))
+	}
+
 	// Check for unexpected top-level directories.
+	sipBase := params.SIP.Path
 	extras, err := extraNodes(sipBase, params.SIP.Path, params.SIP.TopLevelPaths, true)
 	if err != nil {
 		return nil, fmt.Errorf("ValidateStructure: check for unexpected dirs: %v", err)
@@ -75,14 +82,24 @@ func (a *ValidateStructure) Execute(
 		failures = append(failures, extras...)
 	}
 
-	// Check that digitized SIPs only have one dossier in the content dir.
-	if params.SIP.Type == enums.SIPTypeDigitizedSIP {
+	// Check that digitized packages only have one dossier in the content dir.
+	if params.SIP.Type == enums.SIPTypeDigitizedSIP || params.SIP.Type == enums.SIPTypeDigitizedAIP && hasContentDir {
 		entries, err := os.ReadDir(params.SIP.ContentPath)
 		if err != nil {
 			return nil, fmt.Errorf("ValidateStructure: check for unexpected dossiers: %v", err)
 		}
 
-		if len(entries) > 1 {
+		dirs := 0
+		for _, e := range entries {
+			if e.IsDir() {
+				dirs += 1
+			}
+			if dirs > 1 {
+				break
+			}
+		}
+
+		if dirs > 1 {
 			failures = append(failures, "More than one dossier in the content directory")
 		}
 	}

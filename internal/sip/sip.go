@@ -19,6 +19,9 @@ type SIP struct {
 	// ContentPath is the filepath of the "content" directory.
 	ContentPath string
 
+	// LogicalMDPath is the filepath of the logical metadata file (AIP only).
+	LogicalMDPath string
+
 	// ManifestPath is the filepath of the SIP manifest —
 	// "UpdatedAreldaMetadata.xml" for digitized AIPs, "metadata.xml" for all
 	// other SIP types.
@@ -71,6 +74,7 @@ func New(path string) (SIP, error) {
 func (s SIP) digitizedAIP() SIP {
 	s.Type = enums.SIPTypeDigitizedAIP
 	s.ContentPath = filepath.Join(s.Path, "content", "content")
+	s.LogicalMDPath = filepath.Join(s.Path, "additional", s.Name()+"-premis.xml")
 	s.MetadataPath = filepath.Join(s.Path, "content", "header", "old", "SIP", "metadata.xml")
 	s.UpdatedAreldaMDPath = filepath.Join(s.Path, "additional", "UpdatedAreldaMetadata.xml")
 	s.ManifestPath = s.UpdatedAreldaMDPath
@@ -113,4 +117,12 @@ func (s SIP) bornDigitalSIP() SIP {
 
 func (s SIP) Name() string {
 	return filepath.Base(s.Path)
+}
+
+func (s SIP) IsAIP() bool {
+	return s.Type == enums.SIPTypeBornDigitalAIP || s.Type == enums.SIPTypeDigitizedAIP
+}
+
+func (s SIP) IsSIP() bool {
+	return s.Type == enums.SIPTypeBornDigitalSIP || s.Type == enums.SIPTypeDigitizedSIP
 }
