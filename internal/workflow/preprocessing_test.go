@@ -176,6 +176,10 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: xmlvalidate.Name},
 	)
 	s.env.RegisterActivityWithOptions(
+		activities.NewValidatePREMIS(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidatePREMISName},
+	)
+	s.env.RegisterActivityWithOptions(
 		activities.NewTransformSIP().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
 	)
@@ -317,6 +321,14 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		},
 	).Return(
 		&xmlvalidate.Result{}, nil,
+	)
+
+	s.env.OnActivity(
+		activities.ValidatePREMISName,
+		sessionCtx,
+		&activities.ValidatePREMISParams{Path: expectedSIP.LogicalMDPath},
+	).Return(
+		&activities.ValidatePREMISResult{}, nil,
 	)
 
 	// PREMIS activities.
@@ -482,6 +494,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 					CompletedAt: testTime,
 				},
 				{
+					Name:        "Validate logical metadata",
+					Message:     "Logical metadata validation successful",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
 					Name:        "Create premis.xml",
 					Message:     "Created a premis.xml and stored in metadata directory",
 					Outcome:     enums.EventOutcomeSuccess,
@@ -636,6 +655,16 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		}, nil,
 	)
 
+	s.env.OnActivity(
+		activities.ValidatePREMISName,
+		sessionCtx,
+		&activities.ValidatePREMISParams{Path: expectedSIP.LogicalMDPath},
+	).Return(
+		&activities.ValidatePREMISResult{
+			Failures: []string{`test-AIP-premis.xml does not match expected metadata requirements`},
+		}, nil,
+	)
+
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
 		&workflow.PreprocessingWorkflowParams{RelativePath: relPath},
@@ -704,6 +733,14 @@ invalid PDF/A: "contents/contents/d_0000001/test.pdf"`,
 				{
 					Name:        "Validate SIP metadata",
 					Message:     "Content error: metadata validation has failed:\nadditional/UpdatedAreldaMetadata.xml does not match expected metadata requirements",
+					Outcome:     enums.EventOutcomeValidationFailure,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
+					Name: "Validate logical metadata",
+					Message: `Content error: logical metadata validation has failed:
+test-AIP-premis.xml does not match expected metadata requirements`,
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,

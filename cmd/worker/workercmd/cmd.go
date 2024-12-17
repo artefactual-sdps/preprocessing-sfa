@@ -108,6 +108,10 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: xmlvalidate.Name},
 	)
 	w.RegisterActivityWithOptions(
+		activities.NewValidatePREMIS(xmlvalidate.NewXMLLintValidator()).Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidatePREMISName},
+	)
+	w.RegisterActivityWithOptions(
 		activities.NewTransformSIP().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
 	)
