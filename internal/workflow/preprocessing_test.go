@@ -12,11 +12,13 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
+	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
@@ -122,6 +124,10 @@ type PreprocessingTestSuite struct {
 	sipPath  string
 }
 
+func genUUID(ctx temporalsdk_workflow.Context) (uuid.UUID, error) {
+	return uuid.MustParse("146182ff-9923-4869-bca1-0bbc0f822025"), nil
+}
+
 func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 	s.env = s.NewTestWorkflowEnvironment()
 	s.env.SetStartTime(testTime)
@@ -197,7 +203,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
 	)
 
-	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir)
+	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir, genUUID)
 }
 
 func (s *PreprocessingTestSuite) digitizedAIP(path string) sip.SIP {
@@ -548,6 +554,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 					CompletedAt: testTime,
 				},
 			},
+			PreprocessingID: "146182ff-9923-4869-bca1-0bbc0f822025",
 		},
 		&result,
 	)
@@ -590,6 +597,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowIdentifySIPFails() {
 					CompletedAt: testTime,
 				},
 			},
+			PreprocessingID: "146182ff-9923-4869-bca1-0bbc0f822025",
 		},
 		&result,
 	)
@@ -765,6 +773,7 @@ test-AIP-premis.xml does not match expected metadata requirements`,
 					CompletedAt: testTime,
 				},
 			},
+			PreprocessingID: "146182ff-9923-4869-bca1-0bbc0f822025",
 		},
 		&result,
 	)
