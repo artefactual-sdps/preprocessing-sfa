@@ -4,6 +4,7 @@ go 1.23.2
 
 require (
 	github.com/antchfx/xmlquery v1.4.2
+	github.com/artefactual-labs/bagit-gython v0.2.0
 	github.com/artefactual-sdps/temporal-activities v0.0.0-20241105002718-bc4a9d85ce42
 	github.com/beevik/etree v1.4.0
 	github.com/deckarep/golang-set/v2 v2.6.0
@@ -25,7 +26,6 @@ require (
 
 require (
 	github.com/antchfx/xpath v1.3.2 // indirect
-	github.com/artefactual-labs/bagit-gython v0.2.0 // indirect
 	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.30.3 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.3 // indirect

@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 
+	bagit_gython "github.com/artefactual-labs/bagit-gython"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
+	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"github.com/go-logr/logr"
@@ -29,6 +31,7 @@ type Main struct {
 	cfg            config.Configuration
 	temporalWorker temporalsdk_worker.Worker
 	temporalClient temporalsdk_client.Client
+	bagValidator   *bagit_gython.BagIt
 }
 
 func NewMain(logger logr.Logger, cfg config.Configuration) *Main {
@@ -59,11 +62,21 @@ func (m *Main) Run(ctx context.Context) error {
 	})
 	m.temporalWorker = w
 
+	m.bagValidator, err = bagit_gython.NewBagIt()
+	if err != nil {
+		m.logger.Error(err, "Error creating BagIt validator")
+		return err
+	}
+
 	w.RegisterWorkflowWithOptions(
 		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Temporal.WorkflowName},
 	)
 
+	w.RegisterActivityWithOptions(
+		bagvalidate.New(m.bagValidator).Execute,
+		temporalsdk_activity.RegisterOptions{Name: bagvalidate.Name},
+	)
 	w.RegisterActivityWithOptions(
 		activities.NewUnbag().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.UnbagName},
@@ -139,6 +152,12 @@ func (m *Main) Close() error {
 
 	if m.temporalClient != nil {
 		m.temporalClient.Close()
+	}
+
+	if m.bagValidator != nil {
+		if err := m.bagValidator.Cleanup(); err != nil {
+			m.logger.Info("Couldn't clean up bag validator: %v", err)
+		}
 	}
 
 	return nil
