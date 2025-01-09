@@ -8,6 +8,14 @@ requests.
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-01-09
+
+### Added
+
+- veraPDF validation of PDF/A files ([#63])
+- BagIt SIPs support and validation ([#93], [#94] and [#97])
+- Logical metadata PREMIS file support and validation ([#98])
+
 ## [0.5.0] - 2024-11-29
 
 ### Fixed
@@ -58,12 +66,17 @@ requests.
 
 Initial release.
 
-[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/artefactual-sdps/preprocessing-sfa/releases/tag/v0.1.0
+[#98]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/98
+[#97]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/97
+[#94]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/94
+[#93]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/93
 [#90]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/90
 [#88]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/88
 [#87]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/87
@@ -72,6 +85,7 @@ Initial release.
 [#77]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/77
 [#74]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/74
 [#73]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/73
+[#63]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/63
 [#60]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/60
 [#59]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/59
 [#58]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/58
