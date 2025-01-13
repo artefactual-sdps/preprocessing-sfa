@@ -22,29 +22,22 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 	-o /out/preprocessing-worker \
 	./cmd/worker
 
-# Build worker image
-FROM alpine:3.20 AS preprocessing-worker
-RUN apk add --update --no-cache libxml2-utils
-
-# Copy the JRE (Eclipse Temurin v11) from the verapdf/cli image
-ENV JAVA_HOME=/opt/java/openjdk
-ENV PATH="${JAVA_HOME}/bin:${PATH}"
-COPY --from=ghcr.io/verapdf/cli:latest --link $JAVA_HOME $JAVA_HOME
+FROM debian:12-slim AS preprocessing-worker
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	libxml2-utils \
+	openjdk-17-jre-headless \
+	&& rm -rf /var/lib/apt/lists/*
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
-RUN addgroup -g ${GROUP_ID} -S preprocessing
-RUN adduser -u ${USER_ID} -S -D preprocessing preprocessing
-
-# Make preprocessing the owner of the verapdf log dir
-RUN mkdir --parents /var/opt/verapdf/logs && chown -R preprocessing:preprocessing /var/opt/verapdf
+RUN groupadd --gid ${GROUP_ID} preprocessing && \
+	useradd --uid ${USER_ID} --gid preprocessing --create-home preprocessing && \
+	mkdir --parents /var/opt/verapdf/logs /home/preprocessing/shared && \
+	chown -R preprocessing:preprocessing /var/opt/verapdf /home/preprocessing
 
 USER preprocessing
 
-COPY --from=build-preprocessing-worker --link /out/preprocessing-worker /home/preprocessing/bin/preprocessing-worker
-RUN mkdir /home/preprocessing/shared
-
-# Copy the veraPDF application from the verapdf/cli image
 COPY --from=ghcr.io/verapdf/cli:latest --link /opt/verapdf/ /opt/verapdf/
+COPY --from=build-preprocessing-worker --link /out/preprocessing-worker /home/preprocessing/bin/preprocessing-worker
 
 CMD ["/home/preprocessing/bin/preprocessing-worker"]
