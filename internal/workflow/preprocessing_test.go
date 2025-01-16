@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/artefactual-sdps/temporal-activities/archiveextract"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
@@ -137,6 +138,14 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 
 	// Register activities.
 	s.env.RegisterActivityWithOptions(
+		archiveextract.New(archiveextract.Config{}).Execute,
+		temporalsdk_activity.RegisterOptions{Name: archiveextract.Name},
+	)
+	s.env.RegisterActivityWithOptions(
+		activities.NewChecksumSIP().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ChecksumSIPName},
+	)
+	s.env.RegisterActivityWithOptions(
 		bagvalidate.New(nil).Execute,
 		temporalsdk_activity.RegisterOptions{Name: bagvalidate.Name},
 	)
@@ -197,7 +206,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
 	)
 
-	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir)
+	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir, cfg.CheckDuplicates, nil)
 }
 
 func (s *PreprocessingTestSuite) digitizedAIP(path string) sip.SIP {
@@ -257,7 +266,7 @@ Tag-File-Character-Encoding: UTF-8
 }
 
 func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
-	s.SetupTest(&config.Configuration{})
+	s.SetupTest(&config.Configuration{CheckDuplicates: true})
 	s.writeBagitTxt(s.sipPath)
 
 	expectedSIP := s.digitizedAIP(s.sipPath)
@@ -267,7 +276,33 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 	ctx := mock.AnythingOfType("*context.valueCtx")
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
 	premisFilePath := filepath.Join(expectedSIP.Path, "metadata", "premis.xml")
+	checksum := "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
+	s.env.OnActivity(
+		activities.ChecksumSIPName,
+		sessionCtx,
+		&activities.ChecksumSIPParams{Path: s.sipPath},
+	).Return(
+		&activities.ChecksumSIPResult{Hash: checksum}, nil,
+	)
+	s.env.OnActivity(
+		localact.CheckDuplicate,
+		ctx,
+		nil,
+		&localact.CheckDuplicateParams{
+			Name:     filepath.Base(s.sipPath),
+			Checksum: checksum,
+		},
+	).Return(
+		&localact.CheckDuplicateResult{}, nil,
+	)
+	s.env.OnActivity(
+		archiveextract.Name,
+		sessionCtx,
+		&archiveextract.Params{SourcePath: s.sipPath},
+	).Return(
+		&archiveextract.Result{ExtractPath: s.sipPath}, nil,
+	)
 	s.env.OnActivity(
 		localact.IsBag,
 		ctx,
@@ -450,6 +485,27 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 			RelativePath: relPath,
 			PreservationTasks: []*eventlog.Event{
 				{
+					Name:        "Calculate SIP checksum",
+					Message:     "SIP checksum calculated",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
+					Name:        "Check for duplicate SIP",
+					Message:     "SIP is not a duplicate",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
+					Name:        "Extract SIP",
+					Message:     "SIP extracted",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
 					Name:        "Validate Bag",
 					Message:     "Bag validated",
 					Outcome:     enums.EventOutcomeSuccess,
@@ -560,6 +616,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowIdentifySIPFails() {
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
 	s.env.OnActivity(
+		archiveextract.Name,
+		sessionCtx,
+		&archiveextract.Params{SourcePath: s.sipPath},
+	).Return(
+		&archiveextract.Result{ExtractPath: s.sipPath}, nil,
+	)
+	s.env.OnActivity(
 		activities.IdentifySIPName,
 		sessionCtx,
 		&activities.IdentifySIPParams{Path: sipPath},
@@ -583,6 +646,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowIdentifySIPFails() {
 			RelativePath: relPath,
 			PreservationTasks: []*eventlog.Event{
 				{
+					Name:        "Extract SIP",
+					Message:     "SIP extracted",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
 					Name:        "Identify SIP structure",
 					Message:     "System error: SIP structure identification has failed",
 					Outcome:     enums.EventOutcomeSystemFailure,
@@ -603,6 +673,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
+	s.env.OnActivity(
+		archiveextract.Name,
+		sessionCtx,
+		&archiveextract.Params{SourcePath: s.sipPath},
+	).Return(
+		&archiveextract.Result{ExtractPath: s.sipPath}, nil,
+	)
 	s.env.OnActivity(
 		activities.IdentifySIPName,
 		sessionCtx,
@@ -699,6 +776,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 			Outcome:      workflow.OutcomeContentError,
 			RelativePath: relPath,
 			PreservationTasks: []*eventlog.Event{
+				{
+					Name:        "Extract SIP",
+					Message:     "SIP extracted",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
 				{
 					Name:        "Identify SIP structure",
 					Message:     "SIP structure identified: DigitizedAIP",

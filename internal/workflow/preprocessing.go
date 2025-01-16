@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/artefactual-sdps/temporal-activities/archiveextract"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
@@ -19,6 +20,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/localact"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
@@ -33,7 +35,9 @@ const (
 
 type (
 	PreprocessingWorkflow struct {
-		sharedPath string
+		sharedPath      string
+		checkDuplicates bool
+		psvc            persistence.Service
 	}
 
 	PreprocessingWorkflowParams struct {
@@ -47,9 +51,15 @@ type (
 	}
 )
 
-func NewPreprocessingWorkflow(sharedPath string) *PreprocessingWorkflow {
+func NewPreprocessingWorkflow(
+	sharedPath string,
+	checkDuplicates bool,
+	psvc persistence.Service,
+) *PreprocessingWorkflow {
 	return &PreprocessingWorkflow{
-		sharedPath: sharedPath,
+		sharedPath:      sharedPath,
+		checkDuplicates: checkDuplicates,
+		psvc:            psvc,
 	}
 }
 
@@ -112,6 +122,64 @@ func (w *PreprocessingWorkflow) Execute(
 
 	localPath := filepath.Join(w.sharedPath, filepath.Clean(params.RelativePath))
 
+	if w.checkDuplicates {
+		// Calculate SIP checksum.
+		ev := result.newEvent(ctx, "Calculate SIP checksum")
+		var checksumSIP activities.ChecksumSIPResult
+		e = temporalsdk_workflow.ExecuteActivity(
+			withFilesysActOpts(ctx),
+			activities.ChecksumSIPName,
+			&activities.ChecksumSIPParams{Path: localPath},
+		).Get(ctx, &checksumSIP)
+		if e != nil {
+			result.systemError(ctx, e, ev, "Calculating the SIP checksum has failed")
+			return result, nil
+		}
+		ev.Succeed(ctx, "SIP checksum calculated")
+
+		// Check for duplicate SIP.
+		ev = result.newEvent(ctx, "Check for duplicate SIP")
+		var checkDuplicate localact.CheckDuplicateResult
+		e = temporalsdk_workflow.ExecuteLocalActivity(
+			withLocalActOpts(ctx),
+			localact.CheckDuplicate,
+			w.psvc,
+			&localact.CheckDuplicateParams{
+				Name:     filepath.Base(localPath),
+				Checksum: checksumSIP.Hash,
+			},
+		).Get(ctx, &checkDuplicate)
+		if e != nil {
+			result.systemError(ctx, e, ev, "Error attempting to check for duplicate SIP")
+			return result, nil
+		}
+		if checkDuplicate.IsDuplicate {
+			result.validationError(
+				ctx,
+				ev,
+				"SIP is a duplicate",
+				[]string{"A previously submitted SIP has the same checksum"},
+			)
+			return result, nil
+		}
+		ev.Succeed(ctx, "SIP is not a duplicate")
+	}
+
+	// Extract SIP.
+	ev := result.newEvent(ctx, "Extract SIP")
+	var archiveExtract archiveextract.Result
+	err := temporalsdk_workflow.ExecuteActivity(
+		withFilesysActOpts(ctx),
+		archiveextract.Name,
+		&archiveextract.Params{SourcePath: localPath},
+	).Get(ctx, &archiveExtract)
+	if err != nil {
+		result.systemError(ctx, e, ev, "Extracting the SIP has failed")
+		return result, nil
+	}
+	localPath = archiveExtract.ExtractPath
+	ev.Succeed(ctx, "SIP extracted")
+
 	// Check if the SIP is a BagIt bag.
 	var isBag localact.IsBagResult
 	e = temporalsdk_workflow.ExecuteLocalActivity(
@@ -164,7 +232,7 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 
 	// Identify SIP.
-	ev := result.newEvent(ctx, "Identify SIP structure")
+	ev = result.newEvent(ctx, "Identify SIP structure")
 	var identifySIP activities.IdentifySIPResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),

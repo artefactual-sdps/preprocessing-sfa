@@ -9,6 +9,7 @@ import (
 	"ariga.io/sqlcomment"
 	"entgo.io/ent/dialect/sql"
 	bagit_gython "github.com/artefactual-labs/bagit-gython"
+	"github.com/artefactual-sdps/temporal-activities/archiveextract"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
@@ -26,6 +27,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
+	entclient "github.com/artefactual-sdps/preprocessing-sfa/internal/persistence/ent/client"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence/ent/db"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflow"
 )
@@ -75,11 +77,47 @@ func (m *Main) Run(ctx context.Context) error {
 		return err
 	}
 
+	var psvc persistence.Service
+	if m.cfg.CheckDuplicates {
+		sqlDB, err := persistence.Open(m.cfg.Persistence.Driver, m.cfg.Persistence.DSN)
+		if err != nil {
+			m.logger.Error(err, "Error initializing database pool.")
+			return err
+		}
+		m.dbClient = db.NewClient(
+			db.Driver(
+				sqlcomment.NewDriver(
+					sql.OpenDB(m.cfg.Persistence.Driver, sqlDB),
+					sqlcomment.WithDriverVerTag(),
+					sqlcomment.WithTags(sqlcomment.Tags{
+						sqlcomment.KeyApplication: Name,
+					}),
+				),
+			),
+		)
+		if m.cfg.Persistence.Migrate {
+			err = m.dbClient.Schema.Create(ctx)
+			if err != nil {
+				m.logger.Error(err, "Error migrating database.")
+				return err
+			}
+		}
+		psvc = entclient.New(m.dbClient)
+	}
+
 	w.RegisterWorkflowWithOptions(
-		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath).Execute,
+		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath, m.cfg.CheckDuplicates, psvc).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Temporal.WorkflowName},
 	)
 
+	w.RegisterActivityWithOptions(
+		activities.NewChecksumSIP().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ChecksumSIPName},
+	)
+	w.RegisterActivityWithOptions(
+		archiveextract.New(archiveextract.Config{}).Execute,
+		temporalsdk_activity.RegisterOptions{Name: archiveextract.Name},
+	)
 	w.RegisterActivityWithOptions(
 		bagvalidate.New(m.bagValidator).Execute,
 		temporalsdk_activity.RegisterOptions{Name: bagvalidate.Name},
@@ -143,32 +181,6 @@ func (m *Main) Run(ctx context.Context) error {
 		bagcreate.New(m.cfg.Bagit).Execute,
 		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
 	)
-
-	if m.cfg.CheckDuplicates {
-		sqlDB, err := persistence.Open(m.cfg.Persistence.Driver, m.cfg.Persistence.DSN)
-		if err != nil {
-			m.logger.Error(err, "Error initializing database pool.")
-			return err
-		}
-		m.dbClient = db.NewClient(
-			db.Driver(
-				sqlcomment.NewDriver(
-					sql.OpenDB(m.cfg.Persistence.Driver, sqlDB),
-					sqlcomment.WithDriverVerTag(),
-					sqlcomment.WithTags(sqlcomment.Tags{
-						sqlcomment.KeyApplication: Name,
-					}),
-				),
-			),
-		)
-		if m.cfg.Persistence.Migrate {
-			err = m.dbClient.Schema.Create(ctx)
-			if err != nil {
-				m.logger.Error(err, "Error migrating database.")
-				return err
-			}
-		}
-	}
 
 	if err := w.Start(); err != nil {
 		m.logger.Error(err, "Preprocessing worker failed to start.")
