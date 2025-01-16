@@ -3,7 +3,7 @@ kind: Kustomization
 namespace: enduro-sdps
 resources:
   - ../../base
-  - mysql-secret.yaml
   - mysql-recreate-databases-job.yaml
+  - mysql-secret.yaml
   - preprocessing-secret.yaml
   - start-workflow-job.yaml

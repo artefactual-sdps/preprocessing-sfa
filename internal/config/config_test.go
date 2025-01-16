@@ -8,12 +8,18 @@ import (
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 )
 
 const testConfig = `# Config
 debug = true
 verbosity = 2
 sharedPath = "/home/preprocessing/shared"
+checkDuplicates = true
+[persistence]
+dsn = "file:/path/to/fake.db"
+driver = "sqlite3"
+migrate = true
 [temporal]
 address = "host:port"
 namespace = "default"
@@ -45,9 +51,15 @@ func TestConfig(t *testing.T) {
 			toml:       testConfig,
 			wantFound:  true,
 			wantCfg: config.Configuration{
-				Debug:      true,
-				Verbosity:  2,
-				SharedPath: "/home/preprocessing/shared",
+				Debug:           true,
+				Verbosity:       2,
+				SharedPath:      "/home/preprocessing/shared",
+				CheckDuplicates: true,
+				Persistence: persistence.Config{
+					DSN:     "file:/path/to/fake.db",
+					Driver:  "sqlite3",
+					Migrate: true,
+				},
 				Temporal: config.Temporal{
 					Address:      "host:port",
 					Namespace:    "default",
@@ -100,6 +112,21 @@ checksumAlgorithm = "unknown"
 			wantFound: true,
 			wantErr: `invalid configuration:
 Bagit.ChecksumAlgorithm: invalid value "unknown", must be one of (md5, sha1, sha256, sha512)`,
+		},
+		{
+			name:       "Errors when persistence configuration is missing",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+checkDuplicates = true
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+`,
+			wantFound: true,
+			wantErr: `invalid configuration:
+Persistence.DSN: missing required value
+Persistence.Driver: missing required value`,
 		},
 		{
 			name:       "Errors when TOML is invalid",

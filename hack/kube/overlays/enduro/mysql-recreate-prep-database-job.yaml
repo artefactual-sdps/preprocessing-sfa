@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: mysql-recreate-databases
+  name: mysql-recreate-prep-database
 spec:
   backoffLimit: 100
   template:
@@ -26,12 +26,6 @@ spec:
               "sh",
               "-c",
               'mysql -h mysql.enduro-sdps -u root -p$MYSQL_ROOT_PASSWORD --execute "
-              DROP DATABASE IF EXISTS temporal;
-              CREATE DATABASE IF NOT EXISTS temporal;
-              GRANT ALL PRIVILEGES ON temporal.* TO ''$MYSQL_USER''@''%'';
-              DROP DATABASE IF EXISTS temporal_visibility;
-              CREATE DATABASE IF NOT EXISTS temporal_visibility;
-              GRANT ALL PRIVILEGES ON temporal_visibility.* TO ''$MYSQL_USER''@''%'';
               DROP DATABASE IF EXISTS preprocessing_sfa;
               CREATE DATABASE IF NOT EXISTS preprocessing_sfa;
               GRANT ALL PRIVILEGES ON preprocessing_sfa.* TO ''$MYSQL_USER''@''%'';

@@ -20,6 +20,19 @@ spec:
       containers:
         - name: preprocessing-worker
           image: preprocessing-sfa-worker:dev
+          env:
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
+            - name: ENDURO_PREPROCESSING_PERSISTENCE_DSN
+              value: $(MYSQL_USER):$(MYSQL_PASSWORD)@tcp(mysql.enduro-sdps:3306)/preprocessing_sfa
           volumeMounts:
             - name: config
               mountPath: /home/preprocessing/.config

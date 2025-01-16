@@ -3,6 +3,8 @@ kind: Kustomization
 namespace: enduro-sdps
 resources:
   - minio-ais-bucket-job.yaml
+  - mysql-create-prep-database-job.yaml
+  - mysql-recreate-prep-database-job.yaml
   - preprocessing-worker.yaml
   - preprocessing-pvc.yaml
   - preprocessing-secret.yaml

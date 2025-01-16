@@ -31,3 +31,9 @@ k8s_resource(
   trigger_mode=trigger_mode
 )
 k8s_resource("minio-ais-bucket", labels=["Preprocessing"])
+k8s_resource(
+  "mysql-recreate-prep-database",
+  labels=["Preprocessing"],
+  auto_init=False,
+  trigger_mode=TRIGGER_MODE_MANUAL
+)

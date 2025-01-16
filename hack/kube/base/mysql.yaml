@@ -84,4 +84,6 @@ data:
       GRANT ALL PRIVILEGES ON temporal.* TO '$MYSQL_USER'@'%';
       CREATE DATABASE IF NOT EXISTS temporal_visibility;
       GRANT ALL PRIVILEGES ON temporal_visibility.* TO '$MYSQL_USER'@'%';
+      CREATE DATABASE IF NOT EXISTS preprocessing_sfa;
+      GRANT ALL PRIVILEGES ON preprocessing_sfa.* TO '$MYSQL_USER'@'%';
     "

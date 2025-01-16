@@ -12,6 +12,7 @@ import (
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 )
 
 type ConfigurationValidator interface {
@@ -35,6 +36,13 @@ type Configuration struct {
 	// Enduro and preservation processing.
 	SharedPath string
 
+	// CheckDuplicates enables or disables a check for SIPs that have already
+	// been processed. When enabled, the persistence configuration below will
+	// be required, and a SIP that has already been processed will fail the
+	// preprocessing workflow.
+	CheckDuplicates bool
+
+	Persistence  persistence.Config
 	Temporal     Temporal
 	Worker       WorkerConfig
 	Bagit        bagcreate.Config
@@ -90,6 +98,15 @@ func (c Configuration) Validate() error {
 
 	if err := c.Bagit.Validate(); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("Bagit.%v", err))
+	}
+
+	if c.CheckDuplicates {
+		if c.Persistence.DSN == "" {
+			errs = errors.Join(errs, errRequired("Persistence.DSN"))
+		}
+		if c.Persistence.Driver == "" {
+			errs = errors.Join(errs, errRequired("Persistence.Driver"))
+		}
 	}
 
 	return errs

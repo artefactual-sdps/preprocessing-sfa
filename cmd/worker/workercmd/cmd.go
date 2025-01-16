@@ -3,7 +3,11 @@ package workercmd
 import (
 	"context"
 	"crypto/rand"
+	"errors"
+	"fmt"
 
+	"ariga.io/sqlcomment"
+	"entgo.io/ent/dialect/sql"
 	bagit_gython "github.com/artefactual-labs/bagit-gython"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
@@ -21,6 +25,8 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence/ent/db"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflow"
 )
 
@@ -32,6 +38,7 @@ type Main struct {
 	temporalWorker temporalsdk_worker.Worker
 	temporalClient temporalsdk_client.Client
 	bagValidator   *bagit_gython.BagIt
+	dbClient       *db.Client
 }
 
 func NewMain(logger logr.Logger, cfg config.Configuration) *Main {
@@ -137,6 +144,32 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
 	)
 
+	if m.cfg.CheckDuplicates {
+		sqlDB, err := persistence.Open(m.cfg.Persistence.Driver, m.cfg.Persistence.DSN)
+		if err != nil {
+			m.logger.Error(err, "Error initializing database pool.")
+			return err
+		}
+		m.dbClient = db.NewClient(
+			db.Driver(
+				sqlcomment.NewDriver(
+					sql.OpenDB(m.cfg.Persistence.Driver, sqlDB),
+					sqlcomment.WithDriverVerTag(),
+					sqlcomment.WithTags(sqlcomment.Tags{
+						sqlcomment.KeyApplication: Name,
+					}),
+				),
+			),
+		)
+		if m.cfg.Persistence.Migrate {
+			err = m.dbClient.Schema.Create(ctx)
+			if err != nil {
+				m.logger.Error(err, "Error migrating database.")
+				return err
+			}
+		}
+	}
+
 	if err := w.Start(); err != nil {
 		m.logger.Error(err, "Preprocessing worker failed to start.")
 		return err
@@ -146,6 +179,8 @@ func (m *Main) Run(ctx context.Context) error {
 }
 
 func (m *Main) Close() error {
+	var e error
+
 	if m.temporalWorker != nil {
 		m.temporalWorker.Stop()
 	}
@@ -156,9 +191,15 @@ func (m *Main) Close() error {
 
 	if m.bagValidator != nil {
 		if err := m.bagValidator.Cleanup(); err != nil {
-			m.logger.Info("Couldn't clean up bag validator: %v", err)
+			e = errors.Join(e, fmt.Errorf("Couldn't clean up bag validator: %v", err))
 		}
 	}
 
-	return nil
+	if m.dbClient != nil {
+		if err := m.dbClient.Close(); err != nil {
+			e = errors.Join(e, fmt.Errorf("Couldn't close database client: %v", err))
+		}
+	}
+
+	return e
 }

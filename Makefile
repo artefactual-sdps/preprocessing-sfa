@@ -15,6 +15,7 @@ else
 endif
 
 include hack/make/bootstrap.mk
+include hack/make/dep_ent.mk
 include hack/make/dep_go_enum.mk
 include hack/make/dep_golangci_lint.mk
 include hack/make/dep_golines.mk
@@ -27,7 +28,8 @@ include hack/make/dep_tparse.mk
 include hack/make/enums.mk
 
 # Lazy-evaluated list of tools.
-TOOLS = $(GOLANGCI_LINT) \
+TOOLS = $(ENT) \
+	$(GOLANGCI_LINT) \
 	$(GOMAJOR) \
 	$(GOSEC) \
 	$(GOTESTSUM) \
@@ -43,7 +45,10 @@ endef
 IGNORED_PACKAGES := \
 	github.com/artefactual-sdps/preprocessing-sfa/hack/% \
 	github.com/artefactual-sdps/preprocessing-sfa/internal/%/fake \
-	github.com/artefactual-sdps/preprocessing-sfa/internal/enums
+	github.com/artefactual-sdps/preprocessing-sfa/internal/enums \
+	github.com/artefactual-sdps/preprocessing-sfa/internal/persistence/ent/db \
+	github.com/artefactual-sdps/preprocessing-sfa/internal/persistence/ent/db/% \
+	github.com/artefactual-sdps/preprocessing-sfa/internal/persistence/ent/schema
 
 PACKAGES := $(shell go list ./...)
 TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
@@ -58,6 +63,12 @@ env:
 deps: # @HELP List available module dependency updates.
 deps: $(GOMAJOR)
 	gomajor list
+
+gen-ent: # @HELP Generate Ent assets.
+gen-ent: $(ENT)
+	ent generate ./internal/persistence/ent/schema \
+		--feature sql/versioned-migration \
+		--target=./internal/persistence/ent/db
 
 gen-mock: # @HELP Generate mocks.
 gen-mock: $(MOCKGEN)
