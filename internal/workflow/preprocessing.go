@@ -168,16 +168,21 @@ func (w *PreprocessingWorkflow) Execute(
 	// Extract SIP.
 	ev := result.newEvent(ctx, "Extract SIP")
 	var archiveExtract archiveextract.Result
-	err := temporalsdk_workflow.ExecuteActivity(
+	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
 		archiveextract.Name,
 		&archiveextract.Params{SourcePath: localPath},
 	).Get(ctx, &archiveExtract)
-	if err != nil {
+	if e != nil {
 		result.systemError(ctx, e, ev, "Extracting the SIP has failed")
 		return result, nil
 	}
 	localPath = archiveExtract.ExtractPath
+	result.RelativePath, e = filepath.Rel(w.sharedPath, localPath)
+	if e != nil {
+		result.systemError(ctx, e, ev, "Extracting the SIP has failed")
+		return result, nil
+	}
 	ev.Succeed(ctx, "SIP extracted")
 
 	// Check if the SIP is a BagIt bag.
@@ -221,14 +226,13 @@ func (w *PreprocessingWorkflow) Execute(
 			result.systemError(ctx, e, ev, "Unbagging the SIP has failed")
 			return result, nil
 		}
-		ev.Succeed(ctx, "SIP unbagged")
-
 		localPath = unbagResult.Path
-		rp, err := filepath.Rel(w.sharedPath, localPath)
-		if err != nil {
-			return nil, fmt.Errorf("Invalid path")
+		result.RelativePath, e = filepath.Rel(w.sharedPath, localPath)
+		if e != nil {
+			result.systemError(ctx, e, ev, "Unbagging the SIP has failed")
+			return result, nil
 		}
-		result.RelativePath = rp
+		ev.Succeed(ctx, "SIP unbagged")
 	}
 
 	// Identify SIP.
