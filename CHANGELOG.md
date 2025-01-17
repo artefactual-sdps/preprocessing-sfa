@@ -10,6 +10,10 @@ requests.
 
 ## [0.7.0] - 2025-01-17
 
+### Changed
+
+- Expect compressed SIPs from Enduro parent workflow ([#106])
+
 ### Added
 
 - Persistence package for MySQL database ([#106])
