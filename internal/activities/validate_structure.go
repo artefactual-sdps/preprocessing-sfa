@@ -3,6 +3,7 @@ package activities
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -33,6 +34,42 @@ func (a *ValidateStructure) Execute(
 	params *ValidateStructureParams,
 ) (*ValidateStructureResult, error) {
 	var failures []string
+
+	// Check for empty directories.
+	paths := make(map[string]int)
+
+	err := filepath.WalkDir(params.SIP.Path, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if path != params.SIP.Path {
+			relativePath, err := filepath.Rel(params.SIP.Path, path)
+			if err != nil {
+				return err
+			}
+
+			// Initialize this directory's total number of immediate children.
+			if d.IsDir() {
+				paths[relativePath] = 0
+			}
+
+			// Add to parent's total number of immediate children.
+			paths[filepath.Dir(relativePath)] = paths[filepath.Dir(relativePath)] + 1
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("ValidateStructure: check for empty directories: %v", err)
+	}
+
+	// Report any empty subdirectories.
+	for path, children := range paths {
+		if children == 0 {
+			failures = append(failures, fmt.Sprintf("SIP subdirectory %q is empty", path))
+		}
+	}
 
 	// Check existence of the content directory.
 	hasContentDir := true
