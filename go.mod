@@ -7,7 +7,7 @@ require (
 	entgo.io/ent v0.14.1
 	github.com/antchfx/xmlquery v1.4.2
 	github.com/artefactual-labs/bagit-gython v0.2.0
-	github.com/artefactual-sdps/temporal-activities v0.0.0-20241105002718-bc4a9d85ce42
+	github.com/artefactual-sdps/temporal-activities v0.0.0-20250116225551-b0b1966e3e19
 	github.com/beevik/etree v1.4.0
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/go-logr/logr v1.4.2
@@ -127,7 +127,7 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	go4.org v0.0.0-20200411211856-f5505b9728dd // indirect
 	golang.org/x/exp v0.0.0-20231219180239-dc181d75b848 // indirect
-	golang.org/x/image v0.17.0 // indirect
+	golang.org/x/image v0.23.0 // indirect
 	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
