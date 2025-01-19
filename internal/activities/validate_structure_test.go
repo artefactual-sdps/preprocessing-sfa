@@ -63,7 +63,9 @@ func TestValidateStructure(t *testing.T) {
 
 	unexpectedPiecesSIP, err := sip.New(fs.NewDir(t, "",
 		fs.WithDir("content",
-			fs.WithDir("d_0000001"),
+			fs.WithDir("d_0000001",
+				fs.WithFile("content.txt", ""),
+			),
 			fs.WithFile("unexpected.txt", ""),
 		),
 		fs.WithDir("header",
@@ -72,7 +74,9 @@ func TestValidateStructure(t *testing.T) {
 				fs.WithFile("arelda.xsd", ""),
 			),
 		),
-		fs.WithDir("unexpected"),
+		fs.WithDir("unexpected",
+			fs.WithFile("data.txt", ""),
+		),
 	).Path())
 	assert.NilError(t, err)
 
@@ -82,7 +86,9 @@ func TestValidateStructure(t *testing.T) {
 	missingPiecesAIP, err := sip.New(
 		fs.NewDir(t, "",
 			fs.WithDir("AIP-1234",
-				fs.WithDir("additional"),
+				fs.WithDir("additional",
+					fs.WithFile("content.txt", ""),
+				),
 				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
 			),
 		).Join("AIP-1234"),
