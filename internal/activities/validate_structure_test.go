@@ -122,6 +122,25 @@ func TestValidateStructure(t *testing.T) {
 	).Path())
 	assert.NilError(t, err)
 
+	badNamingSIP, err := sip.New(fs.NewDir(t, "",
+		fs.WithDir("content",
+			fs.WithDir("d_0000001",
+				fs.WithFile("content.txt", ""),
+			),
+		),
+		fs.WithDir("header",
+			fs.WithFile("content!.txt", ""),
+			fs.WithFile("metadata.xml", ""),
+			fs.WithDir("xsd",
+				fs.WithFile("arelda.xsd", ""),
+			),
+			fs.WithDir("directory$",
+				fs.WithFile("data.xml", ""),
+			),
+		),
+	).Path())
+	assert.NilError(t, err)
+
 	tests := []struct {
 		name    string
 		params  activities.ValidateStructureParams
@@ -178,6 +197,16 @@ func TestValidateStructure(t *testing.T) {
 			params: activities.ValidateStructureParams{SIP: digitizedSIPExtraDossiers},
 			want: activities.ValidateStructureResult{
 				Failures: []string{"More than one dossier in the content directory"},
+			},
+		},
+		{
+			name:   "Returns a failure when the name of files and/or directories in a SIP have invalid characters",
+			params: activities.ValidateStructureParams{SIP: badNamingSIP},
+			want: activities.ValidateStructureResult{
+				Failures: []string{
+					"Name \"header/content!.txt\" contains invalid character",
+					"Name \"header/directory$\" contains invalid character",
+				},
 			},
 		},
 	}
