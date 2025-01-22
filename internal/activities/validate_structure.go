@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
@@ -35,7 +36,7 @@ func (a *ValidateStructure) Execute(
 ) (*ValidateStructureResult, error) {
 	var failures []string
 
-	// Check for empty directories.
+	// Check for empty directories and invalid (Archivematica incompatible) file/directory names.
 	paths := make(map[string]int)
 
 	err := filepath.WalkDir(params.SIP.Path, func(path string, d fs.DirEntry, err error) error {
@@ -43,12 +44,16 @@ func (a *ValidateStructure) Execute(
 			return err
 		}
 
-		if path != params.SIP.Path {
-			relativePath, err := filepath.Rel(params.SIP.Path, path)
-			if err != nil {
-				return err
-			}
+		relativePath, err := filepath.Rel(params.SIP.Path, path)
+		if err != nil {
+			return err
+		}
 
+		if !validateName(d.Name()) {
+			failures = append(failures, fmt.Sprintf("Name %q contains invalid character", relativePath))
+		}
+
+		if path != params.SIP.Path {
 			// Initialize this directory's total number of immediate children.
 			if d.IsDir() {
 				paths[relativePath] = 0
@@ -170,4 +175,17 @@ func extraNodes(sipBase, path string, expected []string, matchDir bool) ([]strin
 	}
 
 	return extras, nil
+}
+
+// validateName makes sure only valid characters exist in name.
+func validateName(name string) bool {
+	const validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.()"
+
+	for i := range len(name) {
+		if !strings.Contains(validChars, string(name[i])) {
+			return false
+		}
+	}
+
+	return true
 }
