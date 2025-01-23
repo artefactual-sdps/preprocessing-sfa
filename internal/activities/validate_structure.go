@@ -178,12 +178,7 @@ func extraNodes(sipBase, path string, expected []string, matchDir bool) ([]strin
 }
 
 func validateName(name string) bool {
-	validChars := "-_.()"
-
-	// Generate string containing valid characters.
-	validChars = appendRuneRange(validChars, 'a', 'z')
-	validChars = appendRuneRange(validChars, 'A', 'Z')
-	validChars = appendRuneRange(validChars, '0', '9')
+	const validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.()"
 
 	// Make sure only valid characters exist in name.
 	for i := range len(name) {
