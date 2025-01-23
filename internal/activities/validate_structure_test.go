@@ -134,6 +134,9 @@ func TestValidateStructure(t *testing.T) {
 			fs.WithDir("xsd",
 				fs.WithFile("arelda.xsd", ""),
 			),
+			fs.WithDir("directory$",
+				fs.WithFile("data.xml", ""),
+			),
 		),
 	).Path())
 	assert.NilError(t, err)
@@ -197,10 +200,13 @@ func TestValidateStructure(t *testing.T) {
 			},
 		},
 		{
-			name:   "Returns a failure when a SIP a directory name with an invalid character",
+			name:   "Returns a failure when the name of files and/or directories in a SIP have invalid characters",
 			params: activities.ValidateStructureParams{SIP: badNamingSIP},
 			want: activities.ValidateStructureResult{
-				Failures: []string{"Name \"header/content!.txt\" contains invalid character"},
+				Failures: []string{
+					"Name \"header/content!.txt\" contains invalid character",
+					"Name \"header/directory$\" contains invalid character",
+				},
 			},
 		},
 	}
