@@ -189,11 +189,3 @@ func validateName(name string) bool {
 
 	return true
 }
-
-func appendRuneRange(value string, first rune, last rune) string {
-	for i := first; i <= last; i++ {
-		value = value + string(i)
-	}
-
-	return value
-}
