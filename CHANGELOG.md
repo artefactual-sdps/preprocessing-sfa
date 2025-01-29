@@ -8,6 +8,13 @@ requests.
 
 ## [Unreleased]
 
+## [0.8.0] - 2025-01-29
+
+### Added
+
+- Fail structure validation if any directory is empty ([#108])
+- Detect invalid characters in file/dir names ([#109])
+
 ## [0.7.0] - 2025-01-17
 
 ### Changed
@@ -77,7 +84,8 @@ requests.
 
 Initial release.
 
-[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.7.0...HEAD
+[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.4.0...v0.5.0
@@ -85,6 +93,8 @@ Initial release.
 [0.3.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/artefactual-sdps/preprocessing-sfa/releases/tag/v0.1.0
+[#109]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/109
+[#108]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/108
 [#106]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/106
 [#98]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/98
 [#97]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/97
