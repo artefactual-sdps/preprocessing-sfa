@@ -70,10 +70,20 @@ func (a *ValidateStructure) Execute(
 	}
 
 	// Report any empty subdirectories.
+	emptyDirFound := false
+
 	for path, children := range paths {
 		if children == 0 {
-			failures = append(failures, fmt.Sprintf("SIP subdirectory %q is empty", path))
+			failures = append(failures, fmt.Sprintf("An empty directory has been found - %s", path))
+			emptyDirFound = true
 		}
+	}
+
+	if emptyDirFound {
+		failures = append(
+			failures,
+			"Please remove the empty directories and update the metadata manifest accordingly",
+		)
 	}
 
 	// Check existence of the content directory.

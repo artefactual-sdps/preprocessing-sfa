@@ -141,6 +141,31 @@ func TestValidateStructure(t *testing.T) {
 	).Path())
 	assert.NilError(t, err)
 
+	digitizedAIPEmptyDir, err := sip.New(fs.NewDir(t, "",
+		fs.WithDir("AIP-1234",
+			fs.WithDir("additional",
+				fs.WithFile("UpdatedAreldaMetadata.xml", ""),
+				fs.WithFile("AIP-1234-premis.xml", ""),
+			),
+			fs.WithDir("content",
+				fs.WithDir("content",
+					fs.WithDir("d_0000001"),
+				),
+				fs.WithDir("header",
+					fs.WithDir("old",
+						fs.WithDir("SIP",
+							fs.WithFile("metadata.xml", ""),
+						),
+					),
+					fs.WithDir("xsd",
+						fs.WithFile("arelda.xsd", ""),
+					),
+				),
+			),
+		),
+	).Join("AIP-1234"))
+	assert.NilError(t, err)
+
 	tests := []struct {
 		name    string
 		params  activities.ValidateStructureParams
@@ -206,6 +231,16 @@ func TestValidateStructure(t *testing.T) {
 				Failures: []string{
 					"Name \"header/content!.txt\" contains invalid character",
 					"Name \"header/directory$\" contains invalid character",
+				},
+			},
+		},
+		{
+			name:   "Returns a failure when a digitized AIP has an empty directory",
+			params: activities.ValidateStructureParams{SIP: digitizedAIPEmptyDir},
+			want: activities.ValidateStructureResult{
+				Failures: []string{
+					"An empty directory has been found - content/content/d_0000001",
+					"Please remove the empty directories and update the metadata manifest accordingly",
 				},
 			},
 		},
