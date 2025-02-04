@@ -122,7 +122,7 @@ func TestValidateStructure(t *testing.T) {
 	).Path())
 	assert.NilError(t, err)
 
-	badNamingSIP, err := sip.New(fs.NewDir(t, "",
+	badNamingSIP, err := sip.New(fs.NewDir(t, "bad#name",
 		fs.WithDir("content",
 			fs.WithDir("d_0000001",
 				fs.WithFile("content.txt", ""),
@@ -229,8 +229,9 @@ func TestValidateStructure(t *testing.T) {
 			params: activities.ValidateStructureParams{SIP: badNamingSIP},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
-					"Name \"header/content!.txt\" contains invalid character",
-					"Name \"header/directory$\" contains invalid character",
+					fmt.Sprintf("Name %q contains invalid character(s)", filepath.Base(badNamingSIP.Path)),
+					"Name \"header/content!.txt\" contains invalid character(s)",
+					"Name \"header/directory$\" contains invalid character(s)",
 				},
 			},
 		},

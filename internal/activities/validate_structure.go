@@ -49,10 +49,6 @@ func (a *ValidateStructure) Execute(
 			return err
 		}
 
-		if !validateName(d.Name()) {
-			failures = append(failures, fmt.Sprintf("Name %q contains invalid character", relativePath))
-		}
-
 		if path != params.SIP.Path {
 			// Initialize this directory's total number of immediate children.
 			if d.IsDir() {
@@ -61,6 +57,14 @@ func (a *ValidateStructure) Execute(
 
 			// Add to parent's total number of immediate children.
 			paths[filepath.Dir(relativePath)] = paths[filepath.Dir(relativePath)] + 1
+		}
+
+		if !validateName(d.Name()) {
+			if relativePath == "." {
+				relativePath = filepath.Base(params.SIP.Path)
+			}
+
+			failures = append(failures, fmt.Sprintf("Name %q contains invalid character(s)", relativePath))
 		}
 
 		return nil
