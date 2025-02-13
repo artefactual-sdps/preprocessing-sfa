@@ -36,6 +36,11 @@ func (a *ValidateStructure) Execute(
 ) (*ValidateStructureResult, error) {
 	var failures []string
 
+	// Check transfer name for naming standards.
+	if !params.SIP.HasValidName() {
+		failures = append(failures, "Transfer name violates naming standard")
+	}
+
 	// Check for empty directories and invalid (Archivematica incompatible) file/directory names.
 	paths := make(map[string]int)
 

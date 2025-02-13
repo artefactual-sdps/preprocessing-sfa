@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
@@ -125,4 +126,21 @@ func (s SIP) IsAIP() bool {
 
 func (s SIP) IsSIP() bool {
 	return s.Type == enums.SIPTypeBornDigitalSIP || s.Type == enums.SIPTypeDigitizedSIP
+}
+
+func (s SIP) HasValidName() bool {
+	yyyymmdd := "(20\\d{2})(\\d{2})(\\d{2})"
+	alphnum := "[a-zA-Z0-9]"
+
+	if s.Type == enums.SIPTypeBornDigitalSIP {
+		match, _ := regexp.MatchString("^SIP_"+yyyymmdd+"_"+alphnum+"+[_]?"+alphnum+"+$", s.Name())
+		return match
+	}
+
+	if s.Type == enums.SIPTypeDigitizedSIP {
+		match, _ := regexp.MatchString("^SIP_"+yyyymmdd+"_Vecteur_"+alphnum+"+$", s.Name())
+		return match
+	}
+
+	return true
 }
