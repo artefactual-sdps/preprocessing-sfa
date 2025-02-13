@@ -67,6 +67,14 @@ func (a *ValidateStructure) Execute(
 			failures = append(failures, fmt.Sprintf("Name %q contains invalid character(s)", relativePath))
 		}
 
+		if !validateNameStandards(params.SIP, d.Name()) {
+			if relativePath == "." {
+				relativePath = filepath.Base(params.SIP.Path)
+			}
+
+			failures = append(failures, fmt.Sprintf("Name %q violates naming standard", relativePath))
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -200,6 +208,21 @@ func validateNameCharacters(name string) bool {
 			return false
 		}
 	}
+
+	return true
+}
+
+func validateNameStandards(sip sip.SIP, name string) bool {
+	if sip.Type == enums.SIPTypeBornDigitalSIP {
+
+	}
+	/*
+		for i := range len(name) {
+				if !strings.Contains(validChars, string(name[i])) {
+					return false
+				}
+		}
+	*/
 
 	return true
 }
