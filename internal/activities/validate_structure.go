@@ -59,7 +59,7 @@ func (a *ValidateStructure) Execute(
 			paths[filepath.Dir(relativePath)] = paths[filepath.Dir(relativePath)] + 1
 		}
 
-		if !validateName(d.Name()) {
+		if !validateNameCharacters(d.Name()) {
 			if relativePath == "." {
 				relativePath = filepath.Base(params.SIP.Path)
 			}
@@ -191,8 +191,8 @@ func extraNodes(sipBase, path string, expected []string, matchDir bool) ([]strin
 	return extras, nil
 }
 
-// validateName makes sure only valid characters exist in name.
-func validateName(name string) bool {
+// validateNameCharacters makes sure only valid characters exist in name.
+func validateNameCharacters(name string) bool {
 	const validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.()"
 
 	for i := range len(name) {
