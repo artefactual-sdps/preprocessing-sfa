@@ -422,6 +422,24 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		sessionCtx,
 		&activities.AddPREMISEventParams{
 			PREMISFilePath: premisFilePath,
+			Agent: premis.Agent{
+				Type:    "software",
+				Name:    "VeraPDF 1.26.2",
+				IdType:  "url",
+				IdValue: "https://verapdf.org",
+			},
+			Type:          "validation",
+			Detail:        "name=\"Validate SIP file formats\"",
+			OutcomeDetail: "File format complies with specification",
+		},
+	).Return(
+		&activities.AddPREMISEventResult{}, nil,
+	)
+	s.env.OnActivity(
+		activities.AddPREMISEventName,
+		sessionCtx,
+		&activities.AddPREMISEventParams{
+			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
 			Type:           "validation",
 			Detail:         "name=\"Validate SIP metadata\"",
