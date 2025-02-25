@@ -459,6 +459,21 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 	).Return(
 		&activities.AddPREMISAgentResult{}, nil,
 	)
+	s.env.OnActivity(
+		activities.AddPREMISAgentName,
+		sessionCtx,
+		&activities.AddPREMISAgentParams{
+			PREMISFilePath: premisFilePath,
+			Agent: premis.Agent{
+				Type:    "software",
+				Name:    "VeraPDF 1.26.2",
+				IdType:  "url",
+				IdValue: "https://verapdf.org",
+			},
+		},
+	).Return(
+		&activities.AddPREMISAgentResult{}, nil,
+	)
 
 	// Transform SIP.
 	s.env.OnActivity(
