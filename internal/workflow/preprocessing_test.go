@@ -162,6 +162,10 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateStructureName},
 	)
 	s.env.RegisterActivityWithOptions(
+		activities.NewValidateSIPName().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateSIPNameName},
+	)
+	s.env.RegisterActivityWithOptions(
 		activities.NewVerifyManifest().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.VerifyManifestName},
 	)
@@ -337,6 +341,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.ValidateStructureParams{SIP: expectedSIP},
 	).Return(
 		&activities.ValidateStructureResult{}, nil,
+	)
+	s.env.OnActivity(
+		activities.ValidateSIPNameName,
+		sessionCtx,
+		&activities.ValidateSIPNameParams{SIP: expectedSIP},
+	).Return(
+		&activities.ValidateSIPNameResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.VerifyManifestName,
@@ -567,6 +578,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 					CompletedAt: testTime,
 				},
 				{
+					Name:        "Validate SIP name",
+					Message:     "SIP name matches validation criteria",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
 					Name:        "Verify SIP manifest",
 					Message:     "SIP contents match manifest",
 					Outcome:     enums.EventOutcomeSuccess,
@@ -734,6 +752,14 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		nil,
 	)
 	s.env.OnActivity(
+		activities.ValidateSIPNameName,
+		sessionCtx,
+		&activities.ValidateSIPNameParams{SIP: expectedSIP},
+	).Return(
+		&activities.ValidateSIPNameResult{},
+		nil,
+	)
+	s.env.OnActivity(
 		activities.VerifyManifestName,
 		sessionCtx,
 		&activities.VerifyManifestParams{SIP: expectedSIP},
@@ -829,6 +855,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 XSD folder is missing
 UpdatedAreldaMetadata.xml is missing`,
 					Outcome:     enums.EventOutcomeValidationFailure,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
+					Name:        "Validate SIP name",
+					Message:     `SIP name matches validation criteria`,
+					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
