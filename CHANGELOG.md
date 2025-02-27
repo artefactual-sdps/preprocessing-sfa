@@ -8,6 +8,12 @@ requests.
 
 ## [Unreleased]
 
+## [0.10.0] - 2025-02-27
+
+### Added
+
+- Add PREMIS event and agent for file validation ([#118])
+
 ## [0.9.0] - 2025-02-13
 
 ### Changed
@@ -91,7 +97,8 @@ requests.
 
 Initial release.
 
-[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.9.0...HEAD
+[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.6.0...v0.7.0
@@ -101,6 +108,7 @@ Initial release.
 [0.3.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/artefactual-sdps/preprocessing-sfa/releases/tag/v0.1.0
+[#118]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/118
 [#109]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/109
 [#108]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/108
 [#106]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/106
