@@ -54,6 +54,7 @@ type (
 func NewPreprocessingWorkflow(
 	sharedPath string,
 	checkDuplicates bool,
+	veraPDFVersion string,
 	psvc persistence.Service,
 ) *PreprocessingWorkflow {
 	return &PreprocessingWorkflow{

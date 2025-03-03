@@ -82,3 +82,7 @@ func (v *veraPDFValidator) Validate(path string) (string, error) {
 		return "", errors.New("PDF/A validation failed with an application error")
 	}
 }
+
+func VeraPDFVersion() (string, error) {
+	return "1.26.5", nil
+}
