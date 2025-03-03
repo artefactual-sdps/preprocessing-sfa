@@ -19,6 +19,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/localact"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
@@ -417,7 +418,13 @@ func (w *PreprocessingWorkflow) Execute(
 
 	// Write PREMIS XML.
 	ev = result.newEvent(ctx, "Create premis.xml")
-	if e = writePREMISFile(ctx, identifySIP.SIP); e != nil {
+
+	veraPDFVersion, err := fvalidate.VeraPDFVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	if e = writePREMISFile(ctx, identifySIP.SIP, veraPDFVersion); e != nil {
 		result.systemError(ctx, e, ev, "premis.xml creation has failed")
 	} else {
 		ev.Succeed(ctx, "Created a premis.xml and stored in metadata directory")
@@ -492,7 +499,7 @@ func withFilesysActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.C
 	})
 }
 
-func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
+func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersion string) error {
 	var e error
 	path := filepath.Join(sip.Path, "metadata", "premis.xml")
 
