@@ -19,7 +19,6 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/localact"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
@@ -38,6 +37,7 @@ type (
 	PreprocessingWorkflow struct {
 		sharedPath      string
 		checkDuplicates bool
+		veraPDFVersion  string
 		psvc            persistence.Service
 	}
 
@@ -61,6 +61,7 @@ func NewPreprocessingWorkflow(
 	return &PreprocessingWorkflow{
 		sharedPath:      sharedPath,
 		checkDuplicates: checkDuplicates,
+		veraPDFVersion:  veraPDFVersion,
 		psvc:            psvc,
 	}
 }
@@ -419,12 +420,7 @@ func (w *PreprocessingWorkflow) Execute(
 	// Write PREMIS XML.
 	ev = result.newEvent(ctx, "Create premis.xml")
 
-	veraPDFVersion, err := fvalidate.VeraPDFVersion()
-	if err != nil {
-		return nil, err
-	}
-
-	if e = writePREMISFile(ctx, identifySIP.SIP, veraPDFVersion); e != nil {
+	if e = writePREMISFile(ctx, identifySIP.SIP, w.veraPDFVersion); e != nil {
 		result.systemError(ctx, e, ev, "premis.xml creation has failed")
 	} else {
 		ev.Succeed(ctx, "Created a premis.xml and stored in metadata directory")
