@@ -82,3 +82,14 @@ func (v *veraPDFValidator) Validate(path string) (string, error) {
 		return "", errors.New("PDF/A validation failed with an application error")
 	}
 }
+
+func VeraPDFVersion(cmd string) (string, error) {
+	result := exec.Command(cmd, "--version") // #nosec: G204 -- trusted path.
+
+	version, err := result.Output()
+	if err != nil {
+		return "", err
+	}
+
+	return string(version), nil
+}
