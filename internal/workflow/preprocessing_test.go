@@ -206,7 +206,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
 	)
 
-	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir, cfg.CheckDuplicates, "1.26.5", nil)
+	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir, cfg.CheckDuplicates, "VeraPDF 1.26.2", nil)
 }
 
 func (s *PreprocessingTestSuite) digitizedAIP(path string) sip.SIP {

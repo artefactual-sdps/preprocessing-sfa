@@ -556,7 +556,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersi
 	// Add PREMIS events for validate file activity.
 	veraPDFAgent := premis.Agent{
 		Type:    "software",
-		Name:    "VeraPDF 1.26.2",
+		Name:    veraPDFVersion,
 		IdType:  "url",
 		IdValue: "https://verapdf.org",
 	}
