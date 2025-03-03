@@ -2,6 +2,7 @@ package fvalidate_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -93,4 +94,22 @@ func TestValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestVeraPDFVersion(t *testing.T) {
+	t.Parallel()
+
+	version, err := fvalidate.VeraPDFVersion("echo")
+
+	assert.NilError(t, err)
+	assert.Assert(t, strings.Contains(version, "echo (GNU coreutils)"))
+}
+
+func TestVeraPDFVersionError(t *testing.T) {
+	t.Parallel()
+
+	version, err := fvalidate.VeraPDFVersion("false")
+
+	assert.Error(t, err, "exit status 1")
+	assert.Equal(t, version, "")
 }

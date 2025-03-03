@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/go-logr/logr"
 
@@ -81,4 +82,17 @@ func (v *veraPDFValidator) Validate(path string) (string, error) {
 		v.logger.Info("veraPDF validate", "exit code", e.ExitCode(), "STDERR", string(e.Stderr))
 		return "", errors.New("PDF/A validation failed with an application error")
 	}
+}
+
+func VeraPDFVersion(cmd string) (string, error) {
+	result := exec.Command(cmd, "--version") // #nosec: G204 -- trusted path.
+
+	output, err := result.Output()
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(string(output), "\n")
+
+	return lines[0], nil
 }
