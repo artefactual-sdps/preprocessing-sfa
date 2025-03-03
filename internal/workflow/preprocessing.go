@@ -37,6 +37,7 @@ type (
 	PreprocessingWorkflow struct {
 		sharedPath      string
 		checkDuplicates bool
+		veraPDFVersion  string
 		psvc            persistence.Service
 	}
 
@@ -54,11 +55,13 @@ type (
 func NewPreprocessingWorkflow(
 	sharedPath string,
 	checkDuplicates bool,
+	veraPDFVersion string,
 	psvc persistence.Service,
 ) *PreprocessingWorkflow {
 	return &PreprocessingWorkflow{
 		sharedPath:      sharedPath,
 		checkDuplicates: checkDuplicates,
+		veraPDFVersion:  veraPDFVersion,
 		psvc:            psvc,
 	}
 }
@@ -416,7 +419,8 @@ func (w *PreprocessingWorkflow) Execute(
 
 	// Write PREMIS XML.
 	ev = result.newEvent(ctx, "Create premis.xml")
-	if e = writePREMISFile(ctx, identifySIP.SIP); e != nil {
+
+	if e = writePREMISFile(ctx, identifySIP.SIP, w.veraPDFVersion); e != nil {
 		result.systemError(ctx, e, ev, "premis.xml creation has failed")
 	} else {
 		ev.Succeed(ctx, "Created a premis.xml and stored in metadata directory")
@@ -491,7 +495,7 @@ func withFilesysActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.C
 	})
 }
 
-func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
+func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersion string) error {
 	var e error
 	path := filepath.Join(sip.Path, "metadata", "premis.xml")
 
@@ -552,7 +556,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 	// Add PREMIS events for validate file activity.
 	veraPDFAgent := premis.Agent{
 		Type:    "software",
-		Name:    "VeraPDF 1.26.2",
+		Name:    veraPDFVersion,
 		IdType:  "url",
 		IdValue: "https://verapdf.org",
 	}

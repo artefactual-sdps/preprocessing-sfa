@@ -10,4 +10,7 @@ type Validator interface {
 
 	// Validate validates the file at path.
 	Validate(path string) (string, error)
+
+	// Returns the version of a validator.
+	Version() (string, error)
 }

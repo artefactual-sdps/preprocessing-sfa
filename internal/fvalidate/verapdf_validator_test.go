@@ -2,6 +2,7 @@ package fvalidate_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -93,4 +94,36 @@ func TestValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestVeraPDFVersion(t *testing.T) {
+	defer func() {
+		fvalidate.Run = fvalidate.RunCommand
+	}()
+
+	fvalidate.Run = func(string, ...string) (string, error) {
+		return "veraPDF 1.1\nSome more text", nil
+	}
+
+	v := fvalidate.NewVeraPDFValidator("veraPDF", logr.Discard())
+	version, err := v.Version()
+
+	assert.NilError(t, err)
+	assert.Assert(t, strings.Contains(version, "veraPDF 1.1"))
+}
+
+func TestVeraPDFVersionError(t *testing.T) {
+	defer func() {
+		fvalidate.Run = fvalidate.RunCommand
+	}()
+
+	fvalidate.Run = func(string, ...string) (string, error) {
+		return "", fmt.Errorf("exit status 1")
+	}
+
+	v := fvalidate.NewVeraPDFValidator("badcommand", logr.Discard())
+	version, err := v.Version()
+
+	assert.Error(t, err, "exit status 1")
+	assert.Equal(t, version, "")
 }
