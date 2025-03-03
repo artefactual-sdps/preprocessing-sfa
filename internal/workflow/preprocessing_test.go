@@ -206,7 +206,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
 	)
 
-	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir, cfg.CheckDuplicates, nil)
+	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir, cfg.CheckDuplicates, "VeraPDF 1.1.1", nil)
 }
 
 func (s *PreprocessingTestSuite) digitizedAIP(path string) sip.SIP {
@@ -424,7 +424,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 			PREMISFilePath: premisFilePath,
 			Agent: premis.Agent{
 				Type:    "software",
-				Name:    "VeraPDF 1.26.2",
+				Name:    "VeraPDF 1.1.1",
 				IdType:  "url",
 				IdValue: "https://verapdf.org",
 			},
@@ -466,7 +466,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 			PREMISFilePath: premisFilePath,
 			Agent: premis.Agent{
 				Type:    "software",
-				Name:    "VeraPDF 1.26.2",
+				Name:    "VeraPDF 1.1.1",
 				IdType:  "url",
 				IdValue: "https://verapdf.org",
 			},
