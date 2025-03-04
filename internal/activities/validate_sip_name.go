@@ -7,7 +7,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
-const ValidateSIPNameName = "validate-transfer-name"
+const ValidateSIPNameName = "validate-sip-name"
 
 type ValidateSIPNameParams struct {
 	SIP sip.SIP
