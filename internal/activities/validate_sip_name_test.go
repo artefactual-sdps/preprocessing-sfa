@@ -21,6 +21,10 @@ func TestValidateSIPName(t *testing.T) {
 	bornDigitalSIP, err := sip.New(filepath.Join(bornDigitalSIPTempDir(t, bornDigitalSIPName), bornDigitalSIPName))
 	assert.NilError(t, err)
 
+	bornDigitalSIPNoRefName := "SIP_20010106_someoffice"
+	bornDigitalSIPNoRef, err := sip.New(filepath.Join(bornDigitalSIPTempDir(t, bornDigitalSIPNoRefName), bornDigitalSIPNoRefName))
+	assert.NilError(t, err)
+
 	bornDigitalSIPBadName := "somref"
 	bornDigitalSIPBad, err := sip.New(
 		filepath.Join(bornDigitalSIPTempDir(t, bornDigitalSIPBadName), bornDigitalSIPBadName),
@@ -48,6 +52,10 @@ func TestValidateSIPName(t *testing.T) {
 		{
 			name:   "Validates the name of a born digital SIP",
 			params: activities.ValidateSIPNameParams{SIP: bornDigitalSIP},
+		},
+		{
+			name:   "Validates the name of a born digital SIP with no reference number",
+			params: activities.ValidateSIPNameParams{SIP: bornDigitalSIPNoRef},
 		},
 		{
 			name:   "Validates the name of a born digital SIP with a bad name",
