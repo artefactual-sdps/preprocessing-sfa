@@ -21,6 +21,10 @@ func TestValidateSIPName(t *testing.T) {
 	bornDigitalSIP, err := sip.New(filepath.Join(bornDigitalSIPTempDir(t, bornDigitalSIPName), bornDigitalSIPName))
 	assert.NilError(t, err)
 
+	bornDigitalSIPUnderscoreRefName := "SIP_20010106_someoffice_some_ref"
+	bornDigitalSIPUnderscoreRef, err := sip.New(filepath.Join(bornDigitalSIPTempDir(t, bornDigitalSIPUnderscoreRefName), bornDigitalSIPUnderscoreRefName))
+	assert.NilError(t, err)
+
 	bornDigitalSIPNoRefName := "SIP_20010106_someoffice"
 	bornDigitalSIPNoRef, err := sip.New(filepath.Join(bornDigitalSIPTempDir(t, bornDigitalSIPNoRefName), bornDigitalSIPNoRefName))
 	assert.NilError(t, err)
@@ -34,6 +38,12 @@ func TestValidateSIPName(t *testing.T) {
 	digitizedSIPName := "SIP_20010106_Vecteur_someref"
 	digitizedSIP, err := sip.New(
 		filepath.Join(digitizedSIPTempDir(t, digitizedSIPName), digitizedSIPName),
+	)
+	assert.NilError(t, err)
+
+	digitizedSIPUnderscoreRefName := "SIP_20010106_Vecteur_some_ref"
+	digitizedSIPUnderscoreRef, err := sip.New(
+		filepath.Join(digitizedSIPTempDir(t, digitizedSIPUnderscoreRefName), digitizedSIPUnderscoreRefName),
 	)
 	assert.NilError(t, err)
 
@@ -54,6 +64,10 @@ func TestValidateSIPName(t *testing.T) {
 			params: activities.ValidateSIPNameParams{SIP: bornDigitalSIP},
 		},
 		{
+			name:   "Validates the name of a born digital SIP with a hyphen in the reference number",
+			params: activities.ValidateSIPNameParams{SIP: bornDigitalSIPUnderscoreRef},
+		},
+		{
 			name:   "Validates the name of a born digital SIP with no reference number",
 			params: activities.ValidateSIPNameParams{SIP: bornDigitalSIPNoRef},
 		},
@@ -72,6 +86,10 @@ func TestValidateSIPName(t *testing.T) {
 		{
 			name:   "Validates the name of a digitized SIP",
 			params: activities.ValidateSIPNameParams{SIP: digitizedSIP},
+		},
+		{
+			name:   "Validates the name of a digitized SIP with a hyphen in the reference number",
+			params: activities.ValidateSIPNameParams{SIP: digitizedSIPUnderscoreRef},
 		},
 		{
 			name:   "Validates the name of a digitized SIP with a bad name",
