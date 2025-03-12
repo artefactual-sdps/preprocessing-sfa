@@ -7,10 +7,8 @@ import (
 
 	"github.com/artefactual-sdps/temporal-activities/archivezip"
 	"github.com/artefactual-sdps/temporal-activities/bucketupload"
-	"github.com/artefactual-sdps/temporal-activities/removepaths"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 
@@ -32,36 +30,9 @@ func (s *TestSuite) setup(cfg *ais.Config) {
 	s.testDir = s.T().TempDir()
 	cfg.WorkingDir = s.testDir
 
-	s.registerActivities()
+	s.workflow = ais.NewWorkflow(*cfg, nil, nil)
 
-	s.workflow = ais.NewWorkflow(*cfg, nil)
-}
-
-func (s *TestSuite) registerActivities() {
-	s.env.RegisterActivityWithOptions(
-		ais.NewFetchActivity(nil).Execute,
-		temporalsdk_activity.RegisterOptions{Name: ais.FetchActivityName},
-	)
-	s.env.RegisterActivityWithOptions(
-		ais.NewParseActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: ais.ParseActivityName},
-	)
-	s.env.RegisterActivityWithOptions(
-		ais.NewCombineMDActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: ais.CombineMDActivityName},
-	)
-	s.env.RegisterActivityWithOptions(
-		archivezip.New().Execute,
-		temporalsdk_activity.RegisterOptions{Name: archivezip.Name},
-	)
-	s.env.RegisterActivityWithOptions(
-		bucketupload.New(nil).Execute,
-		temporalsdk_activity.RegisterOptions{Name: bucketupload.Name},
-	)
-	s.env.RegisterActivityWithOptions(
-		removepaths.New().Execute,
-		temporalsdk_activity.RegisterOptions{Name: removepaths.Name},
-	)
+	ais.RegisterActivities(s.env, s.workflow)
 }
 
 func TestWorkflow(t *testing.T) {
@@ -94,10 +65,9 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 	searchMDName := fmt.Sprintf("search-md_%s", aipName)
 	localDir := filepath.Join(s.testDir, searchMDName)
 
-	// Mock activities.
 	s.env.OnActivity(
-		ais.GetAIPPathActivity,
-		mock.AnythingOfType("*context.valueCtx"),
+		ais.GetAIPPathActivityName,
+		mock.AnythingOfType("*context.timerCtx"),
 		&ais.GetAIPPathActivityParams{AIPUUID: aipUUID},
 	).Return(
 		&ais.GetAIPPathActivityResult{

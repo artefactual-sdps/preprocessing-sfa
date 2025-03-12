@@ -13,6 +13,7 @@ import (
 	"gocloud.dev/blob"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 )
 
 const Name = "ais-worker"
@@ -52,13 +53,20 @@ func (m *Main) Run(ctx context.Context) error {
 	})
 	m.temporalWorker = w
 
+	amssClient, err := amss.NewClient(m.cfg.AMSS)
+	if err != nil {
+		return fmt.Errorf("RegisterWorkflow: %w", err)
+	}
+
 	b, err := bucket.NewWithConfig(ctx, &m.cfg.Bucket)
 	if err != nil {
 		return fmt.Errorf("Unable to open AIS bucket: %w", err)
 	}
 	m.bucket = b
 
-	if err := ais.RegisterWorkflow(ctx, w, m.cfg, b); err != nil {
+	wf := ais.NewWorkflow(m.cfg, amssClient, b)
+
+	if err := ais.RegisterWorkflow(ctx, w, wf); err != nil {
 		return fmt.Errorf("AIS: %w", err)
 	}
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	"github.com/artefactual-sdps/temporal-activities/archivezip"
 	"github.com/artefactual-sdps/temporal-activities/bucketupload"
 	"github.com/artefactual-sdps/temporal-activities/removepaths"
@@ -27,14 +28,16 @@ type WorkflowResult struct {
 }
 
 type Workflow struct {
-	config     Config
-	amssClient *AMSSClient
+	config  Config
+	amssSvc amss.Service
+	bucket  *blob.Bucket
 }
 
-func NewWorkflow(config Config, amssClient *AMSSClient) *Workflow {
+func NewWorkflow(config Config, amssSvc amss.Service, bucket *blob.Bucket) *Workflow {
 	return &Workflow{
-		config:     config,
-		amssClient: amssClient,
+		config:  config,
+		amssSvc: amssSvc,
+		bucket:  bucket,
 	}
 }
 
@@ -49,12 +52,19 @@ func (w *Workflow) Execute(ctx temporalsdk_workflow.Context, params *WorkflowPar
 	}()
 
 	var getAIPPathResult GetAIPPathActivityResult
-	err := temporalsdk_workflow.ExecuteLocalActivity(
-		withLocalActivityOpts(ctx),
-		GetAIPPathActivity,
+	err := temporalsdk_workflow.ExecuteActivity(
+		temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
+			ScheduleToCloseTimeout: 10 * time.Minute,
+			RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+				InitialInterval:    15 * time.Second,
+				BackoffCoefficient: 2,
+				MaximumInterval:    time.Minute,
+				MaximumAttempts:    5,
+			},
+		}),
+		GetAIPPathActivityName,
 		&GetAIPPathActivityParams{
-			AMSSClient: w.amssClient,
-			AIPUUID:    params.AIPUUID,
+			AIPUUID: params.AIPUUID,
 		},
 	).Get(ctx, &getAIPPathResult)
 	if err != nil {
@@ -229,37 +239,41 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 	return uploadResult.Key, nil
 }
 
-func RegisterWorkflow(ctx context.Context, tw temporalsdk_worker.Worker, config Config, bucket *blob.Bucket) error {
-	amssclient, err := NewAMSSClient(config.AMSS)
-	if err != nil {
-		return fmt.Errorf("RegisterWorkflow: %w", err)
-	}
-
+func RegisterWorkflow(ctx context.Context, tw temporalsdk_worker.Worker, wf *Workflow) error {
 	tw.RegisterWorkflowWithOptions(
-		NewWorkflow(config, amssclient).Execute,
-		temporalsdk_workflow.RegisterOptions{Name: config.Temporal.WorkflowName},
+		wf.Execute,
+		temporalsdk_workflow.RegisterOptions{Name: wf.config.Temporal.WorkflowName},
 	)
-	tw.RegisterActivityWithOptions(
-		NewFetchActivity(amssclient).Execute,
+
+	return RegisterActivities(tw, wf)
+}
+
+func RegisterActivities(r temporalsdk_worker.ActivityRegistry, wf *Workflow) error {
+	r.RegisterActivityWithOptions(
+		NewGetAIPPathActivity(wf.amssSvc).Execute,
+		temporalsdk_activity.RegisterOptions{Name: GetAIPPathActivityName},
+	)
+	r.RegisterActivityWithOptions(
+		NewFetchActivity(wf.amssSvc).Execute,
 		temporalsdk_activity.RegisterOptions{Name: FetchActivityName},
 	)
-	tw.RegisterActivityWithOptions(
+	r.RegisterActivityWithOptions(
 		NewParseActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: ParseActivityName},
 	)
-	tw.RegisterActivityWithOptions(
+	r.RegisterActivityWithOptions(
 		NewCombineMDActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: CombineMDActivityName},
 	)
-	tw.RegisterActivityWithOptions(
+	r.RegisterActivityWithOptions(
 		archivezip.New().Execute,
 		temporalsdk_activity.RegisterOptions{Name: archivezip.Name},
 	)
-	tw.RegisterActivityWithOptions(
-		bucketupload.New(bucket).Execute,
+	r.RegisterActivityWithOptions(
+		bucketupload.New(wf.bucket).Execute,
 		temporalsdk_activity.RegisterOptions{Name: bucketupload.Name},
 	)
-	tw.RegisterActivityWithOptions(
+	r.RegisterActivityWithOptions(
 		removepaths.New().Execute,
 		temporalsdk_activity.RegisterOptions{Name: removepaths.Name},
 	)

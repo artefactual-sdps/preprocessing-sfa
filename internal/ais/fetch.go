@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	"go.artefactual.dev/tools/temporal"
 )
 
@@ -19,12 +20,12 @@ type (
 	}
 	FetchActivityResult struct{}
 	FetchActivity       struct {
-		amssclient *AMSSClient
+		amssSvc amss.Service
 	}
 )
 
-func NewFetchActivity(amssclient *AMSSClient) *FetchActivity {
-	return &FetchActivity{amssclient: amssclient}
+func NewFetchActivity(amssclient amss.Service) *FetchActivity {
+	return &FetchActivity{amssSvc: amssclient}
 }
 
 func (a *FetchActivity) Execute(ctx context.Context, params *FetchActivityParams) (*FetchActivityResult, error) {
@@ -41,7 +42,7 @@ func (a *FetchActivity) Execute(ctx context.Context, params *FetchActivityParams
 	}
 	defer file.Close()
 
-	err = a.amssclient.DownloadAIPFile(ctx, params.AIPUUID, params.RelativePath, file)
+	err = a.amssSvc.DownloadAIPFile(ctx, params.AIPUUID, params.RelativePath, file)
 	if err != nil {
 		return nil, fmt.Errorf("FetchActivity: download file: %w", err)
 	}

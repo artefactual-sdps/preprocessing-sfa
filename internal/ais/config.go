@@ -1,12 +1,15 @@
 package ais
 
-import "go.artefactual.dev/tools/bucket"
+import (
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
+	"go.artefactual.dev/tools/bucket"
+)
 
 type Config struct {
 	WorkingDir string
 	Temporal   TemporalConfig
 	Worker     WorkerConfig
-	AMSS       AMSSConfig
+	AMSS       amss.Config
 	Bucket     bucket.Config
 }
 
@@ -19,10 +22,4 @@ type TemporalConfig struct {
 
 type WorkerConfig struct {
 	MaxConcurrentSessions int
-}
-
-type AMSSConfig struct {
-	URL  string
-	User string
-	Key  string
 }
