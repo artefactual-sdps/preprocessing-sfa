@@ -105,7 +105,9 @@ func (m *Main) Run(ctx context.Context) error {
 		psvc = entclient.New(m.dbClient)
 	}
 
-	veraPDFVersion, err := fvalidate.Version(m.cfg.FileValidate.VeraPDF.Path)
+	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path, m.logger)
+
+	veraPDFVersion, err := veraPDFValidator.Version()
 	if err != nil {
 		return err
 	}
@@ -150,7 +152,7 @@ func (m *Main) Run(ctx context.Context) error {
 	w.RegisterActivityWithOptions(
 		activities.NewValidateFiles(
 			fformat.NewSiegfriedEmbed(),
-			fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path, m.logger),
+			veraPDFValidator,
 		).Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFilesName},
 	)
