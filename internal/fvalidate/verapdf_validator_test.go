@@ -99,7 +99,7 @@ func TestValidate(t *testing.T) {
 func TestVeraPDFVersion(t *testing.T) {
 	t.Parallel()
 
-	version, err := fvalidate.VeraPDFVersion("echo")
+	version, err := fvalidate.Version("echo")
 
 	assert.NilError(t, err)
 	assert.Assert(t, strings.Contains(version, "echo (GNU coreutils)"))
@@ -108,7 +108,7 @@ func TestVeraPDFVersion(t *testing.T) {
 func TestVeraPDFVersionError(t *testing.T) {
 	t.Parallel()
 
-	version, err := fvalidate.VeraPDFVersion("false")
+	version, err := fvalidate.Version("false")
 
 	assert.Error(t, err, "exit status 1")
 	assert.Equal(t, version, "")
