@@ -12,7 +12,7 @@ The preprocessing workers need to share the filesystem with Enduro's a3m or
 Archivematica workers. They must be connected to the same Temporal server
 and related to each other with the namespace, task queue and workflow name.
 
-### Preprocessing:
+### Preprocessing
 
 The required configuration for the preprocessing worker:
 
@@ -38,20 +38,26 @@ Optional BagIt bag configuration:
 checksumAlgorithm = "md5"
 ```
 
-### Enduro:
+### Enduro
 
 The preprocessing section for Enduro's configuration:
 
 ```toml
 [preprocessing]
 enabled = true
-extract = false
+extract = true # Extract must be true for the preprocessing-sfa workflow.
 sharedPath = "/home/enduro/preprocessing"
 
 [preprocessing.temporal]
 namespace = "default"
 taskQueue = "preprocessing"
 workflowName = "preprocessing"
+
+# Enable the AIS poststorage workflow.
+[[poststorage]]
+namespace = "default"
+taskQueue = "ais"
+workflowName = "ais"
 ```
 
 ## Local environment
