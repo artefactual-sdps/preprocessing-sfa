@@ -1,4 +1,4 @@
-package ais
+package amss
 
 import (
 	"context"
@@ -11,25 +11,27 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 )
 
-type AMSSClient struct {
+type Client struct {
 	client *http.Client
 	url    *url.URL
 	auth   string
 }
 
-func NewAMSSClient(config AMSSConfig) (*AMSSClient, error) {
+var _ Service = (*Client)(nil)
+
+func NewClient(config Config) (*Client, error) {
 	u, err := url.Parse(config.URL)
 	if err != nil {
 		return nil, fmt.Errorf("NewAMSSClient: parse URL: %w", err)
 	}
-	return &AMSSClient{
+	return &Client{
 		client: cleanhttp.DefaultPooledClient(),
 		url:    u,
 		auth:   fmt.Sprintf("ApiKey %s:%s", config.User, config.Key),
 	}, nil
 }
 
-func (c *AMSSClient) GetAIPPath(ctx context.Context, aipUUID string) (string, error) {
+func (c *Client) GetAIPPath(ctx context.Context, aipUUID string) (string, error) {
 	u := c.url.JoinPath("api/v2/file", aipUUID)
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
@@ -65,7 +67,7 @@ func (c *AMSSClient) GetAIPPath(ctx context.Context, aipUUID string) (string, er
 	return path, nil
 }
 
-func (c *AMSSClient) DownloadAIPFile(ctx context.Context, aipUUID, path string, writer io.Writer) error {
+func (c *Client) DownloadAIPFile(ctx context.Context, aipUUID, path string, writer io.Writer) error {
 	u := c.url.JoinPath("api/v2/file", aipUUID, "extract_file")
 	query := url.Values{}
 	query.Set("relative_path_to_file", path)
