@@ -53,10 +53,10 @@ func (x SIPType) IsValid() bool {
 }
 
 var _SIPTypeValue = map[string]SIPType{
-	"DigitizedAIP": SIPTypeDigitizedAIP,
-	"DigitizedSIP": SIPTypeDigitizedSIP,
-	"BornDigitalAIP":  SIPTypeBornDigitalAIP,	
-	"BornDigitalSIP":  SIPTypeBornDigitalSIP,
+	"DigitizedAIP":   SIPTypeDigitizedAIP,
+	"DigitizedSIP":   SIPTypeDigitizedSIP,
+	"BornDigitalAIP": SIPTypeBornDigitalAIP,
+	"BornDigitalSIP": SIPTypeBornDigitalSIP,
 }
 
 // ParseSIPType attempts to convert a string to a SIPType.

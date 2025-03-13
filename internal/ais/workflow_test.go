@@ -32,7 +32,7 @@ func (s *TestSuite) setup(cfg *ais.Config) {
 
 	ais.RegisterActivities(s.env, nil, nil)
 
-	s.workflow = ais.NewWorkflow(*cfg, nil)
+	s.workflow = ais.NewWorkflow(*cfg)
 }
 
 func TestWorkflow(t *testing.T) {
@@ -67,8 +67,8 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 
 	// Mock activities.
 	s.env.OnActivity(
-		ais.GetAIPPathActivity,
-		mock.AnythingOfType("*context.valueCtx"),
+		ais.GetAIPPathActivityName,
+		mock.AnythingOfType("*context.timerCtx"),
 		&ais.GetAIPPathActivityParams{AIPUUID: aipUUID},
 	).Return(
 		&ais.GetAIPPathActivityResult{

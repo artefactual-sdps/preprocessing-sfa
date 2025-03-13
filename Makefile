@@ -72,6 +72,7 @@ gen-ent: $(ENT)
 
 gen-mock: # @HELP Generate mocks.
 gen-mock: $(MOCKGEN)
+	mockgen -typed -destination=./internal/amss/fake/mock_client.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/amss Client
 	mockgen -typed -destination=./internal/fformat/fake/mock_identifier.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/fformat Identifier
 	mockgen -typed -destination=./internal/fvalidate/fake/mock_validator.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate Validator
 	mockgen -typed -destination=./internal/persistence/fake/mock_service.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/persistence Service

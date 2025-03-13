@@ -15,6 +15,8 @@ import (
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 	"gocloud.dev/blob"
+
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 )
 
 type WorkflowParams struct {
@@ -26,15 +28,11 @@ type WorkflowResult struct {
 }
 
 type Workflow struct {
-	config     Config
-	amssClient *AMSSClient
+	config Config
 }
 
-func NewWorkflow(config Config, amssClient *AMSSClient) *Workflow {
-	return &Workflow{
-		config:     config,
-		amssClient: amssClient,
-	}
+func NewWorkflow(config Config) *Workflow {
+	return &Workflow{config: config}
 }
 
 func (w *Workflow) Execute(ctx temporalsdk_workflow.Context, params *WorkflowParams) (r *WorkflowResult, e error) {
@@ -48,12 +46,22 @@ func (w *Workflow) Execute(ctx temporalsdk_workflow.Context, params *WorkflowPar
 	}()
 
 	var getAIPPathResult GetAIPPathActivityResult
-	err := temporalsdk_workflow.ExecuteLocalActivity(
-		withLocalActivityOpts(ctx),
-		GetAIPPathActivity,
+	err := temporalsdk_workflow.ExecuteActivity(
+		temporalsdk_workflow.WithActivityOptions(
+			ctx,
+			temporalsdk_workflow.ActivityOptions{
+				ScheduleToCloseTimeout: 10 * time.Minute,
+				RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+					InitialInterval:    15 * time.Second,
+					BackoffCoefficient: 2,
+					MaximumInterval:    time.Minute,
+					MaximumAttempts:    5,
+				},
+			},
+		),
+		GetAIPPathActivityName,
 		&GetAIPPathActivityParams{
-			AMSSClient: w.amssClient,
-			AIPUUID:    params.AIPUUID,
+			AIPUUID: params.AIPUUID,
 		},
 	).Get(ctx, &getAIPPathResult)
 	if err != nil {
@@ -228,14 +236,18 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 	return uploadResult.Key, nil
 }
 
-func RegisterWorkflow(w temporalsdk_worker.Worker, config Config, amssClient *AMSSClient) {
+func RegisterWorkflow(w temporalsdk_worker.Worker, config Config) {
 	w.RegisterWorkflowWithOptions(
-		NewWorkflow(config, amssClient).Execute,
+		NewWorkflow(config).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: config.Temporal.WorkflowName},
 	)
 }
 
-func RegisterActivities(r temporalsdk_worker.ActivityRegistry, amssClient *AMSSClient, bucket *blob.Bucket) {
+func RegisterActivities(r temporalsdk_worker.ActivityRegistry, amssClient amss.Client, bucket *blob.Bucket) {
+	r.RegisterActivityWithOptions(
+		NewGetAIPPathActivity(amssClient).Execute,
+		temporalsdk_activity.RegisterOptions{Name: GetAIPPathActivityName},
+	)
 	r.RegisterActivityWithOptions(
 		NewFetchActivity(amssClient).Execute,
 		temporalsdk_activity.RegisterOptions{Name: FetchActivityName},

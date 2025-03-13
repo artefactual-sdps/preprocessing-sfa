@@ -38,17 +38,3 @@ func withFilesystemActivityOpts(ctx temporalsdk_workflow.Context) temporalsdk_wo
 		},
 	})
 }
-
-// withLocalActivityOpts returns a workflow context with activity options suited
-// for local and short-lived activities with a few retries.
-func withLocalActivityOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
-	return temporalsdk_workflow.WithLocalActivityOptions(ctx, temporalsdk_workflow.LocalActivityOptions{
-		ScheduleToCloseTimeout: 5 * time.Second,
-		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
-			InitialInterval:    time.Second,
-			BackoffCoefficient: 2,
-			MaximumInterval:    time.Minute,
-			MaximumAttempts:    3,
-		},
-	})
-}
