@@ -16,6 +16,7 @@ type (
 		Path string
 	}
 	ChecksumSIPResult struct {
+		Algo string
 		Hash string
 	}
 	ChecksumSIP struct{}
@@ -37,5 +38,8 @@ func (a *ChecksumSIP) Execute(ctx context.Context, params *ChecksumSIPParams) (*
 		return nil, fmt.Errorf("ChecksumSIP: calculate checksum: %v", err)
 	}
 
-	return &ChecksumSIPResult{Hash: hex.EncodeToString(h.Sum(nil))}, nil
+	return &ChecksumSIPResult{
+		Algo: "SHA-256",
+		Hash: hex.EncodeToString(h.Sum(nil)),
+	}, nil
 }
