@@ -58,9 +58,13 @@ func (m *Main) Run(ctx context.Context) error {
 	}
 	m.bucket = b
 
-	if err := ais.RegisterWorkflow(ctx, w, m.cfg, b); err != nil {
-		return fmt.Errorf("AIS: %w", err)
+	amssClient, err := ais.NewAMSSClient(m.cfg.AMSS)
+	if err != nil {
+		return fmt.Errorf("RegisterWorkflow: %w", err)
 	}
+
+	ais.RegisterWorkflow(w, m.cfg, amssClient)
+	ais.RegisterActivities(w, amssClient, m.bucket)
 
 	if err := w.Start(); err != nil {
 		m.logger.Error(err, "AIS worker failed to start.")
