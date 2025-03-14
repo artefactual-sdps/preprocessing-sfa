@@ -19,16 +19,16 @@ func (w *eventWrapper) Complete(
 	ctx temporalsdk_workflow.Context,
 	outcome enums.EventOutcome,
 	msg string,
-	a ...any,
+	notes ...string,
 ) *eventWrapper {
-	w.Event.Complete(temporalsdk_workflow.Now(ctx), outcome, msg, a...)
+	w.Event.Complete(temporalsdk_workflow.Now(ctx), outcome, msg, notes)
 	return w
 }
 
 func (w *eventWrapper) Succeed(
 	ctx temporalsdk_workflow.Context,
 	msg string,
-	a ...any,
+	notes ...string,
 ) *eventWrapper {
-	return w.Complete(ctx, enums.EventOutcomeSuccess, msg, a...)
+	return w.Complete(ctx, enums.EventOutcomeSuccess, msg, notes...)
 }
