@@ -26,8 +26,7 @@ func TestEvent(t *testing.T) {
 		event.Complete(
 			completed,
 			enums.EventOutcomeSuccess,
-			"completed at %s",
-			completed.Format(time.RFC3339),
+			fmt.Sprintf("completed at %s", completed.Format(time.RFC3339)),
 		)
 		assert.DeepEqual(t, event, &eventlog.Event{
 			Name:        "test event",
@@ -48,8 +47,10 @@ func TestEvent(t *testing.T) {
 		event.Complete(
 			completed,
 			enums.EventOutcomeValidationFailure,
-			"Content error: metadata validation has failed: %s does not match expected metadata requirements",
-			p,
+			fmt.Sprintf(
+				"Content error: metadata validation has failed: %s does not match expected metadata requirements",
+				p,
+			),
 		)
 		assert.DeepEqual(t, event, &eventlog.Event{
 			Name: "test event",
