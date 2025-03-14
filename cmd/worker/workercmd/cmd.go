@@ -105,8 +105,15 @@ func (m *Main) Run(ctx context.Context) error {
 		psvc = entclient.New(m.dbClient)
 	}
 
+	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path, m.logger)
+
+	veraPDFVersion, err := veraPDFValidator.Version()
+	if err != nil {
+		return err
+	}
+
 	w.RegisterWorkflowWithOptions(
-		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath, m.cfg.CheckDuplicates, psvc).Execute,
+		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath, m.cfg.CheckDuplicates, veraPDFVersion, psvc).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Temporal.WorkflowName},
 	)
 
@@ -145,7 +152,7 @@ func (m *Main) Run(ctx context.Context) error {
 	w.RegisterActivityWithOptions(
 		activities.NewValidateFiles(
 			fformat.NewSiegfriedEmbed(),
-			fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path, m.logger),
+			veraPDFValidator,
 		).Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFilesName},
 	)
