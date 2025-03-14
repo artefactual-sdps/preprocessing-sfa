@@ -34,10 +34,14 @@ func (s *TestSuite) setup(cfg *ais.Config) {
 
 	s.registerActivities()
 
-	s.workflow = ais.NewWorkflow(*cfg, nil)
+	s.workflow = ais.NewWorkflow(*cfg)
 }
 
 func (s *TestSuite) registerActivities() {
+	s.env.RegisterActivityWithOptions(
+		ais.NewGetAIPPathActivity(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: ais.GetAIPPathActivityName},
+	)
 	s.env.RegisterActivityWithOptions(
 		ais.NewFetchActivity(nil).Execute,
 		temporalsdk_activity.RegisterOptions{Name: ais.FetchActivityName},
@@ -96,8 +100,8 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 
 	// Mock activities.
 	s.env.OnActivity(
-		ais.GetAIPPathActivity,
-		mock.AnythingOfType("*context.valueCtx"),
+		ais.GetAIPPathActivityName,
+		mock.AnythingOfType("*context.timerCtx"),
 		&ais.GetAIPPathActivityParams{AIPUUID: aipUUID},
 	).Return(
 		&ais.GetAIPPathActivityResult{
