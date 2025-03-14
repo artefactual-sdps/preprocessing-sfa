@@ -1,7 +1,6 @@
 package eventlog
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
@@ -27,10 +26,10 @@ func (e *Event) IsSuccess() bool {
 	return e.Outcome == enums.EventOutcomeSuccess
 }
 
-func (e *Event) Complete(t time.Time, outcome enums.EventOutcome, msg string, a ...any) *Event {
+func (e *Event) Complete(t time.Time, outcome enums.EventOutcome, msg string) *Event {
 	e.CompletedAt = t
 	e.Outcome = outcome
-	e.Message = fmt.Sprintf(msg, a...)
+	e.Message = msg
 
 	return e
 }

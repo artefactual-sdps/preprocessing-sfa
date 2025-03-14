@@ -2,6 +2,7 @@ package workflow_test
 
 import (
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -308,7 +309,7 @@ Tag-File-Character-Encoding: UTF-8
 	}
 }
 
-func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
+func (s *PreprocessingTestSuite) TestSuccess() {
 	s.SetupTest(&config.Configuration{CheckDuplicates: true})
 	s.writeBagitTxt(s.sipPath)
 
@@ -326,7 +327,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		sessionCtx,
 		&activities.ChecksumSIPParams{Path: s.sipPath},
 	).Return(
-		&activities.ChecksumSIPResult{Hash: checksum}, nil,
+		&activities.ChecksumSIPResult{Algo: "SHA-256", Hash: checksum}, nil,
 	)
 	s.env.OnActivity(
 		localact.CheckDuplicate,
@@ -566,7 +567,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 			PreservationTasks: []*eventlog.Event{
 				{
 					Name:        "Calculate SIP checksum",
-					Message:     "SIP checksum calculated",
+					Message:     "SIP checksum calculated using SHA-256",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
@@ -587,7 +588,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 				},
 				{
 					Name:        "Validate Bag",
-					Message:     "Bag validated",
+					Message:     "Bag successfully validated",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
@@ -615,7 +616,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 				},
 				{
 					Name:        "Validate SIP name",
-					Message:     "SIP name matches validation criteria",
+					Message:     "SIP name matches expected naming convention for the identified structure type",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
@@ -642,8 +643,10 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 					CompletedAt: testTime,
 				},
 				{
-					Name:        "Validate SIP metadata",
-					Message:     "Metadata validation successful",
+					Name: "Validate SIP metadata",
+					Message: `Metadata validation successful on the following file(s):
+
+- UpdatedAreldaMetadata.xml`,
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
@@ -657,21 +660,21 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 				},
 				{
 					Name:        "Create premis.xml",
-					Message:     "Created a premis.xml and stored in metadata directory",
+					Message:     "Created a premis.xml file and stored it in the metadata directory",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
 				{
 					Name:        "Restructure SIP",
-					Message:     "SIP has been restructured",
+					Message:     "SIP has been restructured for preservation processing",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
 				{
 					Name:        "Create identifier.json",
-					Message:     "Created an identifier.json and stored in metadata directory",
+					Message:     "Created an identifier.json file and stored it in the metadata directory",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
@@ -689,7 +692,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 	)
 }
 
-func (s *PreprocessingTestSuite) TestPreprocessingWorkflowIdentifySIPFails() {
+func (s *PreprocessingTestSuite) TestIdentifySIPFailure() {
 	s.SetupTest(&config.Configuration{})
 	sipPath := filepath.Join(s.testDir, relPath)
 
@@ -722,7 +725,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowIdentifySIPFails() {
 	s.NoError(err)
 	s.Equal(
 		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeSystemError,
+			Outcome:      workflow.OutcomeContentError,
 			RelativePath: relPath,
 			PreservationTasks: []*eventlog.Event{
 				{
@@ -733,9 +736,11 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowIdentifySIPFails() {
 					CompletedAt: testTime,
 				},
 				{
-					Name:        "Identify SIP structure",
-					Message:     "System error: SIP structure identification has failed",
-					Outcome:     enums.EventOutcomeSystemFailure,
+					Name: "Identify SIP structure",
+					Message: `Content error: SIP identification has failed.
+
+Enduro could not identify the package type. Please ensure that your SIP matches one of the supported package structures.`,
+					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -745,7 +750,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowIdentifySIPFails() {
 	)
 }
 
-func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
+func (s *PreprocessingTestSuite) TestValidationError() {
 	s.SetupTest(&config.Configuration{})
 
 	sipPath := filepath.Join(s.testDir, relPath)
@@ -785,7 +790,9 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		sessionCtx,
 		&activities.ValidateSIPNameParams{SIP: expectedSIP},
 	).Return(
-		&activities.ValidateSIPNameResult{},
+		&activities.ValidateSIPNameResult{
+			Failures: []string{"SIP name \"sip\" violates naming standard"},
+		},
 		nil,
 	)
 	s.env.OnActivity(
@@ -820,7 +827,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		&activities.ValidateFilesParams{SIP: expectedSIP},
 	).Return(
 		&activities.ValidateFilesResult{
-			Failures: []string{`invalid PDF/A: "contents/contents/d_0000001/test.pdf"`},
+			Failures: []string{`One or more PDF/A files are invalid`},
 		},
 		nil,
 	)
@@ -871,58 +878,131 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 				},
 				{
 					Name: "Validate SIP structure",
-					Message: `Content error: SIP structure validation has failed:
-XSD folder is missing
-metadata.xml is missing`,
+					Message: `Content error: SIP structure validation has failed.
+
+- XSD folder is missing
+- metadata.xml is missing
+
+Please review the SIP and ensure that its structure matches the BornDigitalSIP specifications.`,
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
 				{
-					Name:        "Validate SIP name",
-					Message:     `SIP name matches validation criteria`,
-					Outcome:     enums.EventOutcomeSuccess,
+					Name: "Validate SIP name",
+					Message: `Content error: SIP name validation has failed.
+
+The name used for the package does not match the expected convention for the "BornDigitalSIP" type.
+
+- SIP name "sip" violates naming standard
+
+Please review the naming conventions specified for this type of SIP.`,
+					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
 				{
 					Name: "Verify SIP manifest",
-					Message: `Content error: SIP contents do not match "metadata.xml":
-Missing file: d_0000001/00000001.jp2
-Unexpected file: d_0000001/extra_file.txt`,
+					Message: `Content error: SIP contents do not match the "metadata.xml" manifest.
+
+- Missing file: d_0000001/00000001.jp2
+- Unexpected file: d_0000001/extra_file.txt
+
+Please review the SIP and ensure that its contents match those listed in the metadata manifest.`,
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
 				{
 					Name: "Verify SIP checksums",
-					Message: `Content error: SIP checksums do not match file contents:
-Checksum mismatch for "content/content/d_0000001/00000001.jp2" (expected: "827ccb0eea8a706c4c34a16891f84e7b", got: "2714364e3a0ac68e8bf9b898b31ff303")`,
+					Message: `Content error: SIP checksums do not match file contents.
+
+- Checksum mismatch for "content/content/d_0000001/00000001.jp2" (expected: "827ccb0eea8a706c4c34a16891f84e7b", got: "2714364e3a0ac68e8bf9b898b31ff303")
+
+Please review the SIP and ensure that the metadata checksums match those of the files.`,
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
 				{
 					Name: "Validate SIP file formats",
-					Message: `Content error: file format validation has failed. One or more file formats are not allowed:
-file format fmt/11 not allowed: "content/content/d_0000001/00000010.png"
-file format fmt/11 not allowed: "content/content/d_0000001/00000011.png"`,
+					Message: `Content error: file format validation has failed.
+
+One or more file formats are not allowed:
+
+- file format fmt/11 not allowed: "content/content/d_0000001/00000010.png"
+- file format fmt/11 not allowed: "content/content/d_0000001/00000011.png"
+
+Please review the SIP and remove or replace all disallowed file formats.`,
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
 				{
 					Name: "Validate SIP files",
-					Message: `Content error: file validation has failed. One or more files are invalid:
-invalid PDF/A: "contents/contents/d_0000001/test.pdf"`,
+					Message: `Content error: file validation has failed.
+
+- One or more PDF/A files are invalid
+
+Please ensure all files are well-formed.`,
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
 				{
-					Name:        "Validate SIP metadata",
-					Message:     "Content error: metadata validation has failed:\nmetadata.xml does not match expected metadata requirements",
+					Name: "Validate SIP metadata",
+					Message: `Content error: metadata validation has failed.
+
+- metadata.xml does not match expected metadata requirements
+
+Please ensure all metadata files are present and well-formed.`,
 					Outcome:     enums.EventOutcomeValidationFailure,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+			},
+		},
+		&result,
+	)
+}
+
+func (s *PreprocessingTestSuite) TestSystemError() {
+	s.SetupTest(&config.Configuration{})
+
+	// Mock activities.
+	s.env.OnActivity(
+		archiveextract.Name,
+		mock.AnythingOfType("*context.timerCtx"),
+		&archiveextract.Params{SourcePath: s.sipPath},
+	).Return(
+		nil, errors.New("Not a file"),
+	)
+
+	// Execute workflow.
+	s.env.ExecuteWorkflow(
+		s.workflow.Execute,
+		&workflow.PreprocessingWorkflowParams{RelativePath: relPath},
+	)
+
+	s.True(s.env.IsWorkflowCompleted())
+
+	var result workflow.PreprocessingWorkflowResult
+	err := s.env.GetWorkflowResult(&result)
+	s.NoError(err)
+	s.Equal(
+		&workflow.PreprocessingWorkflowResult{
+			Outcome:      workflow.OutcomeSystemError,
+			RelativePath: relPath,
+			PreservationTasks: []*eventlog.Event{
+				{
+					Name: "Extract SIP",
+					Message: fmt.Sprintf(
+						`System error: SIP extraction has failed.
+
+%q could not be successfully extracted.`,
+						filepath.Base(relPath),
+					),
+					Outcome:     enums.EventOutcomeSystemFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},

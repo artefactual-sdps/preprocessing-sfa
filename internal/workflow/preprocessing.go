@@ -76,16 +76,13 @@ func (r *PreprocessingWorkflowResult) newEvent(ctx temporalsdk_workflow.Context,
 func (r *PreprocessingWorkflowResult) validationError(
 	ctx temporalsdk_workflow.Context,
 	ev *eventWrapper,
-	msg string,
-	failures []string,
+	msg ...string,
 ) {
 	r.Outcome = OutcomeContentError
 	ev.Complete(
 		ctx,
 		enums.EventOutcomeValidationFailure,
-		"Content error: %s:\n%s",
-		msg,
-		strings.Join(failures, "\n"),
+		fmt.Sprintf("Content error: %s", strings.Join(msg, "\n\n")),
 	)
 }
 
@@ -93,14 +90,29 @@ func (r *PreprocessingWorkflowResult) systemError(
 	ctx temporalsdk_workflow.Context,
 	err error,
 	ev *eventWrapper,
-	msg string,
+	msg ...string,
 ) {
 	logger := temporalsdk_workflow.GetLogger(ctx)
 	logger.Error("System error", "message", err.Error())
 
 	// Complete last preservation task event.
-	ev.Complete(ctx, enums.EventOutcomeSystemFailure, "System error: %s", msg)
 	r.Outcome = OutcomeSystemError
+	ev.Complete(
+		ctx,
+		enums.EventOutcomeSystemFailure,
+		fmt.Sprintf("System error: %s", strings.Join(msg, "\n\n")),
+	)
+}
+
+func (r *PreprocessingWorkflowResult) SetRelativePath(base, path string) error {
+	rp, err := filepath.Rel(base, path)
+	if err != nil {
+		return err
+	}
+
+	r.RelativePath = rp
+
+	return nil
 }
 
 func (w *PreprocessingWorkflow) Execute(
@@ -118,7 +130,9 @@ func (w *PreprocessingWorkflow) Execute(
 	}()
 
 	if params == nil || params.RelativePath == "" {
-		e = temporal.NewNonRetryableError(fmt.Errorf("error calling workflow with unexpected inputs"))
+		e = temporal.NewNonRetryableError(
+			fmt.Errorf("error calling workflow with unexpected inputs"),
+		)
 		return nil, e
 	}
 	result.RelativePath = params.RelativePath
@@ -135,10 +149,19 @@ func (w *PreprocessingWorkflow) Execute(
 			&activities.ChecksumSIPParams{Path: localPath},
 		).Get(ctx, &checksumSIP)
 		if e != nil {
-			result.systemError(ctx, e, ev, "Calculating the SIP checksum has failed")
+			result.systemError(
+				ctx,
+				e,
+				ev,
+				"checksum calculation has failed.",
+				"Enduro could not generate a checksum for the submitted SIP. Please try again, or ask a system administrator to investigate.",
+			)
 			return result, nil
 		}
-		ev.Succeed(ctx, "SIP checksum calculated")
+		ev.Succeed(
+			ctx,
+			fmt.Sprintf("SIP checksum calculated using %s", checksumSIP.Algo),
+		)
 
 		// Check for duplicate SIP.
 		ev = result.newEvent(ctx, "Check for duplicate SIP")
@@ -153,15 +176,21 @@ func (w *PreprocessingWorkflow) Execute(
 			},
 		).Get(ctx, &checkDuplicate)
 		if e != nil {
-			result.systemError(ctx, e, ev, "Error attempting to check for duplicate SIP")
+			result.systemError(
+				ctx,
+				e,
+				ev,
+				"checking for a duplicate SIP has failed.",
+				"An error occurred when checking whether SIP is a duplicate. Please try again, or ask a system administrator to investigate.",
+			)
 			return result, nil
 		}
 		if checkDuplicate.IsDuplicate {
 			result.validationError(
 				ctx,
 				ev,
-				"SIP is a duplicate",
-				[]string{"A previously submitted SIP has the same checksum"},
+				"SIP is a duplicate.",
+				"A previously submitted SIP has the same checksum. Please ensure that your package has not already been ingested.",
 			)
 			return result, nil
 		}
@@ -177,13 +206,25 @@ func (w *PreprocessingWorkflow) Execute(
 		&archiveextract.Params{SourcePath: localPath},
 	).Get(ctx, &archiveExtract)
 	if e != nil {
-		result.systemError(ctx, e, ev, "Extracting the SIP has failed")
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"SIP extraction has failed.",
+			fmt.Sprintf(`%q could not be successfully extracted.`, filepath.Base(localPath)),
+		)
 		return result, nil
 	}
+
 	localPath = archiveExtract.ExtractPath
-	result.RelativePath, e = filepath.Rel(w.sharedPath, localPath)
-	if e != nil {
-		result.systemError(ctx, e, ev, "Extracting the SIP has failed")
+	if e := result.SetRelativePath(w.sharedPath, localPath); e != nil {
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"SIP extraction has failed.",
+			fmt.Sprintf(`%s could not be successfully extracted.`, filepath.Base(localPath)),
+		)
 		return result, nil
 	}
 	ev.Succeed(ctx, "SIP extracted")
@@ -209,13 +250,29 @@ func (w *PreprocessingWorkflow) Execute(
 			&bagvalidate.Params{Path: localPath},
 		).Get(ctx, &bagValidateResult)
 		if e != nil {
-			result.systemError(ctx, e, ev, "Error attempting to validate the Bag")
+			result.systemError(
+				ctx,
+				e,
+				ev,
+				"Bag validation has failed.",
+				"An error occurred during the bag validation process. Please try again, or ask a system administrator to investigate.",
+			)
 			return result, nil
 		}
 		if bagValidateResult.Error != "" {
-			result.validationError(ctx, ev, "Bag validation has failed", []string{bagValidateResult.Error})
+			result.validationError(
+				ctx,
+				ev,
+				"Bag validation has failed.",
+				// TODO: Add BagIt tool and version info.
+				// "An attempt to validate the bag using [tool] - version [version] has failed:",
+				bagValidateResult.Error,
+				"Please ensure the bag is well-formed before reattempting ingest.",
+				"Your SIP has been moved to the failed-sips directory.",
+			)
 		} else {
-			ev.Succeed(ctx, "Bag validated")
+			// TODO: Add BagIt tool and version info.
+			ev.Succeed(ctx, "Bag successfully validated")
 		}
 
 		ev = result.newEvent(ctx, "Unbag SIP")
@@ -226,13 +283,25 @@ func (w *PreprocessingWorkflow) Execute(
 			&activities.UnbagParams{Path: localPath},
 		).Get(ctx, &unbagResult)
 		if e != nil {
-			result.systemError(ctx, e, ev, "Unbagging the SIP has failed")
+			result.systemError(
+				ctx,
+				e,
+				ev,
+				"SIP unbagging has failed.",
+				"An error occurred during the SIP unbagging process. Please try again, or ask a system administrator to investigate.",
+			)
 			return result, nil
 		}
+
 		localPath = unbagResult.Path
-		result.RelativePath, e = filepath.Rel(w.sharedPath, localPath)
-		if e != nil {
-			result.systemError(ctx, e, ev, "Unbagging the SIP has failed")
+		if e := result.SetRelativePath(w.sharedPath, localPath); e != nil {
+			result.systemError(
+				ctx,
+				e,
+				ev,
+				"SIP unbagging has failed.",
+				"An error occurred during the SIP unbagging process. Please try again, or ask a system administrator to investigate.",
+			)
 			return result, nil
 		}
 		ev.Succeed(ctx, "SIP unbagged")
@@ -247,10 +316,17 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.IdentifySIPParams{Path: localPath},
 	).Get(ctx, &identifySIP)
 	if e != nil {
-		result.systemError(ctx, e, ev, "SIP structure identification has failed")
+		result.validationError(
+			ctx,
+			ev,
+			"SIP identification has failed.",
+			"Enduro could not identify the package type. Please ensure that your SIP matches one of the supported package structures.",
+		)
 		return result, nil
 	}
-	ev.Succeed(ctx, "SIP structure identified: %s", identifySIP.SIP.Type.String())
+
+	sip := identifySIP.SIP
+	ev.Succeed(ctx, fmt.Sprintf("SIP structure identified: %s", sip.Type))
 
 	// Validate structure.
 	ev = result.newEvent(ctx, "Validate SIP structure")
@@ -258,14 +334,26 @@ func (w *PreprocessingWorkflow) Execute(
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
 		activities.ValidateStructureName,
-		&activities.ValidateStructureParams{SIP: identifySIP.SIP},
+		&activities.ValidateStructureParams{SIP: sip},
 	).Get(ctx, &validateStructure)
 	if e != nil {
-		result.systemError(ctx, e, ev, "SIP structure validation has failed")
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"SIP structure validation has failed.",
+			"An error occurred during the structure validation process. Please try again, or ask a system administrator to investigate.",
+		)
 		return result, nil
 	}
 	if validateStructure.Failures != nil {
-		result.validationError(ctx, ev, "SIP structure validation has failed", validateStructure.Failures)
+		result.validationError(
+			ctx,
+			ev,
+			"SIP structure validation has failed.",
+			ul(validateStructure.Failures),
+			fmt.Sprintf("Please review the SIP and ensure that its structure matches the %s specifications.", sip.Type),
+		)
 	} else {
 		ev.Succeed(ctx, "SIP structure matches validation criteria")
 	}
@@ -279,13 +367,29 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.ValidateSIPNameParams{SIP: identifySIP.SIP},
 	).Get(ctx, &ValidateSIPName)
 	if e != nil {
-		result.systemError(ctx, e, ev, "SIP name validation has failed")
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"SIP name validation has failed.",
+			"An error occurred during the SIP name validation process. Please try again, or ask a system administrator to investigate.",
+		)
 		return result, nil
 	}
 	if ValidateSIPName.Failures != nil {
-		result.validationError(ctx, ev, "SIP name validation has failed", ValidateSIPName.Failures)
+		result.validationError(
+			ctx,
+			ev,
+			"SIP name validation has failed.",
+			fmt.Sprintf(
+				"The name used for the package does not match the expected convention for the %q type.",
+				sip.Type,
+			),
+			ul(ValidateSIPName.Failures),
+			"Please review the naming conventions specified for this type of SIP.",
+		)
 	} else {
-		ev.Succeed(ctx, "SIP name matches validation criteria")
+		ev.Succeed(ctx, "SIP name matches expected naming convention for the identified structure type")
 	}
 
 	// Verify that package contents match the manifest.
@@ -295,11 +399,23 @@ func (w *PreprocessingWorkflow) Execute(
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
 		activities.VerifyManifestName,
-		&activities.VerifyManifestParams{SIP: identifySIP.SIP},
+		&activities.VerifyManifestParams{SIP: sip},
 	).Get(ctx, &verifyManifest)
 	if e != nil {
-		checksumEv.Complete(ctx, enums.EventOutcomeSystemFailure, "checksum verification has failed")
-		result.systemError(ctx, e, manifestEv, "manifest verification has failed")
+		result.systemError(
+			ctx,
+			e,
+			manifestEv,
+			"SIP manifest verification has failed.",
+			"An error occurred during the manifest verification process. Please try again, or ask a system administrator to investigate.",
+		)
+		result.systemError(
+			ctx,
+			e,
+			checksumEv,
+			"SIP checksum verification has failed.",
+			"An error occurred during the checksum verification process. Please try again, or ask a system administrator to investigate.",
+		)
 		return result, nil
 	}
 
@@ -308,8 +424,9 @@ func (w *PreprocessingWorkflow) Execute(
 		result.validationError(
 			ctx,
 			manifestEv,
-			fmt.Sprintf("SIP contents do not match %q", filepath.Base(identifySIP.SIP.ManifestPath)),
-			failures,
+			fmt.Sprintf("SIP contents do not match the %q manifest.", filepath.Base(sip.ManifestPath)),
+			ul(failures),
+			"Please review the SIP and ensure that its contents match those listed in the metadata manifest.",
 		)
 	} else {
 		manifestEv.Succeed(ctx, "SIP contents match manifest")
@@ -319,24 +436,31 @@ func (w *PreprocessingWorkflow) Execute(
 		result.validationError(
 			ctx,
 			checksumEv,
-			"SIP checksums do not match file contents",
-			verifyManifest.ChecksumFailures,
+			"SIP checksums do not match file contents.",
+			ul(verifyManifest.ChecksumFailures),
+			"Please review the SIP and ensure that the metadata checksums match those of the files.",
 		)
 	} else {
 		checksumEv.Succeed(ctx, "SIP checksums match file contents")
 	}
 
 	// Verify that SIP file formats are on allowlist (SIP types only).
-	if identifySIP.SIP.IsSIP() {
+	if sip.IsSIP() {
 		ev = result.newEvent(ctx, "Validate SIP file formats")
 		var ffvalidateResult ffvalidate.Result
 		e = temporalsdk_workflow.ExecuteActivity(
 			withFilesysActOpts(ctx),
 			ffvalidate.Name,
-			&ffvalidate.Params{Path: identifySIP.SIP.ContentPath},
+			&ffvalidate.Params{Path: sip.ContentPath},
 		).Get(ctx, &ffvalidateResult)
 		if e != nil {
-			result.systemError(ctx, e, ev, "System error: file format validation has failed")
+			result.systemError(
+				ctx,
+				e,
+				ev,
+				"file format validation has failed.",
+				"An error occurred during the file format validation process. Please try again, or ask a system administrator to investigate.",
+			)
 			return result, nil
 		}
 
@@ -344,8 +468,10 @@ func (w *PreprocessingWorkflow) Execute(
 			result.validationError(
 				ctx,
 				ev,
-				"file format validation has failed. One or more file formats are not allowed",
-				ffvalidateResult.Failures,
+				"file format validation has failed.",
+				"One or more file formats are not allowed:",
+				ul(ffvalidateResult.Failures),
+				"Please review the SIP and remove or replace all disallowed file formats.",
 			)
 		} else {
 			ev.Succeed(ctx, "No disallowed file formats found")
@@ -366,10 +492,16 @@ func (w *PreprocessingWorkflow) Execute(
 			},
 		),
 		activities.ValidateFilesName,
-		&activities.ValidateFilesParams{SIP: identifySIP.SIP},
+		&activities.ValidateFilesParams{SIP: sip},
 	).Get(ctx, &validateFilesResult)
 	if e != nil {
-		result.systemError(ctx, e, ev, "System error: file validation has failed")
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"file validation has failed.",
+			"An error occurred during the file validation process. Please try again, or ask a system administrator to investigate.",
+		)
 		return result, nil
 	}
 
@@ -377,7 +509,10 @@ func (w *PreprocessingWorkflow) Execute(
 		result.validationError(
 			ctx,
 			ev,
-			"file validation has failed. One or more files are invalid", validateFilesResult.Failures,
+			"file validation has failed.",
+			// TODO: Add tool name and version info.
+			ul(validateFilesResult.Failures),
+			"Please ensure all files are well-formed.",
 		)
 	} else {
 		ev.Succeed(ctx, "No invalid files found")
@@ -390,43 +525,71 @@ func (w *PreprocessingWorkflow) Execute(
 		withFilesysActOpts(ctx),
 		xmlvalidate.Name,
 		&xmlvalidate.Params{
-			XMLPath: identifySIP.SIP.ManifestPath,
-			XSDPath: identifySIP.SIP.XSDPath,
+			XMLPath: sip.ManifestPath,
+			XSDPath: sip.XSDPath,
 		},
 	).Get(ctx, &validateMetadata)
 	if e != nil {
-		result.systemError(ctx, e, ev, "metadata validation has failed")
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"metadata validation has failed.",
+			fmt.Sprintf(
+				"An error has occurred while attempting to validate the %q file. Please try again, or ask a system administrator to investigate.",
+				filepath.Base(sip.ManifestPath),
+			),
+		)
 		return result, nil
 	}
 
 	if validateMetadata.Failures != nil {
 		for idx, f := range validateMetadata.Failures {
-			validateMetadata.Failures[idx] = strings.ReplaceAll(f, identifySIP.SIP.Path+"/", "")
+			validateMetadata.Failures[idx] = strings.ReplaceAll(f, sip.Path+"/", "")
 		}
-		result.validationError(ctx, ev, "metadata validation has failed", validateMetadata.Failures)
+		result.validationError(
+			ctx,
+			ev,
+			"metadata validation has failed.",
+			ul(validateMetadata.Failures),
+			"Please ensure all metadata files are present and well-formed.",
+		)
 	} else {
-		ev.Succeed(ctx, "Metadata validation successful")
+		ev.Succeed(ctx,
+			"Metadata validation successful on the following file(s):",
+			ul([]string{filepath.Base(sip.ManifestPath)}),
+		)
 	}
 
 	// Validate logical metadata (AIP types only).
-	if identifySIP.SIP.IsAIP() {
+	if sip.IsAIP() {
 		ev = result.newEvent(ctx, "Validate logical metadata")
 		var validateLMD activities.ValidatePREMISResult
 		e = temporalsdk_workflow.ExecuteActivity(
 			withFilesysActOpts(ctx),
 			activities.ValidatePREMISName,
-			activities.ValidatePREMISParams{Path: identifySIP.SIP.LogicalMDPath},
+			activities.ValidatePREMISParams{Path: sip.LogicalMDPath},
 		).Get(ctx, &validateLMD)
 		if e != nil {
-			result.systemError(ctx, e, ev, "logical metadata validation has failed")
+			result.systemError(
+				ctx,
+				e,
+				ev,
+				"logical metadata validation has failed.",
+				fmt.Sprintf(
+					"An error has occurred while attempting to validate the %q file. Please try again, or ask a system administrator to investigate.",
+					filepath.Base(sip.LogicalMDPath),
+				),
+			)
 			return result, nil
 		}
 		if validateLMD.Failures != nil {
 			result.validationError(
 				ctx,
 				ev,
-				"logical metadata validation has failed",
-				validateLMD.Failures,
+				"logical metadata validation has failed.",
+				ul(validateLMD.Failures),
+				"Please ensure all metadata files are present and well-formed.",
 			)
 		} else {
 			ev.Succeed(ctx, "Logical metadata validation successful")
@@ -440,11 +603,16 @@ func (w *PreprocessingWorkflow) Execute(
 
 	// Write PREMIS XML.
 	ev = result.newEvent(ctx, "Create premis.xml")
-
 	if e = writePREMISFile(ctx, identifySIP.SIP, w.veraPDFVersion); e != nil {
-		result.systemError(ctx, e, ev, "premis.xml creation has failed")
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"premis.xml creation has failed",
+			"An error has occurred while attempting to create the premis.xml file and store it in the metadata directory. Please try again, or ask a system administrator to investigate.",
+		)
 	} else {
-		ev.Succeed(ctx, "Created a premis.xml and stored in metadata directory")
+		ev.Succeed(ctx, "Created a premis.xml file and stored it in the metadata directory")
 	}
 
 	// Re-structure SIP.
@@ -453,13 +621,19 @@ func (w *PreprocessingWorkflow) Execute(
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
 		activities.TransformSIPName,
-		&activities.TransformSIPParams{SIP: identifySIP.SIP},
+		&activities.TransformSIPParams{SIP: sip},
 	).Get(ctx, &transformSIP)
 	if e != nil {
-		result.systemError(ctx, e, ev, "restructuring has failed")
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"restructuring has failed",
+			"An error has occurred while attempting to restructure the SIP for preservation processing. Please try again, or ask a system administrator to investigate.",
+		)
 		return result, nil
 	}
-	ev.Succeed(ctx, "SIP has been restructured")
+	ev.Succeed(ctx, "SIP has been restructured for preservation processing")
 
 	// Write the identifiers.json file.
 	ev = result.newEvent(ctx, "Create identifier.json")
@@ -470,10 +644,16 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.WriteIdentifierFileParams{PIP: transformSIP.PIP},
 	).Get(ctx, &writeIDFile)
 	if e != nil {
-		result.systemError(ctx, e, ev, "creating identifier.json has failed")
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"identifier.json creation has failed.",
+			"An error has occurred while attempting to create the identifier.json file and store it in the metadata directory. Please try again, or ask a system administrator to investigate.",
+		)
 		return result, nil
 	}
-	ev.Succeed(ctx, "Created an identifier.json and stored in metadata directory")
+	ev.Succeed(ctx, "Created an identifier.json file and stored it in the metadata directory")
 
 	// Bag the SIP for Enduro processing.
 	ev = result.newEvent(ctx, "Bag SIP")
@@ -484,7 +664,13 @@ func (w *PreprocessingWorkflow) Execute(
 		&bagcreate.Params{SourcePath: localPath},
 	).Get(ctx, &createBag)
 	if e != nil {
-		result.systemError(ctx, e, ev, "bagging has failed")
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"SIP bagging has failed.",
+			"An error has occurred while attempting to bag the SIP. Please try again, or ask a system administrator to investigate.",
+		)
 		return result, nil
 	}
 	ev.Succeed(ctx, "SIP has been bagged")
@@ -670,4 +856,18 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersi
 	}
 
 	return nil
+}
+
+// ul formats a list of strings as an unordered, Markdown-style list.
+func ul(items []string) string {
+	if len(items) == 0 {
+		return ""
+	}
+
+	var s string
+	for _, i := range items {
+		s += fmt.Sprintf("- %s\n", i)
+	}
+
+	return strings.TrimSuffix(s, "\n")
 }
