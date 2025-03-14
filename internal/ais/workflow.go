@@ -1,7 +1,6 @@
 package ais
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -229,40 +228,36 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 	return uploadResult.Key, nil
 }
 
-func RegisterWorkflow(ctx context.Context, tw temporalsdk_worker.Worker, config Config, bucket *blob.Bucket) error {
-	amssclient, err := NewAMSSClient(config.AMSS)
-	if err != nil {
-		return fmt.Errorf("RegisterWorkflow: %w", err)
-	}
-
-	tw.RegisterWorkflowWithOptions(
-		NewWorkflow(config, amssclient).Execute,
+func RegisterWorkflow(w temporalsdk_worker.Worker, config Config, amssClient *AMSSClient) {
+	w.RegisterWorkflowWithOptions(
+		NewWorkflow(config, amssClient).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: config.Temporal.WorkflowName},
 	)
-	tw.RegisterActivityWithOptions(
-		NewFetchActivity(amssclient).Execute,
+}
+
+func RegisterActivities(r temporalsdk_worker.ActivityRegistry, amssClient *AMSSClient, bucket *blob.Bucket) {
+	r.RegisterActivityWithOptions(
+		NewFetchActivity(amssClient).Execute,
 		temporalsdk_activity.RegisterOptions{Name: FetchActivityName},
 	)
-	tw.RegisterActivityWithOptions(
+	r.RegisterActivityWithOptions(
 		NewParseActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: ParseActivityName},
 	)
-	tw.RegisterActivityWithOptions(
+	r.RegisterActivityWithOptions(
 		NewCombineMDActivity().Execute,
 		temporalsdk_activity.RegisterOptions{Name: CombineMDActivityName},
 	)
-	tw.RegisterActivityWithOptions(
+	r.RegisterActivityWithOptions(
 		archivezip.New().Execute,
 		temporalsdk_activity.RegisterOptions{Name: archivezip.Name},
 	)
-	tw.RegisterActivityWithOptions(
+	r.RegisterActivityWithOptions(
 		bucketupload.New(bucket).Execute,
 		temporalsdk_activity.RegisterOptions{Name: bucketupload.Name},
 	)
-	tw.RegisterActivityWithOptions(
+	r.RegisterActivityWithOptions(
 		removepaths.New().Execute,
 		temporalsdk_activity.RegisterOptions{Name: removepaths.Name},
 	)
-
-	return nil
 }
