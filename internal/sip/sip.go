@@ -134,12 +134,18 @@ func (s SIP) HasValidName() bool {
 	alphaNumAndUnderscore := "[a-zA-Z0-9_]"
 
 	if s.Type == enums.SIPTypeBornDigitalSIP {
-		match, _ := regexp.MatchString(fmt.Sprintf("^SIP_%s_%s+[_]?%s+$", yyyymmdd, alphaNum, alphaNumAndUnderscore), s.Name())
+		match, _ := regexp.MatchString(
+			fmt.Sprintf("^SIP_%s_%s+[_]?%s+$", yyyymmdd, alphaNum, alphaNumAndUnderscore),
+			s.Name(),
+		)
 		return match
 	}
 
 	if s.Type == enums.SIPTypeDigitizedSIP {
-		match, _ := regexp.MatchString(fmt.Sprintf("^SIP_%s_[V|v]ecteur_%s+$", yyyymmdd, alphaNumAndUnderscore), s.Name())
+		match, _ := regexp.MatchString(
+			fmt.Sprintf("^SIP_%s_[V|v]ecteur_%s+$", yyyymmdd, alphaNumAndUnderscore),
+			s.Name(),
+		)
 		return match
 	}
 
