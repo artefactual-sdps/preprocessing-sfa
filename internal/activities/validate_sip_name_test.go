@@ -22,11 +22,15 @@ func TestValidateSIPName(t *testing.T) {
 	assert.NilError(t, err)
 
 	bornDigitalSIPUnderscoreRefName := "SIP_20010106_someoffice_some_ref"
-	bornDigitalSIPUnderscoreRef, err := sip.New(filepath.Join(bornDigitalSIPTempDir(t, bornDigitalSIPUnderscoreRefName), bornDigitalSIPUnderscoreRefName))
+	bornDigitalSIPUnderscoreRef, err := sip.New(
+		filepath.Join(bornDigitalSIPTempDir(t, bornDigitalSIPUnderscoreRefName), bornDigitalSIPUnderscoreRefName),
+	)
 	assert.NilError(t, err)
 
 	bornDigitalSIPNoRefName := "SIP_20010106_someoffice"
-	bornDigitalSIPNoRef, err := sip.New(filepath.Join(bornDigitalSIPTempDir(t, bornDigitalSIPNoRefName), bornDigitalSIPNoRefName))
+	bornDigitalSIPNoRef, err := sip.New(
+		filepath.Join(bornDigitalSIPTempDir(t, bornDigitalSIPNoRefName), bornDigitalSIPNoRefName),
+	)
 	assert.NilError(t, err)
 
 	bornDigitalSIPBadName := "somref"
