@@ -2,8 +2,13 @@ package activities
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
+	"path/filepath"
 	"slices"
+
+	"go.artefactual.dev/tools/temporal"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
@@ -37,7 +42,7 @@ func NewValidateFiles(idr fformat.Identifier, vdrs ...fvalidate.Validator) *Vali
 // Execute validates SIP files against a file format specification. The
 // only format validator currently implemented verapdf for PDF/A.
 func (a *ValidateFiles) Execute(ctx context.Context, params *ValidateFilesParams) (*ValidateFilesResult, error) {
-	formats, err := fformat.IdentifyFormats(ctx, a.identifier, params.SIP)
+	formats, err := a.identifyFormats(ctx, params.SIP)
 	if err != nil {
 		return nil, fmt.Errorf("identifyFormats: %v", err)
 	}
@@ -50,7 +55,6 @@ func (a *ValidateFiles) Execute(ctx context.Context, params *ValidateFilesParams
 	return &ValidateFilesResult{Failures: failures}, nil
 }
 
-/*
 func (a *ValidateFiles) identifyFormats(ctx context.Context, sip sip.SIP) (fileFormats, error) {
 	logger := temporal.GetLogger(ctx)
 	formats := make(fileFormats)
@@ -82,11 +86,10 @@ func (a *ValidateFiles) identifyFormats(ctx context.Context, sip sip.SIP) (fileF
 
 	return formats, nil
 }
-*/
 
 func (a *ValidateFiles) validateFiles(
 	sip sip.SIP,
-	files fformat.FileFormats,
+	files fileFormats,
 ) ([]string, error) {
 	var failures []string
 	for _, v := range a.validators {
@@ -102,7 +105,7 @@ func (a *ValidateFiles) validateFiles(
 	return failures, nil
 }
 
-func validate(v fvalidate.Validator, path string, files fformat.FileFormats) (string, error) {
+func validate(v fvalidate.Validator, path string, files fileFormats) (string, error) {
 	var canValidate bool
 	allowedIds := v.FormatIDs()
 
