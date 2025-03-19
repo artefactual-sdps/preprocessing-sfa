@@ -421,6 +421,20 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
 			Type:           "validation",
+			Detail:         "name=\"Validate SIP name\"",
+			OutcomeDetail:  "SIP name \"sip\" matches validation criteria.",
+			Failures:       nil,
+		},
+	).Return(
+		&activities.AddPREMISEventResult{}, nil,
+	)
+	s.env.OnActivity(
+		activities.AddPREMISEventName,
+		sessionCtx,
+		&activities.AddPREMISEventParams{
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+			Type:           "validation",
 			Detail:         "name=\"Validate file format\"",
 			OutcomeDetail:  "Format allowed",
 			Failures:       nil,

@@ -550,6 +550,28 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 		return e
 	}
 
+	// Add PREMIS event noting validate SIP name result.
+	validateSIPNameOutcomeDetail := fmt.Sprintf(
+		"SIP name %q matches validation criteria.",
+		sip.Name(),
+	)
+
+	e = temporalsdk_workflow.ExecuteActivity(
+		withFilesysActOpts(ctx),
+		activities.AddPREMISEventName,
+		&activities.AddPREMISEventParams{
+			PREMISFilePath: path,
+			Agent:          premis.AgentDefault(),
+			Type:           "validation",
+			Detail:         "name=\"Validate SIP name\"",
+			OutcomeDetail:  validateSIPNameOutcomeDetail,
+			Failures:       nil,
+		},
+	).Get(ctx, &addPREMISEvent)
+	if e != nil {
+		return e
+	}
+
 	// Add PREMIS events for validate file format activity.
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
