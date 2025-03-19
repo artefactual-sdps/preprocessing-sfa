@@ -270,6 +270,24 @@ func (w *PreprocessingWorkflow) Execute(
 		ev.Succeed(ctx, "SIP structure matches validation criteria")
 	}
 
+	// Validate SIP name.
+	ev = result.newEvent(ctx, "Validate SIP name")
+	var ValidateSIPName activities.ValidateSIPNameResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		withFilesysActOpts(ctx),
+		activities.ValidateSIPNameName,
+		&activities.ValidateSIPNameParams{SIP: identifySIP.SIP},
+	).Get(ctx, &ValidateSIPName)
+	if e != nil {
+		result.systemError(ctx, e, ev, "SIP name validation has failed")
+		return result, nil
+	}
+	if ValidateSIPName.Failures != nil {
+		result.validationError(ctx, ev, "SIP name validation has failed", ValidateSIPName.Failures)
+	} else {
+		ev.Succeed(ctx, "SIP name matches validation criteria")
+	}
+
 	// Verify that package contents match the manifest.
 	manifestEv := result.newEvent(ctx, "Verify SIP manifest")
 	checksumEv := result.newEvent(ctx, "Verify SIP checksums")
@@ -529,6 +547,28 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersi
 			Type:           "validation",
 			Detail:         "name=\"Validate SIP structure\"",
 			OutcomeDetail:  validateStructureOutcomeDetail,
+			Failures:       nil,
+		},
+	).Get(ctx, &addPREMISEvent)
+	if e != nil {
+		return e
+	}
+
+	// Add PREMIS event noting validate SIP name result.
+	validateSIPNameOutcomeDetail := fmt.Sprintf(
+		"SIP name %q matches validation criteria.",
+		sip.Name(),
+	)
+
+	e = temporalsdk_workflow.ExecuteActivity(
+		withFilesysActOpts(ctx),
+		activities.AddPREMISEventName,
+		&activities.AddPREMISEventParams{
+			PREMISFilePath: path,
+			Agent:          premis.AgentDefault(),
+			Type:           "validation",
+			Detail:         "name=\"Validate SIP name\"",
+			OutcomeDetail:  validateSIPNameOutcomeDetail,
 			Failures:       nil,
 		},
 	).Get(ctx, &addPREMISEvent)

@@ -162,6 +162,10 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateStructureName},
 	)
 	s.env.RegisterActivityWithOptions(
+		activities.NewValidateSIPName().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateSIPNameName},
+	)
+	s.env.RegisterActivityWithOptions(
 		activities.NewVerifyManifest().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.VerifyManifestName},
 	)
@@ -339,6 +343,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.ValidateStructureResult{}, nil,
 	)
 	s.env.OnActivity(
+		activities.ValidateSIPNameName,
+		sessionCtx,
+		&activities.ValidateSIPNameParams{SIP: expectedSIP},
+	).Return(
+		&activities.ValidateSIPNameResult{}, nil,
+	)
+	s.env.OnActivity(
 		activities.VerifyManifestName,
 		sessionCtx,
 		&activities.VerifyManifestParams{SIP: expectedSIP},
@@ -398,6 +409,20 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 			Type:           "validation",
 			Detail:         "name=\"Validate SIP structure\"",
 			OutcomeDetail:  "SIP structure identified: DigitizedAIP. SIP structure matches validation criteria.",
+			Failures:       nil,
+		},
+	).Return(
+		&activities.AddPREMISEventResult{}, nil,
+	)
+	s.env.OnActivity(
+		activities.AddPREMISEventName,
+		sessionCtx,
+		&activities.AddPREMISEventParams{
+			PREMISFilePath: premisFilePath,
+			Agent:          premis.AgentDefault(),
+			Type:           "validation",
+			Detail:         "name=\"Validate SIP name\"",
+			OutcomeDetail:  "SIP name \"sip\" matches validation criteria.",
 			Failures:       nil,
 		},
 	).Return(
@@ -562,6 +587,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 				{
 					Name:        "Validate SIP structure",
 					Message:     "SIP structure matches validation criteria",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
+					Name:        "Validate SIP name",
+					Message:     "SIP name matches validation criteria",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
@@ -734,6 +766,14 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		nil,
 	)
 	s.env.OnActivity(
+		activities.ValidateSIPNameName,
+		sessionCtx,
+		&activities.ValidateSIPNameParams{SIP: expectedSIP},
+	).Return(
+		&activities.ValidateSIPNameResult{},
+		nil,
+	)
+	s.env.OnActivity(
 		activities.VerifyManifestName,
 		sessionCtx,
 		&activities.VerifyManifestParams{SIP: expectedSIP},
@@ -829,6 +869,13 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 XSD folder is missing
 UpdatedAreldaMetadata.xml is missing`,
 					Outcome:     enums.EventOutcomeValidationFailure,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
+					Name:        "Validate SIP name",
+					Message:     `SIP name matches validation criteria`,
+					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},

@@ -26,23 +26,11 @@ func TestNew(t *testing.T) {
 	)
 	digiAIPPath := digitizedAIP.Join("Digitized-AIP")
 
-	digitizedSIP := fs.NewDir(t, "SIP_20201201_Vecteur",
-		fs.WithDir("content",
-			fs.WithDir("d_0000001",
-				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
-			),
-		),
-		fs.WithDir("header"),
-	)
+	digitizedSIPName := "SIP_20201201_Vecteur_someref"
+	digitizedSIPPath := filepath.Join(digitizedSIPTempDir(t, digitizedSIPName), digitizedSIPName)
 
-	digitizedSIPCase := fs.NewDir(t, "SIP_20201201_vecteur",
-		fs.WithDir("content",
-			fs.WithDir("d_0000001",
-				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
-			),
-		),
-		fs.WithDir("header"),
-	)
+	digitizedSIPCaseName := "SIP_20201201_vecteur_someref"
+	digitizedSIPCasePath := filepath.Join(digitizedSIPTempDir(t, digitizedSIPCaseName), digitizedSIPCaseName)
 
 	bornDigitalAIP := fs.NewDir(t, "",
 		fs.WithDir("Born-Digital-AIP",
@@ -65,10 +53,14 @@ func TestNew(t *testing.T) {
 	)
 	bdAIPPath := bornDigitalAIP.Join("Born-Digital-AIP")
 
-	bornDigitalSIP := fs.NewDir(t, "",
-		fs.WithDir("content"),
-		fs.WithDir("header"),
-	)
+	bornDigitalSIPName := "SIP_20201201_someoffice_someref"
+	bornDigitalSIPTempDir := fs.NewDir(t, "",
+		fs.WithDir(bornDigitalSIPName,
+			fs.WithDir("content"),
+			fs.WithDir("header"),
+		),
+	).Path()
+	bornDigitalSIPPath := filepath.Join(bornDigitalSIPTempDir, bornDigitalSIPName)
 
 	tests := []struct {
 		name    string
@@ -114,49 +106,49 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name: "Creates a new digitized SIP",
-			path: digitizedSIP.Path(),
+			path: digitizedSIPPath,
 			wantSIP: sip.SIP{
 				Type:         enums.SIPTypeDigitizedSIP,
-				Path:         digitizedSIP.Path(),
-				ContentPath:  digitizedSIP.Join("content"),
-				ManifestPath: digitizedSIP.Join("header", "metadata.xml"),
-				MetadataPath: digitizedSIP.Join("header", "metadata.xml"),
-				XSDPath:      digitizedSIP.Join("header", "xsd", "arelda.xsd"),
+				Path:         digitizedSIPPath,
+				ContentPath:  filepath.Join(digitizedSIPPath, "content"),
+				ManifestPath: filepath.Join(digitizedSIPPath, "header", "metadata.xml"),
+				MetadataPath: filepath.Join(digitizedSIPPath, "header", "metadata.xml"),
+				XSDPath:      filepath.Join(digitizedSIPPath, "header", "xsd", "arelda.xsd"),
 				TopLevelPaths: []string{
-					digitizedSIP.Join("content"),
-					digitizedSIP.Join("header"),
+					filepath.Join(digitizedSIPPath, "content"),
+					filepath.Join(digitizedSIPPath, "header"),
 				},
 			},
 		},
 		{
 			name: "Creates a new digitized SIP (case-insensitive)",
-			path: digitizedSIPCase.Path(),
+			path: digitizedSIPCasePath,
 			wantSIP: sip.SIP{
 				Type:         enums.SIPTypeDigitizedSIP,
-				Path:         digitizedSIPCase.Path(),
-				ContentPath:  digitizedSIPCase.Join("content"),
-				ManifestPath: digitizedSIPCase.Join("header", "metadata.xml"),
-				MetadataPath: digitizedSIPCase.Join("header", "metadata.xml"),
-				XSDPath:      digitizedSIPCase.Join("header", "xsd", "arelda.xsd"),
+				Path:         digitizedSIPCasePath,
+				ContentPath:  filepath.Join(digitizedSIPCasePath, "content"),
+				ManifestPath: filepath.Join(digitizedSIPCasePath, "header", "metadata.xml"),
+				MetadataPath: filepath.Join(digitizedSIPCasePath, "header", "metadata.xml"),
+				XSDPath:      filepath.Join(digitizedSIPCasePath, "header", "xsd", "arelda.xsd"),
 				TopLevelPaths: []string{
-					digitizedSIPCase.Join("content"),
-					digitizedSIPCase.Join("header"),
+					filepath.Join(digitizedSIPCasePath, "content"),
+					filepath.Join(digitizedSIPCasePath, "header"),
 				},
 			},
 		},
 		{
 			name: "Creates a new born digital SIP",
-			path: bornDigitalSIP.Path(),
+			path: bornDigitalSIPPath,
 			wantSIP: sip.SIP{
 				Type:         enums.SIPTypeBornDigitalSIP,
-				Path:         bornDigitalSIP.Path(),
-				ContentPath:  bornDigitalSIP.Join("content"),
-				ManifestPath: bornDigitalSIP.Join("header", "metadata.xml"),
-				MetadataPath: bornDigitalSIP.Join("header", "metadata.xml"),
-				XSDPath:      bornDigitalSIP.Join("header", "xsd", "arelda.xsd"),
+				Path:         bornDigitalSIPPath,
+				ContentPath:  filepath.Join(bornDigitalSIPPath, "content"),
+				ManifestPath: filepath.Join(bornDigitalSIPPath, "header", "metadata.xml"),
+				MetadataPath: filepath.Join(bornDigitalSIPPath, "header", "metadata.xml"),
+				XSDPath:      filepath.Join(bornDigitalSIPPath, "header", "xsd", "arelda.xsd"),
 				TopLevelPaths: []string{
-					bornDigitalSIP.Join("content"),
-					bornDigitalSIP.Join("header"),
+					filepath.Join(bornDigitalSIPPath, "content"),
+					filepath.Join(bornDigitalSIPPath, "header"),
 				},
 			},
 		},
@@ -183,6 +175,7 @@ func TestNew(t *testing.T) {
 
 			assert.NilError(t, err)
 			assert.DeepEqual(t, s, tt.wantSIP)
+			assert.Equal(t, s.HasValidName(), true)
 		})
 	}
 }
@@ -227,4 +220,17 @@ func TestIsSIP(t *testing.T) {
 		Path: "/path/to/AIP_20201201",
 	}
 	assert.Assert(t, !s.IsSIP())
+}
+
+func digitizedSIPTempDir(t *testing.T, sipName string) string {
+	return fs.NewDir(t, "",
+		fs.WithDir(sipName,
+			fs.WithDir("content",
+				fs.WithDir("d_0000001",
+					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+				),
+			),
+			fs.WithDir("header"),
+		),
+	).Path()
 }
