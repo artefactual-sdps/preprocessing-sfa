@@ -28,14 +28,17 @@ var pdfaPUIDs = []string{
 }
 
 type veraPDFValidator struct {
-	cmd    string
-	logger logr.Logger
+	cmd     string
+	runFunc runFunction
+	logger  logr.Logger
 }
+
+type runFunction func(name string, args ...string) (string, error)
 
 var _ Validator = (*veraPDFValidator)(nil)
 
-func NewVeraPDFValidator(cmd string, logger logr.Logger) *veraPDFValidator {
-	return &veraPDFValidator{cmd: cmd, logger: logger}
+func NewVeraPDFValidator(cmd string, runFunc runFunction, logger logr.Logger) *veraPDFValidator {
+	return &veraPDFValidator{cmd: cmd, runFunc: runFunc, logger: logger}
 }
 
 func (v *veraPDFValidator) FormatIDs() []string {
@@ -95,15 +98,13 @@ func RunCommand(name string, args ...string) (string, error) {
 	return string(output), nil
 }
 
-var Run = RunCommand
-
 func (v *veraPDFValidator) Version() (string, error) {
 	// If the veraPDF cmd path is not set then skip returning the version.
 	if v.cmd == "" {
 		return "", nil
 	}
 
-	output, err := Run(v.cmd, "--version")
+	output, err := v.runFunc(v.cmd, "--version")
 	if err != nil {
 		return "", err
 	}

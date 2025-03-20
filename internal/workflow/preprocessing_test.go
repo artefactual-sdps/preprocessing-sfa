@@ -13,6 +13,7 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -24,6 +25,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/localact"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/pips"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
@@ -184,6 +186,13 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 	s.env.RegisterActivityWithOptions(
 		activities.NewAddPREMISEvent().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISEventName},
+	)
+
+	veraPDFValidator := fvalidate.NewVeraPDFValidator("", fvalidate.RunCommand, logr.Discard())
+
+	s.env.RegisterActivityWithOptions(
+		activities.NewAddPREMISValidationEvent(veraPDFValidator).Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISValidationEventName},
 	)
 	s.env.RegisterActivityWithOptions(
 		activities.NewAddPREMISAgent().Execute,
@@ -452,9 +461,10 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.AddPREMISEventResult{}, nil,
 	)
 	s.env.OnActivity(
-		activities.AddPREMISEventName,
+		activities.AddPREMISValidationEventName,
 		sessionCtx,
-		&activities.AddPREMISEventParams{
+		&activities.AddPREMISValidationEventParams{
+			SIP:            expectedSIP,
 			PREMISFilePath: premisFilePath,
 			Agent: premis.Agent{
 				Type:    "software",
@@ -462,12 +472,15 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 				IdType:  "url",
 				IdValue: "https://verapdf.org",
 			},
-			Type:          "validation",
-			Detail:        "name=\"Validate SIP file formats\"",
-			OutcomeDetail: "File format complies with specification",
+			Summary: premis.EventSummary{
+				Type:          "validation",
+				Detail:        "name=\"Validate SIP file formats\"",
+				Outcome:       "valid",
+				OutcomeDetail: "File format complies with specification",
+			},
 		},
 	).Return(
-		&activities.AddPREMISEventResult{}, nil,
+		&activities.AddPREMISValidationEventResult{}, nil,
 	)
 	s.env.OnActivity(
 		activities.AddPREMISEventName,

@@ -149,12 +149,12 @@ func AppendEventXMLForEachObject(doc *etree.Document, eventSummary EventSummary,
 
 	// Add events for each existing object.
 	objectEls := PREMISEl.FindElements("//premis:object")
-	appendEventXMLForObjects(PREMISEl, eventSummary, agent, objectEls)
+	AppendEventXMLForObjects(PREMISEl, eventSummary, agent, objectEls)
 
 	return nil
 }
 
-func appendEventXMLForObjects(
+func AppendEventXMLForObjects(
 	PREMISEl *etree.Element,
 	eventSummary EventSummary,
 	agent Agent,

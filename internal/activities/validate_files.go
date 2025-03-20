@@ -2,13 +2,8 @@ package activities
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io/fs"
-	"path/filepath"
 	"slices"
-
-	"go.artefactual.dev/tools/temporal"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
@@ -30,8 +25,6 @@ type (
 	}
 )
 
-type fileFormats map[string]*fformat.FileFormat
-
 func NewValidateFiles(idr fformat.Identifier, vdrs ...fvalidate.Validator) *ValidateFiles {
 	return &ValidateFiles{
 		identifier: idr,
@@ -42,7 +35,7 @@ func NewValidateFiles(idr fformat.Identifier, vdrs ...fvalidate.Validator) *Vali
 // Execute validates SIP files against a file format specification. The
 // only format validator currently implemented verapdf for PDF/A.
 func (a *ValidateFiles) Execute(ctx context.Context, params *ValidateFilesParams) (*ValidateFilesResult, error) {
-	formats, err := a.identifyFormats(ctx, params.SIP)
+	formats, err := fformat.IdentifyFormats(ctx, a.identifier, params.SIP)
 	if err != nil {
 		return nil, fmt.Errorf("identifyFormats: %v", err)
 	}
@@ -55,41 +48,9 @@ func (a *ValidateFiles) Execute(ctx context.Context, params *ValidateFilesParams
 	return &ValidateFilesResult{Failures: failures}, nil
 }
 
-func (a *ValidateFiles) identifyFormats(ctx context.Context, sip sip.SIP) (fileFormats, error) {
-	logger := temporal.GetLogger(ctx)
-	formats := make(fileFormats)
-	err := filepath.WalkDir(sip.ContentPath, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if ctx.Err() != nil {
-			return errors.New("context cancelled")
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		ff, err := a.identifier.Identify(path)
-		if err != nil {
-			logger.Info("format identification failed", "path", path)
-		} else {
-			formats[path] = ff
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return formats, nil
-}
-
 func (a *ValidateFiles) validateFiles(
 	sip sip.SIP,
-	files fileFormats,
+	files fformat.FileFormats,
 ) ([]string, error) {
 	var failures []string
 	for _, v := range a.validators {
@@ -105,7 +66,7 @@ func (a *ValidateFiles) validateFiles(
 	return failures, nil
 }
 
-func validate(v fvalidate.Validator, path string, files fileFormats) (string, error) {
+func validate(v fvalidate.Validator, path string, files fformat.FileFormats) (string, error) {
 	var canValidate bool
 	allowedIds := v.FormatIDs()
 
