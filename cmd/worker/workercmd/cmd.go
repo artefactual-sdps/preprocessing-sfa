@@ -105,7 +105,7 @@ func (m *Main) Run(ctx context.Context) error {
 		psvc = entclient.New(m.dbClient)
 	}
 
-	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path, m.logger)
+	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path, fvalidate.RunCommand, m.logger)
 
 	veraPDFVersion, err := veraPDFValidator.Version()
 	if err != nil {
@@ -171,6 +171,10 @@ func (m *Main) Run(ctx context.Context) error {
 	w.RegisterActivityWithOptions(
 		activities.NewAddPREMISAgent().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISAgentName},
+	)
+	w.RegisterActivityWithOptions(
+		activities.NewAddPREMISValidationEvent(veraPDFValidator).Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISValidationEventName},
 	)
 	w.RegisterActivityWithOptions(
 		xmlvalidate.New(xmlvalidate.NewXMLLintValidator()).Execute,

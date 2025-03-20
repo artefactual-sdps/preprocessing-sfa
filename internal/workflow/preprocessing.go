@@ -608,13 +608,17 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersi
 
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
-		activities.AddPREMISEventName,
-		&activities.AddPREMISEventParams{
+		activities.AddPREMISValidationEventName,
+		&activities.AddPREMISValidationEventParams{
+			SIP:            sip,
 			PREMISFilePath: path,
 			Agent:          veraPDFAgent,
-			Type:           "validation",
-			Detail:         "name=\"Validate SIP file formats\"",
-			OutcomeDetail:  "File format complies with specification",
+			Summary: premis.EventSummary{
+				Type:          "validation",
+				Detail:        "name=\"Validate SIP file formats\"",
+				Outcome:       "valid",
+				OutcomeDetail: "File format complies with specification",
+			},
 		},
 	).Get(ctx, &addPREMISEvent)
 	if e != nil {

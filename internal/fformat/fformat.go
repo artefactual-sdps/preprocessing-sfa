@@ -1,5 +1,16 @@
 package fformat
 
+import (
+	"context"
+	"errors"
+	"io/fs"
+	"path/filepath"
+
+	"go.artefactual.dev/tools/temporal"
+
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
+)
+
 // Identifier provides a interface for identifying a file's format.
 type Identifier interface {
 	// Identify returns a file format identification for the file at path.
@@ -18,4 +29,38 @@ type FileFormat struct {
 	MIMEType   string // MIMEType of the format (e.g. "application/msword").
 	Basis      string // Basis for identification of the format (e.g. "magic").
 	Warning    string // Warning message (if any) from the format identifier.
+}
+
+type FileFormats map[string]*FileFormat
+
+func IdentifyFormats(ctx context.Context, identifier Identifier, sip sip.SIP) (FileFormats, error) {
+	logger := temporal.GetLogger(ctx)
+	formats := make(FileFormats)
+	err := filepath.WalkDir(sip.ContentPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if ctx.Err() != nil {
+			return errors.New("context cancelled")
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		ff, err := identifier.Identify(path)
+		if err != nil {
+			logger.Info("format identification failed", "path", path)
+		} else {
+			formats[path] = ff
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return formats, nil
 }

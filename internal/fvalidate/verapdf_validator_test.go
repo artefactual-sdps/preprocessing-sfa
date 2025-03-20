@@ -14,7 +14,7 @@ import (
 func TestFormatIDs(t *testing.T) {
 	t.Parallel()
 
-	v := fvalidate.NewVeraPDFValidator("", logr.Discard())
+	v := fvalidate.NewVeraPDFValidator("", fvalidate.RunCommand, logr.Discard())
 	got := v.FormatIDs()
 
 	assert.DeepEqual(t, got, []string{
@@ -35,7 +35,7 @@ func TestFormatIDs(t *testing.T) {
 func TestName(t *testing.T) {
 	t.Parallel()
 
-	v := fvalidate.NewVeraPDFValidator("", logr.Discard())
+	v := fvalidate.NewVeraPDFValidator("", fvalidate.RunCommand, logr.Discard())
 	got := v.Name()
 
 	assert.Equal(t, got, "veraPDF")
@@ -77,7 +77,7 @@ func TestValidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			v := fvalidate.NewVeraPDFValidator(tt.cmd, logr.Discard())
+			v := fvalidate.NewVeraPDFValidator(tt.cmd, fvalidate.RunCommand, logr.Discard())
 			td := t.TempDir()
 			got, err := v.Validate(tt.path(td))
 			if tt.wantErr != nil {
@@ -97,15 +97,11 @@ func TestValidate(t *testing.T) {
 }
 
 func TestVeraPDFVersion(t *testing.T) {
-	defer func() {
-		fvalidate.Run = fvalidate.RunCommand
-	}()
-
-	fvalidate.Run = func(string, ...string) (string, error) {
+	runFunc := func(string, ...string) (string, error) {
 		return "veraPDF 1.1\nSome more text", nil
 	}
 
-	v := fvalidate.NewVeraPDFValidator("veraPDF", logr.Discard())
+	v := fvalidate.NewVeraPDFValidator("veraPDF", runFunc, logr.Discard())
 	version, err := v.Version()
 
 	assert.NilError(t, err)
@@ -113,15 +109,11 @@ func TestVeraPDFVersion(t *testing.T) {
 }
 
 func TestVeraPDFVersionError(t *testing.T) {
-	defer func() {
-		fvalidate.Run = fvalidate.RunCommand
-	}()
-
-	fvalidate.Run = func(string, ...string) (string, error) {
+	runFunc := func(string, ...string) (string, error) {
 		return "", fmt.Errorf("exit status 1")
 	}
 
-	v := fvalidate.NewVeraPDFValidator("badcommand", logr.Discard())
+	v := fvalidate.NewVeraPDFValidator("badcommand", runFunc, logr.Discard())
 	version, err := v.Version()
 
 	assert.Error(t, err, "exit status 1")
