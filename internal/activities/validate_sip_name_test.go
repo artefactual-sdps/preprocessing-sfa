@@ -81,7 +81,7 @@ func TestValidateSIPName(t *testing.T) {
 			want: activities.ValidateSIPNameResult{
 				Failures: []string{
 					fmt.Sprintf(
-						"Transfer name %q violates naming standard",
+						"SIP name %q violates naming standard",
 						bornDigitalSIPBadName,
 					),
 				},
@@ -101,7 +101,7 @@ func TestValidateSIPName(t *testing.T) {
 			want: activities.ValidateSIPNameResult{
 				Failures: []string{
 					fmt.Sprintf(
-						"Transfer name %q violates naming standard",
+						"SIP name %q violates naming standard",
 						digitizedSIPBadName,
 					),
 				},
