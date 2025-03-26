@@ -29,9 +29,9 @@ func (a *ValidateSIPName) Execute(
 ) (*ValidateSIPNameResult, error) {
 	var failures []string
 
-	// Check transfer name for naming standards.
+	// Check SIP name for naming standards.
 	if !params.SIP.HasValidName() {
-		failures = append(failures, fmt.Sprintf("Transfer name %q violates naming standard", params.SIP.Name()))
+		failures = append(failures, fmt.Sprintf("SIP name %q violates naming standard", params.SIP.Name()))
 	}
 
 	return &ValidateSIPNameResult{Failures: failures}, nil
