@@ -248,6 +248,36 @@ func (s *PreprocessingTestSuite) digitizedAIP(path string) sip.SIP {
 	return r
 }
 
+func (s *PreprocessingTestSuite) bornDigitalSIP(path string) sip.SIP {
+	fs.Apply(
+		s.T(),
+		fs.DirFromPath(s.T(), path),
+		fs.WithDir("content",
+			fs.WithDir("content",
+				fs.WithDir("d_0000001",
+					fs.WithFile("00000001.jp2", ""),
+					fs.WithFile("00000001_PREMIS.xml", ""),
+					fs.WithFile("00000002.jp2", ""),
+					fs.WithFile("00000002_PREMIS.xml", ""),
+				),
+			),
+			fs.WithDir("header",
+				fs.WithDir("xsd",
+					fs.WithFile("arelda.xsd", ""),
+				),
+				fs.WithFile("metadata.xml", ""),
+			),
+		),
+	)
+
+	r, err := sip.New(path)
+	if err != nil {
+		s.T().Fatalf("Couldn't create SIP: %v", err)
+	}
+
+	return r
+}
+
 func (s *PreprocessingTestSuite) AfterTest(suiteName, testName string) {
 	s.env.AssertExpectations(s.T())
 }
@@ -357,13 +387,6 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 		&activities.VerifyManifestResult{}, nil,
 	)
 	s.env.OnActivity(
-		ffvalidate.Name,
-		sessionCtx,
-		&ffvalidate.Params{Path: expectedSIP.ContentPath},
-	).Return(
-		&ffvalidate.Result{}, nil,
-	)
-	s.env.OnActivity(
 		activities.ValidateFilesName,
 		sessionCtx,
 		&activities.ValidateFilesParams{SIP: expectedSIP},
@@ -423,20 +446,6 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 			Type:           "validation",
 			Detail:         "name=\"Validate SIP name\"",
 			OutcomeDetail:  "SIP name \"sip\" matches validation criteria.",
-			Failures:       nil,
-		},
-	).Return(
-		&activities.AddPREMISEventResult{}, nil,
-	)
-	s.env.OnActivity(
-		activities.AddPREMISEventName,
-		sessionCtx,
-		&activities.AddPREMISEventParams{
-			PREMISFilePath: premisFilePath,
-			Agent:          premis.AgentDefault(),
-			Type:           "validation",
-			Detail:         "name=\"Validate file format\"",
-			OutcomeDetail:  "Format allowed",
 			Failures:       nil,
 		},
 	).Return(
@@ -613,13 +622,6 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowSuccess() {
 					CompletedAt: testTime,
 				},
 				{
-					Name:        "Validate SIP file formats",
-					Message:     "No disallowed file formats found",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
 					Name:        "Validate SIP files",
 					Message:     "No invalid files found",
 					Outcome:     enums.EventOutcomeSuccess,
@@ -734,7 +736,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 	s.SetupTest(&config.Configuration{})
 
 	sipPath := filepath.Join(s.testDir, relPath)
-	expectedSIP := s.digitizedAIP(sipPath)
+	expectedSIP := s.bornDigitalSIP(sipPath)
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
@@ -760,7 +762,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 		&activities.ValidateStructureResult{
 			Failures: []string{
 				"XSD folder is missing",
-				"UpdatedAreldaMetadata.xml is missing",
+				"metadata.xml is missing",
 			},
 		},
 		nil,
@@ -819,21 +821,12 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 	).Return(
 		&xmlvalidate.Result{
 			Failures: []string{
-				`additional/UpdatedAreldaMetadata.xml does not match expected metadata requirements`,
+				`metadata.xml does not match expected metadata requirements`,
 			},
 		}, nil,
 	)
 
-	s.env.OnActivity(
-		activities.ValidatePREMISName,
-		sessionCtx,
-		&activities.ValidatePREMISParams{Path: expectedSIP.LogicalMDPath},
-	).Return(
-		&activities.ValidatePREMISResult{
-			Failures: []string{`test-AIP-premis.xml does not match expected metadata requirements`},
-		}, nil,
-	)
-
+	// Execute workflow.
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
 		&workflow.PreprocessingWorkflowParams{RelativePath: relPath},
@@ -858,7 +851,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 				},
 				{
 					Name:        "Identify SIP structure",
-					Message:     "SIP structure identified: DigitizedAIP",
+					Message:     "SIP structure identified: BornDigitalSIP",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
@@ -867,7 +860,7 @@ func (s *PreprocessingTestSuite) TestPreprocessingWorkflowValidationFails() {
 					Name: "Validate SIP structure",
 					Message: `Content error: SIP structure validation has failed:
 XSD folder is missing
-UpdatedAreldaMetadata.xml is missing`,
+metadata.xml is missing`,
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
@@ -881,7 +874,7 @@ UpdatedAreldaMetadata.xml is missing`,
 				},
 				{
 					Name: "Verify SIP manifest",
-					Message: `Content error: SIP contents do not match "UpdatedAreldaMetadata.xml":
+					Message: `Content error: SIP contents do not match "metadata.xml":
 Missing file: d_0000001/00000001.jp2
 Unexpected file: d_0000001/extra_file.txt`,
 					Outcome:     enums.EventOutcomeValidationFailure,
@@ -915,15 +908,7 @@ invalid PDF/A: "contents/contents/d_0000001/test.pdf"`,
 				},
 				{
 					Name:        "Validate SIP metadata",
-					Message:     "Content error: metadata validation has failed:\nadditional/UpdatedAreldaMetadata.xml does not match expected metadata requirements",
-					Outcome:     enums.EventOutcomeValidationFailure,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name: "Validate logical metadata",
-					Message: `Content error: logical metadata validation has failed:
-test-AIP-premis.xml does not match expected metadata requirements`,
+					Message:     "Content error: metadata validation has failed:\nmetadata.xml does not match expected metadata requirements",
 					Outcome:     enums.EventOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
