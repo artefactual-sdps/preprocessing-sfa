@@ -326,27 +326,30 @@ func (w *PreprocessingWorkflow) Execute(
 		checksumEv.Succeed(ctx, "SIP checksums match file contents")
 	}
 
-	// Verify that SIP file formats are on allowlist.
-	ev = result.newEvent(ctx, "Validate SIP file formats")
-	var ffvalidateResult ffvalidate.Result
-	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
-		ffvalidate.Name,
-		&ffvalidate.Params{Path: identifySIP.SIP.ContentPath},
-	).Get(ctx, &ffvalidateResult)
-	if e != nil {
-		result.systemError(ctx, e, ev, "System error: file format validation has failed")
-		return result, nil
-	}
+	// Verify that SIP file formats are on allowlist (SIP types only).
+	if identifySIP.SIP.IsSIP() {
+		ev = result.newEvent(ctx, "Validate SIP file formats")
+		var ffvalidateResult ffvalidate.Result
+		e = temporalsdk_workflow.ExecuteActivity(
+			withFilesysActOpts(ctx),
+			ffvalidate.Name,
+			&ffvalidate.Params{Path: identifySIP.SIP.ContentPath},
+		).Get(ctx, &ffvalidateResult)
+		if e != nil {
+			result.systemError(ctx, e, ev, "System error: file format validation has failed")
+			return result, nil
+		}
 
-	if ffvalidateResult.Failures != nil {
-		result.validationError(
-			ctx,
-			ev,
-			"file format validation has failed. One or more file formats are not allowed", ffvalidateResult.Failures,
-		)
-	} else {
-		ev.Succeed(ctx, "No disallowed file formats found")
+		if ffvalidateResult.Failures != nil {
+			result.validationError(
+				ctx,
+				ev,
+				"file format validation has failed. One or more file formats are not allowed",
+				ffvalidateResult.Failures,
+			)
+		} else {
+			ev.Succeed(ctx, "No disallowed file formats found")
+		}
 	}
 
 	// Validate the SIP files.
@@ -405,7 +408,7 @@ func (w *PreprocessingWorkflow) Execute(
 		ev.Succeed(ctx, "Metadata validation successful")
 	}
 
-	// Validate logical metadata if SIP is an AIP type.
+	// Validate logical metadata (AIP types only).
 	if identifySIP.SIP.IsAIP() {
 		ev = result.newEvent(ctx, "Validate logical metadata")
 		var validateLMD activities.ValidatePREMISResult
@@ -576,21 +579,23 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersi
 		return e
 	}
 
-	// Add PREMIS events for validate file format activity.
-	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
-		activities.AddPREMISEventName,
-		&activities.AddPREMISEventParams{
-			PREMISFilePath: path,
-			Agent:          premis.AgentDefault(),
-			Type:           "validation",
-			Detail:         "name=\"Validate file format\"",
-			OutcomeDetail:  "Format allowed",
-			Failures:       nil,
-		},
-	).Get(ctx, &addPREMISEvent)
-	if e != nil {
-		return e
+	if sip.IsSIP() {
+		// Add PREMIS events for validate file format activity (SIP types only).
+		e = temporalsdk_workflow.ExecuteActivity(
+			withFilesysActOpts(ctx),
+			activities.AddPREMISEventName,
+			&activities.AddPREMISEventParams{
+				PREMISFilePath: path,
+				Agent:          premis.AgentDefault(),
+				Type:           "validation",
+				Detail:         "name=\"Validate file format\"",
+				OutcomeDetail:  "Format allowed",
+				Failures:       nil,
+			},
+		).Get(ctx, &addPREMISEvent)
+		if e != nil {
+			return e
+		}
 	}
 
 	// Add PREMIS events for validate file activity.
