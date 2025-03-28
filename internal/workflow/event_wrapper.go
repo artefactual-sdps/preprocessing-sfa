@@ -1,6 +1,8 @@
 package workflow
 
 import (
+	"strings"
+
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
@@ -19,16 +21,14 @@ func (w *eventWrapper) Complete(
 	ctx temporalsdk_workflow.Context,
 	outcome enums.EventOutcome,
 	msg string,
-	a ...any,
 ) *eventWrapper {
-	w.Event.Complete(temporalsdk_workflow.Now(ctx), outcome, msg, a...)
+	w.Event.Complete(temporalsdk_workflow.Now(ctx), outcome, msg)
 	return w
 }
 
 func (w *eventWrapper) Succeed(
 	ctx temporalsdk_workflow.Context,
-	msg string,
-	a ...any,
+	msg ...string,
 ) *eventWrapper {
-	return w.Complete(ctx, enums.EventOutcomeSuccess, msg, a...)
+	return w.Complete(ctx, enums.EventOutcomeSuccess, strings.Join(msg, "\n\n"))
 }
