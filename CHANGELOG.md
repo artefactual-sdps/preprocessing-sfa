@@ -8,6 +8,23 @@ requests.
 
 ## [Unreleased]
 
+## [0.11.0] - 2025-04-02
+
+### Fixed
+
+- Don't add inapplicable veraPDF PREMIS events ([#118])
+- Increase timeouts to get AIP path from AMSS ([#126])
+
+### Changed
+
+- Get veraPDF version dynamically ([#118])
+- Don't check file formats for migrated SIPs ([#135])
+- Improve content and system error messages ([#43])
+
+### Added
+
+- SIP name validation ([#122])
+
 ## [0.10.0] - 2025-02-27
 
 ### Added
@@ -97,7 +114,8 @@ requests.
 
 Initial release.
 
-[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.10.0...HEAD
+[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.7.0...v0.8.0
@@ -108,6 +126,9 @@ Initial release.
 [0.3.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/artefactual-sdps/preprocessing-sfa/releases/tag/v0.1.0
+[#135]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/135
+[#126]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/126
+[#122]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/122
 [#118]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/118
 [#109]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/109
 [#108]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/108
@@ -128,6 +149,7 @@ Initial release.
 [#60]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/60
 [#59]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/59
 [#58]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/58
+[#43]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/43
 [#39]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/39
 [keep a changelog]: https://keepachangelog.com/en/1.1.0
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
