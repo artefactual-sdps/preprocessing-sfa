@@ -5,6 +5,7 @@
 - [Configuration](#configuration)
 - [Local environment](#local-environment)
 - [Makefile](#makefile)
+- [Available activities](#available-activities)
 
 ## Configuration
 
@@ -216,6 +217,339 @@ Dependencies are downloaded automatically.
 ### Debug mode
 
 The debug mode produces more output, including the commands executed. E.g.:
+
+## Available activities
+
+* [Calculate SIP checksum](#calculate-sip-checksum)
+* [Check for duplicate SIP](#check-for-duplicate-sip)
+* [Unbag SIP](#unbag-sip)
+* [Identify SIP structure](#identify-sip-structure)
+* [Validate SIP structure](#validate-sip-structure)
+* [Validate SIP name](#validate-sip-name)
+* [Verify SIP manifest](#verify-sip-manifest)
+* [Verify SIP checksums](#verify-sip-checksums)
+* [Validate SIP files](#validate-sip-files)
+* [Validate logical metadata](#validate-logical-metadata)
+* [Create premis.xml](#create-premisxml)
+* [Restrucuture SIP](#restructure-sip)
+* [Create identifiers.json](#create-identifiersjson)
+* [Other activities](#other-activities)
+
+### Calculate SIP checksum
+
+Part 1 of a 2-part activity around duplicate checking - see also:
+
+* [Check for duplicate SIP](#check-for-duplicate-sip)
+
+Generates and stores a checksum for the entire SIP, so it can be used to check
+for duplicates
+
+#### Steps
+
+* Generate a SHA256 checksum for the incoming package
+* Read SIP name
+* Store SIP name and checksum in the persistence layer (`sips` table)
+
+#### Success critera
+
+* A SHA256 checksum is successfully generate for the SIP
+* the SIP name and generated checksum are stored in the persistence layer
+
+### Check for duplicate SIP
+
+Part 2 of a 2-part activity around duplicate checking - see also:
+
+* [Calculate SIP checksum](#calculate-sip-checksum)
+
+Determines if an identical SIP  has previously been ingested
+
+#### Steps
+
+* Use the generated checksum from [part 1](#calculate-sip-checksum) to search
+  for an existing match in the `sips` database table
+* If an existing match is found, return a content error fro a duplicateSIP and
+  terminate the workflow
+* Else, continue to next activity
+
+#### Success critera
+
+* The activity is able to read the generated checksum and the `sips` database
+  table
+* No matching checksum is found the SIPs database table
+
+### Unbag SIP
+
+Extracts the contents of the bag.
+
+Only runs if the SIP is a BagIt bag. If the SIP is not a bag, this activity will
+not run.
+
+#### Steps
+
+* Check if SIP is a bag
+* If yes, extract the contents of the bag for additional ingest processing
+* Else, skip
+
+#### Success critera
+
+* Bag is successfully extracted
+
+### Identify SIP structure
+
+Determines the SIP type by analyzing the name and distinguishing features of
+the package, based on eCH-0160 requirements and other internal policies.
+
+Package types include:
+
+* BornDigitalSIP
+* DigitizedSIP
+* BornDigitalAIP
+* DigitizedAIP
+
+#### Steps
+
+* Base type is BornDigitalSIP; assume this is the SIP type unless other
+  conditions are met
+* Check if the package contains a `Prozess_Digitalisierung_PREMIS.xml` file
+  * If yes, it is a Digitized package - either DigitizedSIP or DigitizedAIP
+* Check if the package contains an additional directory
+  * If yes, it is a migration AIP - either BornDigitalAIP or DigitizedAIP
+* Compare check results and determine package type
+
+#### Success criteria
+
+* Package is successfully identified as one of the 4 supported types
+
+### Validate SIP structure
+
+Ensures that the SIP directory structure conforms to eCH-0160 specifications,
+that no empty directories are included, and that there are no disallowed
+characters used in file and directory names.
+
+**Note**: Chracacter restrictions for file and directory names are based on some
+of the requirements of the tools used by
+[Archivematica](https://www.archivematica.org) during preservation processing -
+at present, the file name cleanup steps in Archivematica cannot be modified or
+disabled without forking. To ensure that SFA package metadata matches the
+content, this validation check ensures that no disallowed characters are
+included in file or directory names that might be automatically changed once
+received by Archivematica.
+
+#### Steps
+
+* Read SIP type from previous activity
+* Check for presence of `content` and `header` directories
+* Check all file and directory names for invalid characters
+* Check for empty directories
+
+#### Success critera
+
+* Files and directories only contain valid characters
+  * `A-Z`, `a-z`, `0-9`, or `-_.()`
+* SIPs contain `content` and `header` directories
+  * If content type is an AIP, it also contains an `additional` directory
+* No empty directories are found
+
+### Validate SIP name
+
+Ensure that submitted SIPs use the required naming convention for the identified
+package type.
+
+#### Steps
+
+* Read SIP type from previous activity
+* Use regular expression to validate SIP name based on identified type
+
+#### Success critera
+
+* SIP follows expected naming convention for package type:
+  * BornDigitalSIP: `SIP_[YYYYMMDD]_[delivering office]_[reference]`
+  * DigitizedSIP: `SIP_[YYYYMMDD]_Vecteur_[delivering office]_[reference]`
+
+### Verify SIP manifest
+
+Checks if all files and directories listed in the metadata manifest match those
+found in the SIP, and that no extra files or directories are found.
+
+#### Steps
+
+* Load SIP metadata manifest into memory
+* Parse the manifest contents and return a list of files and directories
+* Parse the SIP and return a list of files and directories
+* Compare lists
+* Return a list of any missing files found in the manifest but not the SIP
+* Return a list of unexpected files found in the SIP but not the manifest
+
+#### Success critera
+
+* There is a matching file or directory for every entry found in the
+  `metadata.xml` (or `UpdatedAreldaMetadata.xml`) manifest
+* No unexpected files that are not listed in the manifest are found
+
+### Verify SIP checksums
+
+Confirms that the checksums included in the metadata manifest match those
+calculated during validation.
+
+#### Steps
+
+* Check if a given file exists in the manifest
+* If yes, calculate a checksum - else skip
+* Compare calculated checksum to manifest checksum
+
+#### Success critera
+
+* A checksum calculated using the same algorithm as the one used in the metadata
+  file returns the same value as the one included in the metadata manifest for
+  each file listed
+
+### Validate SIP files
+
+Ensures that files included in the SIP are well-formed and match their format
+specifications.
+
+#### Steps
+
+* For PDFs, use [VeraPDF](https://github.com/veraPDF) to validate against the
+  PDF specification
+* Note: additional format validation checks will be added in the future
+
+#### Success critera
+
+* All files pass validation
+
+### Validate logical metadata
+
+Ensures that a logical metadata file is included for AIPs being migrated from
+DIR and validates the file against a PREMIS schema file
+
+**Note** : this activity uses some custom workflow code and a locally stored
+copy of the PREMIS schema to run the general temporal activity
+[xmlvalidate](https://github.com/artefactual-sdps/temporal-activities/blob/main/xmlvalidate/activity.go).
+
+#### Steps
+
+* Read package type from memory
+* If package type is bornDigitalAIP or DigitizedAIP, check for XML file in
+  `additional` directory
+* If found, validate the XML file against a locally stored copy of the PREMIS
+  schema; fail ingest if any errors are returned
+
+#### Success critera
+
+* Logical metadata file is found in the `additional` directory of the package
+* Logical metadata file validates against PREMIS 3.x schema
+
+### Create premis.xml
+
+Generates a PREMIS XML file that captures ingest preservation actions performed
+by Enduro as PREMIS events for inclusion in the resulting AIP METS file.
+
+**NOTE**: This activity is broken up into 3 different activity files in
+`/internal/activites`:
+
+* `add_premis_agent.go`
+* `add_premis_event.go`
+* `add_premisobjects.go`
+
+The XML output is then assembled via `/internal/premis/premis.go`.
+
+#### Steps
+
+* Review event details for all successful tasks
+* Create premis.xml file in a new metadata directory
+* Write PREMIS objects to file
+* Write PREMIS events to file
+* Write PREMIS agents to file
+
+#### Success critera
+
+* A `premis.xml` file is successfully generated with ingest events
+
+### Restructure SIP
+
+Reorganizes SIP directory structure into a Preservation Information Package
+(PIP) that the preservation engine (Archivematica) can process.
+
+#### Steps
+
+* Check if `metadata` directory exists, else create a new `metadata` directory
+* Move the `Prozess_Digitalisierung_PREMIS.xml` file to the `metadata` directory
+* For AIPs, move the `UpdatedAreldaMetatdata.xml` and logical metadata files to
+  the `metadata` directory
+* Create an `objects` directory, and in that directory create a sub-directory
+  with the SIP name
+* Delete `xsd` directory and its contents from `header` directory
+* Move `content` directory into the new `objects` directory
+* Create a new `header` directory in objects
+* Move the `metadata.xml` file into the new `header` directory
+* Delete original top-level directories
+
+#### Success critera
+
+* XSD files are removed
+* Restructured package now has `objects` and `metadata` directories immediately
+  inside parent container
+* All content for preservation is within the `objects` directory
+* Enduro-generated PREMIS file is in the `metadata` directory
+* For Digitized packages, `Prozess_Digitalisierung_PREMIS.xml` file is in the
+  metadata directory
+
+### Create identifiers.json
+
+Extract original UUIDs from the SIP metadata file and add them to an
+`identifiers.json` file added to the `metadata` directory of the package for
+parsing by the preservation engine
+
+#### Steps
+
+* Parse SIP metadata file
+* Extract persistent identifiers and write to memory
+* Convert manifest file paths to the restructured PIP file paths
+* Exclude any files in the manifest that aren't found in the PIP
+* Using extracted identifiers, generate an `identifiers.json` file that conforms
+  to Archivematica's expectations
+* Move generated file to package `metadata` directory
+
+#### Success critera
+
+* An `identifiers.json` file is added to the `metadata` directory of the package
+* UUIDs present in the original SIP metadata are maintained and used by the
+  preservation engine during preservation processing
+
+### Other activities
+
+The SFA workflow that invokes the activities listed above (see the
+[preprocessing.go](https://github.com/artefactual-sdps/preprocessing-sfa/blob/main/internal/workflow/preprocessing.go) 
+file) also uses a number of other more general Enduro
+[temporal activites](https://github.com/artefactual-sdps/temporal-activities), including:
+
+* `archiveextract`
+* `bagcreate`
+* `bagvalidate`
+* `ffvalidate`
+* `xmlvalidate`
+
+There is also one custom post-preservation workflow activity maintained in this
+repository as well:
+
+#### Create AIS metadata bundle
+
+Extracts all relevant metadata from the SIP and resulting AIP and delivers it to
+the AIS for synchronization.
+
+##### Steps
+
+* Generate a new XML document that combines the contents of the two source files
+  (the SIP `metadata.xml` or `UpdatedAreldaMetadata.xml` file, and the AIP METS
+  file)
+* ZIP the generated file and deposit it in an `ais` MinIO bucket
+
+##### Success criteria
+
+* Metadata bundle is successfully generated and deposited
+* AIS is able to receive and ingest the metadata
+
 
 ```shell
 $ make env DBG_MAKEFILE=1
