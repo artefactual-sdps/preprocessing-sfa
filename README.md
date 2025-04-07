@@ -261,13 +261,13 @@ Part 2 of a 2-part activity around duplicate checking - see also:
 
 * [Calculate SIP checksum](#calculate-sip-checksum)
 
-Determines if an identical SIP  has previously been ingested
+Determines if an identical SIP has previously been ingested
 
 #### Steps
 
 * Use the generated checksum from [part 1](#calculate-sip-checksum) to search
   for an existing match in the `sips` database table
-* If an existing match is found, return a content error fro a duplicateSIP and
+* If an existing match is found, return a content error for a duplicateSIP and
   terminate the workflow
 * Else, continue to next activity
 
@@ -326,7 +326,7 @@ Ensures that the SIP directory structure conforms to eCH-0160 specifications,
 that no empty directories are included, and that there are no disallowed
 characters used in file and directory names.
 
-**Note**: Chracacter restrictions for file and directory names are based on some
+**Note**: Character restrictions for file and directory names are based on some
 of the requirements of the tools used by
 [Archivematica](https://www.archivematica.org) during preservation processing -
 at present, the file name cleanup steps in Archivematica cannot be modified or
@@ -410,8 +410,8 @@ specifications.
 
 #### Steps
 
-* For PDFs, use [VeraPDF](https://github.com/veraPDF) to validate against the
-  PDF specification
+* For PDF/As, use [VeraPDF](https://github.com/veraPDF) to validate against the
+  PDF/A specification
 * Note: additional format validation checks will be added in the future
 
 #### Success critera
