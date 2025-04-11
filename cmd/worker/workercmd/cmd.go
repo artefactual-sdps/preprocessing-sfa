@@ -8,7 +8,6 @@ import (
 
 	"ariga.io/sqlcomment"
 	"entgo.io/ent/dialect/sql"
-	bagit_gython "github.com/artefactual-labs/bagit-gython"
 	"github.com/artefactual-sdps/temporal-activities/archiveextract"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
@@ -39,7 +38,6 @@ type Main struct {
 	cfg            config.Configuration
 	temporalWorker temporalsdk_worker.Worker
 	temporalClient temporalsdk_client.Client
-	bagValidator   *bagit_gython.BagIt
 	dbClient       *db.Client
 }
 
@@ -70,12 +68,6 @@ func (m *Main) Run(ctx context.Context) error {
 		},
 	})
 	m.temporalWorker = w
-
-	m.bagValidator, err = bagit_gython.NewBagIt()
-	if err != nil {
-		m.logger.Error(err, "Error creating BagIt validator")
-		return err
-	}
 
 	var psvc persistence.Service
 	if m.cfg.CheckDuplicates {
@@ -126,7 +118,7 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: archiveextract.Name},
 	)
 	w.RegisterActivityWithOptions(
-		bagvalidate.New(m.bagValidator).Execute,
+		bagvalidate.New(nil).Execute,
 		temporalsdk_activity.RegisterOptions{Name: bagvalidate.Name},
 	)
 	w.RegisterActivityWithOptions(
@@ -214,12 +206,6 @@ func (m *Main) Close() error {
 
 	if m.temporalClient != nil {
 		m.temporalClient.Close()
-	}
-
-	if m.bagValidator != nil {
-		if err := m.bagValidator.Cleanup(); err != nil {
-			e = errors.Join(e, fmt.Errorf("Couldn't clean up bag validator: %v", err))
-		}
 	}
 
 	if m.dbClient != nil {
