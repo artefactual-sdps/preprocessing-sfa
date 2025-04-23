@@ -1,6 +1,6 @@
 module github.com/artefactual-sdps/preprocessing-sfa
 
-go 1.23.6
+go 1.24.2
 
 require (
 	ariga.io/sqlcomment v0.1.0
