@@ -55,13 +55,18 @@ TEST_IGNORED_PACKAGES := $(filter $(IGNORED_PACKAGES),$(PACKAGES))
 
 export PATH:=$(GOBIN):$(PATH)
 
+deps: # @HELP List available module dependency updates.
+deps: $(GOMAJOR)
+	gomajor list
+
 env: # @HELP Print Go env variables.
 env:
 	go env
 
-deps: # @HELP List available module dependency updates.
-deps: $(GOMAJOR)
-	gomajor list
+fmt: # @HELP Format the project Go files with golangci-lint.
+fmt: FMT_FLAGS ?=
+fmt: $(GOLANGCI_LINT)
+	golangci-lint fmt $(FMT_FLAGS)
 
 gen-ent: # @HELP Generate Ent assets.
 gen-ent: $(ENT)
@@ -89,30 +94,25 @@ help: # @HELP Print this message.
 	grep -hE '^.*:.*?# *@HELP' $(MAKEFILE_LIST) | sort | \
 	    awk 'BEGIN {FS = ":.*?# *@HELP"}; { printf "  %-30s %s\n", $$1, $$2 };'
 
-fmt: # @HELP Format the project Go files with golangci-lint.
-fmt: FMT_FLAGS ?=
-fmt: $(GOLANGCI_LINT)
-	golangci-lint fmt $(FMT_FLAGS)
-
 lint: # @HELP Lint the project Go files with golangci-lint.
 lint: LINT_FLAGS ?= --timeout=5m --fix --output.text.colors
 lint: $(GOLANGCI_LINT)
 	golangci-lint run $(LINT_FLAGS)
 
-list-tested-packages: # @HELP Print a list of packages being tested.
-list-tested-packages:
-	$(foreach PACKAGE,$(TEST_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
-
 list-ignored-packages: # @HELP Print a list of packages ignored in testing.
 list-ignored-packages:
 	$(foreach PACKAGE,$(TEST_IGNORED_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
 
+list-tested-packages: # @HELP Print a list of packages being tested.
+list-tested-packages:
+	$(foreach PACKAGE,$(TEST_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
+
 pre-commit: # @HELP Check that code is ready to commit.
 pre-commit:
 	ENDURO_PP_INTEGRATION_TEST=1 $(MAKE) -j \
+	fmt \
 	gen-enums \
 	gosec GOSEC_VERBOSITY="-quiet" \
-	fmt \
 	lint \
 	shfmt \
 	test-race
