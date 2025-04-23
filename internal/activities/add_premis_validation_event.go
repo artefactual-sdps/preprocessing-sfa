@@ -75,7 +75,7 @@ func (md *AddPREMISValidationEventActivity) Execute(
 			)
 
 			if objectOriginalNameEl == nil {
-				return nil, fmt.Errorf("Element not found")
+				return nil, fmt.Errorf("element not found")
 			}
 
 			objectEl := objectOriginalNameEl.Parent()

@@ -40,7 +40,7 @@ func (m *Main) Run(ctx context.Context) error {
 		Logger:    temporal.Logger(m.logger.WithName("ais-temporal")),
 	})
 	if err != nil {
-		return fmt.Errorf("Unable to create AIS Temporal client: %w", err)
+		return fmt.Errorf("unable to create AIS Temporal client: %w", err)
 	}
 	m.temporalClient = tc
 
@@ -55,12 +55,12 @@ func (m *Main) Run(ctx context.Context) error {
 
 	amssClient, err := amss.NewPooledClient(m.cfg.AMSS)
 	if err != nil {
-		return fmt.Errorf("Unable to create AMSS client: %w", err)
+		return fmt.Errorf("unable to create AMSS client: %w", err)
 	}
 
 	b, err := bucket.NewWithConfig(ctx, &m.cfg.Bucket)
 	if err != nil {
-		return fmt.Errorf("Unable to open AIS bucket: %w", err)
+		return fmt.Errorf("unable to open AIS bucket: %w", err)
 	}
 	m.bucket = b
 

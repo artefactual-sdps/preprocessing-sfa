@@ -78,7 +78,7 @@ func TestConfig(t *testing.T) {
 			name:       "Errors when configuration values are not valid",
 			configFile: "preprocessing.toml",
 			wantFound:  true,
-			wantErr: `invalid configuration:
+			wantErr: `invalid configuration
 SharedPath: missing required value
 Temporal.TaskQueue: missing required value
 Temporal.WorkflowName: missing required value`,
@@ -95,7 +95,7 @@ workflowName = "preprocessing"
 maxConcurrentSessions = -1
 `,
 			wantFound: true,
-			wantErr: `invalid configuration:
+			wantErr: `invalid configuration
 Worker.MaxConcurrentSessions: -1 is less than the minimum value (1)`,
 		},
 		{
@@ -110,7 +110,7 @@ workflowName = "preprocessing"
 checksumAlgorithm = "unknown"
 `,
 			wantFound: true,
-			wantErr: `invalid configuration:
+			wantErr: `invalid configuration
 Bagit.ChecksumAlgorithm: invalid value "unknown", must be one of (md5, sha1, sha256, sha512)`,
 		},
 		{
@@ -124,7 +124,7 @@ taskQueue = "preprocessing"
 workflowName = "preprocessing"
 `,
 			wantFound: true,
-			wantErr: `invalid configuration:
+			wantErr: `invalid configuration
 Persistence.DSN: missing required value
 Persistence.Driver: missing required value`,
 		},

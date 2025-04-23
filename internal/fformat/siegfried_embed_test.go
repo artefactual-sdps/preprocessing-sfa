@@ -41,7 +41,7 @@ func BenchmarkSiegfried(b *testing.B) {
 	b.Run("SiegfriedEmbed", func(b *testing.B) {
 		sf := fformat.NewSiegfriedEmbed()
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			sf.Identify("fformat.go")
 		}
 	})

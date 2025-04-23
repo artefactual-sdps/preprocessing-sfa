@@ -210,7 +210,7 @@ func (m *Main) Close() error {
 
 	if m.dbClient != nil {
 		if err := m.dbClient.Close(); err != nil {
-			e = errors.Join(e, fmt.Errorf("Couldn't close database client: %v", err))
+			e = errors.Join(e, fmt.Errorf("couldn't close database client: %v", err))
 		}
 	}
 

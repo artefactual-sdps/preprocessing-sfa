@@ -125,7 +125,7 @@ func TestAddPREMISValidationEvent(t *testing.T) {
 			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
 				m.FormatIDs().Return([]string{"fmt/354", "fmt/817"})
 			},
-			wantErr: "Element not found",
+			wantErr: "element not found",
 		},
 		{
 			name: "Add PREMIS event for PREMIS object present in the XML",
