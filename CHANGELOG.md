@@ -8,6 +8,12 @@ requests.
 
 ## [Unreleased]
 
+## [0.12.0] - 2025-05-01
+
+### Fixed
+
+- Bag validation when running concurrent workflows ([#144])
+
 ## [0.11.0] - 2025-04-02
 
 ### Fixed
@@ -114,7 +120,8 @@ requests.
 
 Initial release.
 
-[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.11.0...HEAD
+[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.8.0...v0.9.0
@@ -126,6 +133,7 @@ Initial release.
 [0.3.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/artefactual-sdps/preprocessing-sfa/releases/tag/v0.1.0
+[#144]: https://github.com/artefactual-sdps/preprocessing-sfa/pull/144
 [#135]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/135
 [#126]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/126
 [#122]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/122
