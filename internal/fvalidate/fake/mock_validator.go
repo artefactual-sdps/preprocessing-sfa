@@ -12,6 +12,7 @@ package fake
 import (
 	reflect "reflect"
 
+	fvalidate "github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -110,6 +111,44 @@ func (c *MockValidatorNameCall) Do(f func() string) *MockValidatorNameCall {
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockValidatorNameCall) DoAndReturn(f func() string) *MockValidatorNameCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// Scope mocks base method.
+func (m *MockValidator) Scope() fvalidate.TargetType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Scope")
+	ret0, _ := ret[0].(fvalidate.TargetType)
+	return ret0
+}
+
+// Scope indicates an expected call of Scope.
+func (mr *MockValidatorMockRecorder) Scope() *MockValidatorScopeCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scope", reflect.TypeOf((*MockValidator)(nil).Scope))
+	return &MockValidatorScopeCall{Call: call}
+}
+
+// MockValidatorScopeCall wrap *gomock.Call
+type MockValidatorScopeCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockValidatorScopeCall) Return(arg0 fvalidate.TargetType) *MockValidatorScopeCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockValidatorScopeCall) Do(f func() fvalidate.TargetType) *MockValidatorScopeCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockValidatorScopeCall) DoAndReturn(f func() fvalidate.TargetType) *MockValidatorScopeCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

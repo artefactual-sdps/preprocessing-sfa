@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"gotest.tools/v3/assert"
+
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 )
 
 func TestSystemError(t *testing.T) {

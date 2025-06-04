@@ -82,6 +82,7 @@ func TestValidateFiles(t *testing.T) {
 			params:   activities.ValidateFilesParams{SIP: digitizedAIP},
 			expectId: defaultIdentifierMock,
 			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
+				m.Scope().Return(fvalidate.TargetTypeDir)
 				m.FormatIDs().Return([]string{"fmt/354"})
 				m.Validate(digitizedAIP.ContentPath).Return("", nil)
 			},
@@ -91,6 +92,7 @@ func TestValidateFiles(t *testing.T) {
 			params:   activities.ValidateFilesParams{SIP: digitizedAIP},
 			expectId: defaultIdentifierMock,
 			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
+				m.Scope().Return(fvalidate.TargetTypeDir)
 				m.FormatIDs().Return([]string{"fmt/354"})
 				m.Validate(digitizedAIP.ContentPath).Return(
 					"One or more PDF/A files are invalid",
@@ -106,6 +108,7 @@ func TestValidateFiles(t *testing.T) {
 			params:   activities.ValidateFilesParams{SIP: digitizedAIP},
 			expectId: defaultIdentifierMock,
 			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
+				m.Scope().Return(fvalidate.TargetTypeDir)
 				m.FormatIDs().Return([]string{"fmt/354"})
 				m.Validate(digitizedAIP.ContentPath).Return(
 					"",
@@ -119,6 +122,7 @@ func TestValidateFiles(t *testing.T) {
 			params:   activities.ValidateFilesParams{SIP: digitizedAIP},
 			expectId: defaultIdentifierMock,
 			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
+				m.Scope().Return(fvalidate.TargetTypeDir)
 				m.FormatIDs().Return([]string{"fmt/354"})
 				m.Validate(digitizedAIP.ContentPath).Return(
 					"",
@@ -131,6 +135,15 @@ func TestValidateFiles(t *testing.T) {
 				)
 			},
 			wantErr: "PDF/A validation failed with an application error",
+		},
+		{
+			name:     "Error when validator scope is not supported",
+			params:   activities.ValidateFilesParams{SIP: digitizedAIP},
+			expectId: defaultIdentifierMock,
+			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
+				m.Scope().Return(fvalidate.TargetTypeFile)
+			},
+			wantErr: "validateFiles: unsupported validator scope",
 		},
 		{
 			name:   "Skip validation when format identification fails",
@@ -156,6 +169,7 @@ func TestValidateFiles(t *testing.T) {
 				)
 			},
 			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
+				m.Scope().Return(fvalidate.TargetTypeDir)
 				m.FormatIDs().Return([]string{"fmt/354"})
 			},
 		},
