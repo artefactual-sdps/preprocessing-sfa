@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"slices"
 
+	temporalsdk_activity "go.temporal.io/sdk/activity"
+
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
-	temporalsdk_activity "go.temporal.io/sdk/activity"
 )
 
 const ValidateFilesName = "validate-files"
@@ -67,7 +68,17 @@ func (a *ValidateFiles) validateFiles(
 ) ([]string, error) {
 	var failures []string
 	for _, v := range a.validators {
-		out, err := validate(v, sip.ContentPath, files)
+		var (
+			out string
+			err error
+		)
+
+		if v.Scope() == fvalidate.TargetTypeDir {
+			out, err = validateDir(v, sip.ContentPath, files)
+		} else {
+			return nil, fmt.Errorf("unsupported validator scope")
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -79,11 +90,11 @@ func (a *ValidateFiles) validateFiles(
 	return failures, nil
 }
 
-func validate(v fvalidate.Validator, path string, files fformat.FileFormats) (string, error) {
+func validateDir(v fvalidate.Validator, path string, ff fformat.FileFormats) (string, error) {
 	var canValidate bool
 	allowedIds := v.FormatIDs()
 
-	for _, f := range files {
+	for _, f := range ff {
 		if slices.Contains(allowedIds, f.ID) {
 			canValidate = true
 			break

@@ -95,6 +95,13 @@ func TestValidate(t *testing.T) {
 	}
 }
 
+func TestScope(t *testing.T) {
+	t.Parallel()
+
+	v := fvalidate.NewVeraPDFValidator("")
+	assert.Equal(t, v.Scope(), fvalidate.TargetTypeDir)
+}
+
 func TestVersion(t *testing.T) {
 	t.Parallel()
 

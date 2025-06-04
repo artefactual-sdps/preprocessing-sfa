@@ -26,13 +26,14 @@ var pdfaPUIDs = []string{
 }
 
 type veraPDFValidator struct {
-	cmd string
+	cmd   string
+	scope TargetType
 }
 
 var _ Validator = (*veraPDFValidator)(nil)
 
 func NewVeraPDFValidator(cmd string) *veraPDFValidator {
-	return &veraPDFValidator{cmd: cmd}
+	return &veraPDFValidator{cmd: cmd, scope: TargetTypeDir}
 }
 
 func (v *veraPDFValidator) FormatIDs() []string {
@@ -81,6 +82,10 @@ func (v *veraPDFValidator) Validate(path string) (string, error) {
 			"PDF/A validation failed with an application error",
 		)
 	}
+}
+
+func (v *veraPDFValidator) Scope() TargetType {
+	return v.scope
 }
 
 func (v *veraPDFValidator) Version() (string, error) {
