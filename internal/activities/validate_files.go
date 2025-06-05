@@ -2,12 +2,14 @@ package activities
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
+	temporalsdk_activity "go.temporal.io/sdk/activity"
 )
 
 const ValidateFilesName = "validate-files"
@@ -35,6 +37,8 @@ func NewValidateFiles(idr fformat.Identifier, vdrs ...fvalidate.Validator) *Vali
 // Execute validates SIP files against a file format specification. The
 // only format validator currently implemented verapdf for PDF/A.
 func (a *ValidateFiles) Execute(ctx context.Context, params *ValidateFilesParams) (*ValidateFilesResult, error) {
+	logger := temporalsdk_activity.GetLogger(ctx)
+
 	formats, err := fformat.IdentifyFormats(ctx, a.identifier, params.SIP)
 	if err != nil {
 		return nil, fmt.Errorf("identifyFormats: %v", err)
@@ -42,6 +46,15 @@ func (a *ValidateFiles) Execute(ctx context.Context, params *ValidateFilesParams
 
 	failures, err := a.validateFiles(params.SIP, formats)
 	if err != nil {
+		var se *fvalidate.SystemError
+		if errors.As(err, &se) {
+			// Log the underlying system error and the validator name.
+			logger.Error(se.Error(), "validator", se.Validator())
+
+			// Return a user-friendly error message.
+			return nil, errors.New(se.Message())
+		}
+
 		return nil, fmt.Errorf("validateFiles: %v", err)
 	}
 

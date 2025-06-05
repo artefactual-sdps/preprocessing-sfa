@@ -97,7 +97,7 @@ func (m *Main) Run(ctx context.Context) error {
 		psvc = entclient.New(m.dbClient)
 	}
 
-	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path, fvalidate.RunCommand, m.logger)
+	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path)
 
 	veraPDFVersion, err := veraPDFValidator.Version()
 	if err != nil {
