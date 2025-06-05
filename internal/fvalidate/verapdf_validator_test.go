@@ -2,10 +2,8 @@ package fvalidate_test
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
-	"github.com/go-logr/logr"
 	"gotest.tools/v3/assert"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
@@ -14,7 +12,7 @@ import (
 func TestFormatIDs(t *testing.T) {
 	t.Parallel()
 
-	v := fvalidate.NewVeraPDFValidator("", fvalidate.RunCommand, logr.Discard())
+	v := fvalidate.NewVeraPDFValidator("")
 	got := v.FormatIDs()
 
 	assert.DeepEqual(t, got, []string{
@@ -35,14 +33,10 @@ func TestFormatIDs(t *testing.T) {
 func TestName(t *testing.T) {
 	t.Parallel()
 
-	v := fvalidate.NewVeraPDFValidator("", fvalidate.RunCommand, logr.Discard())
+	v := fvalidate.NewVeraPDFValidator("")
 	got := v.Name()
 
 	assert.Equal(t, got, "veraPDF")
-}
-
-func empty(td string) string {
-	return ""
 }
 
 func TestValidate(t *testing.T) {
@@ -58,7 +52,6 @@ func TestValidate(t *testing.T) {
 	for _, tt := range []test{
 		{
 			name: "Does nothing when cmd is not set",
-			path: empty,
 		},
 		{
 			name: "Errors when path doesn't exist",
@@ -77,9 +70,15 @@ func TestValidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			v := fvalidate.NewVeraPDFValidator(tt.cmd, fvalidate.RunCommand, logr.Discard())
+			v := fvalidate.NewVeraPDFValidator(tt.cmd)
 			td := t.TempDir()
-			got, err := v.Validate(tt.path(td))
+
+			path := ""
+			if tt.path != nil {
+				path = tt.path(td)
+			}
+
+			got, err := v.Validate(path)
 			if tt.wantErr != nil {
 				assert.Error(t, err, tt.wantErr(td))
 				return
@@ -96,26 +95,12 @@ func TestValidate(t *testing.T) {
 	}
 }
 
-func TestVeraPDFVersion(t *testing.T) {
-	runFunc := func(string, ...string) (string, error) {
-		return "veraPDF 1.1\nSome more text", nil
-	}
+func TestVersion(t *testing.T) {
+	t.Parallel()
 
-	v := fvalidate.NewVeraPDFValidator("veraPDF", runFunc, logr.Discard())
-	version, err := v.Version()
+	v := fvalidate.NewVeraPDFValidator("")
+	got, err := v.Version()
 
 	assert.NilError(t, err)
-	assert.Assert(t, strings.Contains(version, "veraPDF 1.1"))
-}
-
-func TestVeraPDFVersionError(t *testing.T) {
-	runFunc := func(string, ...string) (string, error) {
-		return "", fmt.Errorf("exit status 1")
-	}
-
-	v := fvalidate.NewVeraPDFValidator("badcommand", runFunc, logr.Discard())
-	version, err := v.Version()
-
-	assert.Error(t, err, "exit status 1")
-	assert.Equal(t, version, "")
+	assert.Equal(t, got, "")
 }

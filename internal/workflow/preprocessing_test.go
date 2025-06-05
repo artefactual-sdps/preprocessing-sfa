@@ -14,7 +14,6 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
-	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -189,7 +188,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISEventName},
 	)
 
-	veraPDFValidator := fvalidate.NewVeraPDFValidator("", fvalidate.RunCommand, logr.Discard())
+	veraPDFValidator := fvalidate.NewVeraPDFValidator("")
 
 	s.env.RegisterActivityWithOptions(
 		activities.NewAddPREMISValidationEvent(veraPDFValidator).Execute,

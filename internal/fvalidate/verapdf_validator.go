@@ -6,8 +6,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/go-logr/logr"
-
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
 )
 
@@ -28,17 +26,13 @@ var pdfaPUIDs = []string{
 }
 
 type veraPDFValidator struct {
-	cmd     string
-	runFunc runFunction
-	logger  logr.Logger
+	cmd string
 }
-
-type runFunction func(name string, args ...string) (string, error)
 
 var _ Validator = (*veraPDFValidator)(nil)
 
-func NewVeraPDFValidator(cmd string, runFunc runFunction, logger logr.Logger) *veraPDFValidator {
-	return &veraPDFValidator{cmd: cmd, runFunc: runFunc, logger: logger}
+func NewVeraPDFValidator(cmd string) *veraPDFValidator {
+	return &veraPDFValidator{cmd: cmd}
 }
 
 func (v *veraPDFValidator) FormatIDs() []string {
@@ -59,9 +53,7 @@ func (v *veraPDFValidator) Validate(path string) (string, error) {
 		return "", fmt.Errorf("validate: file not found: %s", path)
 	}
 
-	cmd := exec.Command(v.cmd, "--recurse", path) // #nosec: G204 -- trusted path.
-
-	_, err := cmd.Output()
+	_, err := v.run("--recurse", path)
 	if err == nil { // error IS nil.
 		return "", nil
 	}
@@ -82,20 +74,13 @@ func (v *veraPDFValidator) Validate(path string) (string, error) {
 	default:
 		// Other exit codes (e.g. file not found) should write an error
 		// message to STDERR.
-		v.logger.Info("veraPDF validate", "exit code", e.ExitCode(), "STDERR", string(e.Stderr))
-		return "", errors.New("PDF/A validation failed with an application error")
+		return "", NewSystemError(
+			v.Name(),
+			e.ExitCode(),
+			errors.New(string(e.Stderr)),
+			"PDF/A validation failed with an application error",
+		)
 	}
-}
-
-func RunCommand(name string, args ...string) (string, error) {
-	result := exec.Command(name, args...) // #nosec: G204 -- trusted path.
-
-	output, err := result.Output()
-	if err != nil {
-		return "", err
-	}
-
-	return string(output), nil
 }
 
 func (v *veraPDFValidator) Version() (string, error) {
@@ -104,7 +89,7 @@ func (v *veraPDFValidator) Version() (string, error) {
 		return "", nil
 	}
 
-	output, err := v.runFunc(v.cmd, "--version")
+	output, err := v.run("--version")
 	if err != nil {
 		return "", err
 	}
@@ -112,4 +97,15 @@ func (v *veraPDFValidator) Version() (string, error) {
 	lines := strings.Split(output, "\n")
 
 	return lines[0], nil
+}
+
+func (v *veraPDFValidator) run(args ...string) (string, error) {
+	result := exec.Command(v.cmd, args...) // #nosec: G204 -- trusted path.
+
+	output, err := result.Output()
+	if err != nil {
+		return "", err
+	}
+
+	return string(output), nil
 }

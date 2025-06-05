@@ -15,6 +15,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	fake_fformat "github.com/artefactual-sdps/preprocessing-sfa/internal/fformat/fake"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	fake_fvalidate "github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate/fake"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
@@ -47,6 +48,27 @@ func TestValidateFiles(t *testing.T) {
 	).Path())
 	assert.NilError(t, err)
 
+	defaultIdentifierMock := func(m *fake_fformat.MockIdentifierMockRecorder) {
+		m.Identify(
+			filepath.Join(digitizedAIP.ContentPath, "d_0000001", "test.pdf"),
+		).Return(
+			&fformat.FileFormat{
+				Namespace: "PRONOM",
+				ID:        "fmt/354",
+			},
+			nil,
+		)
+		m.Identify(
+			filepath.Join(digitizedAIP.ContentPath, "d_0000001", "Prozess_Digitalisierung_PREMIS.xml"),
+		).Return(
+			&fformat.FileFormat{
+				Namespace: "PRONOM",
+				ID:        "fmt/101",
+			},
+			nil,
+		)
+	}
+
 	tests := []struct {
 		name      string
 		params    activities.ValidateFilesParams
@@ -56,56 +78,18 @@ func TestValidateFiles(t *testing.T) {
 		wantErr   string
 	}{
 		{
-			name:   "Validates a PDF/A file",
-			params: activities.ValidateFilesParams{SIP: digitizedAIP},
-			expectId: func(m *fake_fformat.MockIdentifierMockRecorder) {
-				m.Identify(
-					filepath.Join(digitizedAIP.ContentPath, "d_0000001", "test.pdf"),
-				).Return(
-					&fformat.FileFormat{
-						Namespace: "PRONOM",
-						ID:        "fmt/354",
-					},
-					nil,
-				)
-				m.Identify(
-					filepath.Join(digitizedAIP.ContentPath, "d_0000001", "Prozess_Digitalisierung_PREMIS.xml"),
-				).Return(
-					&fformat.FileFormat{
-						Namespace: "PRONOM",
-						ID:        "fmt/101",
-					},
-					nil,
-				)
-			},
+			name:     "Validates a PDF/A file",
+			params:   activities.ValidateFilesParams{SIP: digitizedAIP},
+			expectId: defaultIdentifierMock,
 			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
 				m.FormatIDs().Return([]string{"fmt/354"})
 				m.Validate(digitizedAIP.ContentPath).Return("", nil)
 			},
 		},
 		{
-			name:   "Reports PDF validation errors",
-			params: activities.ValidateFilesParams{SIP: digitizedAIP},
-			expectId: func(m *fake_fformat.MockIdentifierMockRecorder) {
-				m.Identify(
-					filepath.Join(digitizedAIP.ContentPath, "d_0000001", "test.pdf"),
-				).Return(
-					&fformat.FileFormat{
-						Namespace: "PRONOM",
-						ID:        "fmt/354",
-					},
-					nil,
-				)
-				m.Identify(
-					filepath.Join(digitizedAIP.ContentPath, "d_0000001", "Prozess_Digitalisierung_PREMIS.xml"),
-				).Return(
-					&fformat.FileFormat{
-						Namespace: "PRONOM",
-						ID:        "fmt/101",
-					},
-					nil,
-				)
-			},
+			name:     "Reports PDF validation errors",
+			params:   activities.ValidateFilesParams{SIP: digitizedAIP},
+			expectId: defaultIdentifierMock,
 			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
 				m.FormatIDs().Return([]string{"fmt/354"})
 				m.Validate(digitizedAIP.ContentPath).Return(
@@ -118,36 +102,35 @@ func TestValidateFiles(t *testing.T) {
 			},
 		},
 		{
-			name:   "Errors on application error",
-			params: activities.ValidateFilesParams{SIP: digitizedAIP},
-			expectId: func(m *fake_fformat.MockIdentifierMockRecorder) {
-				m.Identify(
-					filepath.Join(digitizedAIP.ContentPath, "d_0000001", "test.pdf"),
-				).Return(
-					&fformat.FileFormat{
-						Namespace: "PRONOM",
-						ID:        "fmt/354",
-					},
-					nil,
-				)
-				m.Identify(
-					filepath.Join(digitizedAIP.ContentPath, "d_0000001", "Prozess_Digitalisierung_PREMIS.xml"),
-				).Return(
-					&fformat.FileFormat{
-						Namespace: "PRONOM",
-						ID:        "fmt/101",
-					},
-					nil,
-				)
-			},
+			name:     "Returns file not found error",
+			params:   activities.ValidateFilesParams{SIP: digitizedAIP},
+			expectId: defaultIdentifierMock,
 			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
 				m.FormatIDs().Return([]string{"fmt/354"})
 				m.Validate(digitizedAIP.ContentPath).Return(
 					"",
-					errors.New("can't open /fake/path: permission denied"),
+					errors.New("validate: file not found: /fake/path"),
 				)
 			},
-			wantErr: "can't open /fake/path: permission denied",
+			wantErr: "validate: file not found: /fake/path",
+		},
+		{
+			name:     "Reports an application error",
+			params:   activities.ValidateFilesParams{SIP: digitizedAIP},
+			expectId: defaultIdentifierMock,
+			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
+				m.FormatIDs().Return([]string{"fmt/354"})
+				m.Validate(digitizedAIP.ContentPath).Return(
+					"",
+					fvalidate.NewSystemError(
+						"veraPDF",
+						1,
+						errors.New("permission denied"), // Simulating a system error
+						"PDF/A validation failed with an application error",
+					),
+				)
+			},
+			wantErr: "PDF/A validation failed with an application error",
 		},
 		{
 			name:   "Skip validation when format identification fails",
