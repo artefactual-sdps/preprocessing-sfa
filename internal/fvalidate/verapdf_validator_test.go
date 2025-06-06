@@ -7,6 +7,7 @@ import (
 	"gotest.tools/v3/assert"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 )
 
 func TestFormatIDs(t *testing.T) {
@@ -100,6 +101,20 @@ func TestScope(t *testing.T) {
 
 	v := fvalidate.NewVeraPDFValidator("")
 	assert.Equal(t, v.Scope(), fvalidate.TargetTypeDir)
+}
+
+func TestVeraPDFPREMISAgent(t *testing.T) {
+	t.Parallel()
+
+	v := fvalidate.NewVeraPDFValidator("")
+
+	got := v.PREMISAgent()
+	assert.DeepEqual(t, got, premis.Agent{
+		Type:    "software",
+		Name:    "veraPDF (version unknown)",
+		IdType:  "url",
+		IdValue: "https://verapdf.org",
+	})
 }
 
 func TestVersion(t *testing.T) {

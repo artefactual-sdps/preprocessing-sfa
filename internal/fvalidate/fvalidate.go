@@ -1,5 +1,7 @@
 package fvalidate
 
+import "github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
+
 type TargetType int
 
 const (
@@ -14,6 +16,10 @@ type Validator interface {
 
 	// Name of the validator.
 	Name() string
+
+	// Validate validates the file or directory at path.
+	// PREMISAgent returns a PREMIS agent representing the validator.
+	PREMISAgent() premis.Agent
 
 	// Scope of the validator, whether it targets an individual file or all the
 	// files in a directory.

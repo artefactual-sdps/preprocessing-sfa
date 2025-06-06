@@ -165,7 +165,7 @@ func AppendEventXMLForObjects(
 		event := eventFromEventSummaryAndAgent(eventSummary, agent)
 
 		// Add PREMIS event element and, if necessary, agent element.
-		addEventElement(PREMISEl, event)
+		AddEventElement(PREMISEl, event)
 
 		// Link event to object
 		LinkEventToObject(objectEl, event)
@@ -214,8 +214,8 @@ func addObjectElementIfNeeded(PREMISEl *etree.Element, object Object) {
 	originalNameEl.CreateText(object.OriginalName)
 }
 
-func addEventElement(PREMISEl *etree.Element, event Event) {
-	eventEl := PREMISEl.CreateElement("premis:event")
+func AddEventElement(PREMISEl *etree.Element, event Event) {
+	eventEl := etree.NewElement("premis:event")
 
 	// Add event identifier elements.
 	eventIdElement := eventEl.CreateElement("premis:eventIdentifier")
@@ -248,6 +248,26 @@ func addEventElement(PREMISEl *etree.Element, event Event) {
 		outcomeDetailNoteEl := outcomeDetailEl.CreateElement("premis:eventOutcomeDetailNote")
 		outcomeDetailNoteEl.CreateText(event.Summary.OutcomeDetail)
 	}
+
+	// The order of PREMIS entities is important (i.e. first objects, then
+	// events, then agents) so we need to find the correct place to insert this
+	// event element.
+	var index int
+	if events := PREMISEl.FindElements("./premis:event"); len(events) > 0 {
+		// If there are other events, add this event after the last one.
+		last := events[len(events)-1]
+		index = last.Index() + 1
+	} else if objs := PREMISEl.FindElements("./premis:object"); len(objs) > 0 {
+		// If there are no other events, add this event after the last object.
+		last := objs[len(objs)-1]
+		index = last.Index() + 1
+	} else {
+		// If no PREMIS objects exist, add the event to the end of the PREMIS
+		// file.
+		index = len(PREMISEl.ChildElements())
+	}
+
+	PREMISEl.InsertChildAt(index, eventEl)
 
 	addEventAgentIdentifierElement(eventEl, event)
 }

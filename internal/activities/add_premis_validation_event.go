@@ -3,12 +3,16 @@ package activities
 import (
 	"context"
 	"fmt"
+	"io"
 	"path/filepath"
 	"slices"
+	"time"
 
-	"github.com/beevik/etree"
+	"github.com/google/uuid"
+	"github.com/jonboulle/clockwork"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
@@ -19,26 +23,45 @@ const AddPREMISValidationEventName = "add-premis-validation-event"
 type AddPREMISValidationEventParams struct {
 	SIP            sip.SIP
 	PREMISFilePath string
-	Agent          premis.Agent
 	Summary        premis.EventSummary
 }
 
 type AddPREMISValidationEventResult struct{}
 
 type AddPREMISValidationEventActivity struct {
+	// Clock for time-related operations, can be used to mock time in tests.
+	clock clockwork.Clock
+
+	// Random number generator for generating UUIDs. Can be set to a
+	// deterministic generator for testing purposes.
+	rng io.Reader
+
 	validator fvalidate.Validator
 }
 
-func NewAddPREMISValidationEvent(validator fvalidate.Validator) *AddPREMISValidationEventActivity {
+func NewAddPREMISValidationEvent(
+	clock clockwork.Clock,
+	rng io.Reader,
+	validator fvalidate.Validator,
+) *AddPREMISValidationEventActivity {
 	return &AddPREMISValidationEventActivity{
+		clock:     clock,
+		rng:       rng,
 		validator: validator,
 	}
 }
 
-func (md *AddPREMISValidationEventActivity) Execute(
+func (a *AddPREMISValidationEventActivity) Execute(
 	ctx context.Context,
 	params *AddPREMISValidationEventParams,
 ) (*AddPREMISValidationEventResult, error) {
+	var addAgent bool
+
+	// Ensure the PREMIS file path exists.
+	if !fsutil.FileExists(params.PREMISFilePath) {
+		return nil, fmt.Errorf("PREMIS file path does not exist: %s", params.PREMISFilePath)
+	}
+
 	// Load or initialize PREMIS XML.
 	doc, err := premis.ParseOrInitialize(params.PREMISFilePath)
 	if err != nil {
@@ -56,8 +79,10 @@ func (md *AddPREMISValidationEventActivity) Execute(
 		return nil, fmt.Errorf("identifyFormats: %v", err)
 	}
 
+	agent := a.validator.PREMISAgent()
+
 	// Determine which files should have been checked by the validator.
-	allowedIds := md.validator.FormatIDs()
+	allowedIds := a.validator.FormatIDs()
 
 	for path, f := range fileformats {
 		if slices.Contains(allowedIds, f.ID) {
@@ -69,25 +94,46 @@ func (md *AddPREMISValidationEventActivity) Execute(
 
 			// Find PREMIS object element using original name.
 			originalName := premis.OriginalNameForSubpath(params.SIP, subpath)
-
 			objectOriginalNameEl := doc.FindElement(
 				fmt.Sprintf("/premis:premis/premis:object/premis:originalName[text()='%s']", originalName),
 			)
-
 			if objectOriginalNameEl == nil {
 				return nil, fmt.Errorf("element not found")
 			}
 
-			objectEl := objectOriginalNameEl.Parent()
+			id, err := uuid.NewRandomFromReader(a.rng)
+			if err != nil {
+				return nil, fmt.Errorf("generate UUID: %v", err)
+			}
 
-			// Append PREMIS event linked to from PREMIS object element.
-			var objectEls []*etree.Element
-			objectEls = append(objectEls, objectEl)
-			premis.AppendEventXMLForObjects(PREMISEl, params.Summary, params.Agent, objectEls)
+			// Append PREMIS event linked to PREMIS object element.
+			objectEl := objectOriginalNameEl.Parent()
+			event := premis.Event{
+				Summary:      params.Summary,
+				IdType:       "UUID",
+				IdValue:      id.String(),
+				DateTime:     a.clock.Now().Format(time.RFC3339),
+				AgentIdType:  agent.IdType,
+				AgentIdValue: agent.IdValue,
+			}
+
+			premis.AddEventElement(PREMISEl, event)
+			premis.LinkEventToObject(objectEl, event)
+
+			// Add agent to PREMIS.
+			addAgent = true
+		}
+	}
+
+	// Add validator agents to PREMIS document.
+	if addAgent {
+		if e := premis.AppendAgentXML(doc, agent); e != nil {
+			return nil, fmt.Errorf("addAgent: %v", e)
 		}
 	}
 
 	// Write PREMIS.
+	doc.Indent(2)
 	err = doc.WriteToFile(params.PREMISFilePath)
 	if err != nil {
 		return nil, err
