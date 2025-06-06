@@ -1,9 +1,13 @@
 package activities_test
 
 import (
+	pseudorand "math/rand"
+	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/jonboulle/clockwork"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	"go.uber.org/mock/gomock"
@@ -43,6 +47,7 @@ func TestAddPREMISValidationEvent(t *testing.T) {
 	eventSummary := premis.EventSummary{
 		Type:          "validation",
 		Detail:        "name=\"Validate SIP file formats\"",
+		Outcome:       "valid",
 		OutcomeDetail: "File format complies with specification",
 	}
 
@@ -96,63 +101,120 @@ func TestAddPREMISValidationEvent(t *testing.T) {
 	ContentNonExistent.Remove()
 
 	tests := []struct {
-		name      string
-		params    activities.AddPREMISValidationEventParams
-		result    activities.AddPREMISValidationEventResult
-		expectVld func(*fake_fvalidate.MockValidatorMockRecorder)
-		wantErr   string
+		name        string
+		params      activities.AddPREMISValidationEventParams
+		result      activities.AddPREMISValidationEventResult
+		expectVld   func(*fake_fvalidate.MockValidatorMockRecorder)
+		wantContent []byte
+		wantErr     string
 	}{
 		{
-			name: "Attempt to add PREMIS event to bad XML",
+			name: "Add PREMIS event and agent",
+			params: activities.AddPREMISValidationEventParams{
+				SIP:            normalTestSIP,
+				PREMISFilePath: normalPREMISPath,
+				Summary:        eventSummary,
+			},
+			result: activities.AddPREMISValidationEventResult{},
+			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
+				m.FormatIDs().Return([]string{"fmt/354", "fmt/817"})
+				m.PREMISAgent().Return(premis.Agent{
+					Type:    "software",
+					Name:    "veraPDF v1.2.3",
+					IdType:  "url",
+					IdValue: "https://verapdf.org",
+				})
+			},
+			wantContent: []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<premis:premis xmlns:premis="http://www.loc.gov/premis/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/premis/v3 https://www.loc.gov/standards/premis/premis.xsd" version="3.0">
+  <premis:object xsi:type="premis:file">
+    <premis:objectIdentifier>
+      <premis:objectIdentifierType>uuid</premis:objectIdentifierType>
+      <premis:objectIdentifierValue>c74a85b7-919b-409e-8209-9c7ebe0e7945</premis:objectIdentifierValue>
+    </premis:objectIdentifier>
+    <premis:objectCharacteristics>
+      <premis:format>
+        <premis:formatDesignation>
+          <premis:formatName/>
+        </premis:formatDesignation>
+      </premis:format>
+    </premis:objectCharacteristics>
+    <premis:originalName>data/objects/content/file.json</premis:originalName>
+    <premis:linkingEventIdentifier>
+      <premis:linkingEventIdentifierType>UUID</premis:linkingEventIdentifierType>
+      <premis:linkingEventIdentifierValue>52fdfc07-2182-454f-963f-5f0f9a621d72</premis:linkingEventIdentifierValue>
+    </premis:linkingEventIdentifier>
+  </premis:object>
+  <premis:event>
+    <premis:eventIdentifier>
+      <premis:eventIdentifierType>UUID</premis:eventIdentifierType>
+      <premis:eventIdentifierValue>52fdfc07-2182-454f-963f-5f0f9a621d72</premis:eventIdentifierValue>
+    </premis:eventIdentifier>
+    <premis:eventType>validation</premis:eventType>
+    <premis:eventDateTime>2025-06-06T09:57:16Z</premis:eventDateTime>
+    <premis:eventDetailInformation>
+      <premis:eventDetail>name=&quot;Validate SIP file formats&quot;</premis:eventDetail>
+    </premis:eventDetailInformation>
+    <premis:eventOutcomeInformation>
+      <premis:eventOutcome>valid</premis:eventOutcome>
+      <premis:eventOutcomeDetail>
+        <premis:eventOutcomeDetailNote>File format complies with specification</premis:eventOutcomeDetailNote>
+      </premis:eventOutcomeDetail>
+    </premis:eventOutcomeInformation>
+    <premis:linkingAgentIdentifier>
+      <premis:linkingAgentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">url</premis:linkingAgentIdentifierType>
+      <premis:linkingAgentIdentifierValue>https://verapdf.org</premis:linkingAgentIdentifierValue>
+    </premis:linkingAgentIdentifier>
+  </premis:event>
+  <premis:agent>
+    <premis:agentIdentifier>
+      <premis:agentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">url</premis:agentIdentifierType>
+      <premis:agentIdentifierValue>https://verapdf.org</premis:agentIdentifierValue>
+    </premis:agentIdentifier>
+    <premis:agentName>veraPDF v1.2.3</premis:agentName>
+    <premis:agentType>software</premis:agentType>
+  </premis:agent>
+</premis:premis>
+`),
+		},
+		{
+			name: "Error adding PREMIS event to bad XML",
 			params: activities.AddPREMISValidationEventParams{
 				SIP:            badXMLSIP,
 				PREMISFilePath: badXMLFilePath,
-				Agent:          premis.AgentDefault(),
 				Summary:        eventSummary,
 			},
 			result:  activities.AddPREMISValidationEventResult{},
 			wantErr: "no root premis element found in document",
 		},
 		{
-			name: "Add PREMIS event for PREMIS object not yet in the XML",
+			name: "Error adding PREMIS event for PREMIS object not yet in the XML",
 			params: activities.AddPREMISValidationEventParams{
 				SIP:            testSIP,
 				PREMISFilePath: emptyPREMISPath,
-				Agent:          premis.AgentDefault(),
 				Summary:        eventSummary,
 			},
 			result: activities.AddPREMISValidationEventResult{},
 			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
 				m.FormatIDs().Return([]string{"fmt/354", "fmt/817"})
+				m.PREMISAgent().Return(premis.Agent{
+					Type:    "software",
+					Name:    "veraPDF v1.2.3",
+					IdType:  "url",
+					IdValue: "https://verapdf.org",
+				})
 			},
 			wantErr: "element not found",
 		},
 		{
-			name: "Add PREMIS event for PREMIS object present in the XML",
-			params: activities.AddPREMISValidationEventParams{
-				SIP:            normalTestSIP,
-				PREMISFilePath: normalPREMISPath,
-				Agent:          premis.AgentDefault(),
-				Summary:        eventSummary,
-			},
-			result: activities.AddPREMISValidationEventResult{},
-			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
-				m.FormatIDs().Return([]string{"fmt/354", "fmt/817"})
-			},
-		},
-		{
-			name: "Add PREMIS event for bad path",
+			name: "Error adding PREMIS event to bad PREMIS file path",
 			params: activities.AddPREMISValidationEventParams{
 				SIP:            testSIP,
 				PREMISFilePath: PREMISFilePathNonExistent,
-				Agent:          premis.AgentDefault(),
 				Summary:        eventSummary,
 			},
-			result: activities.AddPREMISValidationEventResult{},
-			expectVld: func(m *fake_fvalidate.MockValidatorMockRecorder) {
-				m.FormatIDs().Return([]string{"fmt/354"})
-			},
-			wantErr: "no such file or directory",
+			result:  activities.AddPREMISValidationEventResult{},
+			wantErr: "PREMIS file path does not exist",
 		},
 	}
 	for _, tt := range tests {
@@ -160,16 +222,21 @@ func TestAddPREMISValidationEvent(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-
 			mockVdr := fake_fvalidate.NewMockValidator(ctrl)
 			if tt.expectVld != nil {
 				tt.expectVld(mockVdr.EXPECT())
 			}
 
+			act := activities.NewAddPREMISValidationEvent(
+				clockwork.NewFakeClockAt(time.Date(2025, 6, 6, 9, 57, 16, 0, time.UTC)),
+				pseudorand.New(pseudorand.NewSource(1)), // #nosec G404
+				mockVdr,
+			)
+
 			ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 			env := ts.NewTestActivityEnvironment()
 			env.RegisterActivityWithOptions(
-				activities.NewAddPREMISValidationEvent(mockVdr).Execute,
+				act.Execute,
 				temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISValidationEventName},
 			)
 
@@ -192,8 +259,11 @@ func TestAddPREMISValidationEvent(t *testing.T) {
 			assert.NilError(t, err)
 			assert.DeepEqual(t, res, tt.result)
 
-			_, err = premis.ParseFile(tt.params.PREMISFilePath)
-			assert.NilError(t, err)
+			if tt.wantContent != nil {
+				b, err := os.ReadFile(tt.params.PREMISFilePath)
+				assert.NilError(t, err)
+				assert.DeepEqual(t, b, tt.wantContent)
+			}
 		})
 	}
 }

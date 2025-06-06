@@ -1,7 +1,6 @@
 package workflow_test
 
 import (
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"os"
@@ -25,7 +24,6 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/localact"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/pips"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
@@ -180,18 +178,15 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFilesName},
 	)
 	s.env.RegisterActivityWithOptions(
-		activities.NewAddPREMISObjects(rand.Reader).Execute,
+		activities.NewAddPREMISObjects(nil).Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISObjectsName},
 	)
 	s.env.RegisterActivityWithOptions(
 		activities.NewAddPREMISEvent().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISEventName},
 	)
-
-	veraPDFValidator := fvalidate.NewVeraPDFValidator("")
-
 	s.env.RegisterActivityWithOptions(
-		activities.NewAddPREMISValidationEvent(veraPDFValidator).Execute,
+		activities.NewAddPREMISValidationEvent(nil, nil, nil).Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISValidationEventName},
 	)
 	s.env.RegisterActivityWithOptions(
@@ -219,7 +214,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
 	)
 
-	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir, cfg.CheckDuplicates, "VeraPDF 1.1.1", nil)
+	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir, cfg.CheckDuplicates, nil)
 }
 
 func (s *PreprocessingTestSuite) digitizedAIP(path string) sip.SIP {
@@ -466,12 +461,6 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 		&activities.AddPREMISValidationEventParams{
 			SIP:            expectedSIP,
 			PREMISFilePath: premisFilePath,
-			Agent: premis.Agent{
-				Type:    "software",
-				Name:    "VeraPDF 1.1.1",
-				IdType:  "url",
-				IdValue: "https://verapdf.org",
-			},
 			Summary: premis.EventSummary{
 				Type:          "validation",
 				Detail:        "name=\"Validate SIP file formats\"",
@@ -502,21 +491,6 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 		&activities.AddPREMISAgentParams{
 			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
-		},
-	).Return(
-		&activities.AddPREMISAgentResult{}, nil,
-	)
-	s.env.OnActivity(
-		activities.AddPREMISAgentName,
-		sessionCtx,
-		&activities.AddPREMISAgentParams{
-			PREMISFilePath: premisFilePath,
-			Agent: premis.Agent{
-				Type:    "software",
-				Name:    "VeraPDF 1.1.1",
-				IdType:  "url",
-				IdValue: "https://verapdf.org",
-			},
 		},
 	).Return(
 		&activities.AddPREMISAgentResult{}, nil,

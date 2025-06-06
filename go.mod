@@ -13,6 +13,7 @@ require (
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
+	github.com/jonboulle/clockwork v0.5.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/oklog/run v1.1.0
 	github.com/richardlehane/siegfried v1.11.1

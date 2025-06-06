@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 )
 
 // pdfaPUIDs are the https://www.nationalarchives.gov.uk/pronom/ IDs of the
@@ -42,6 +43,20 @@ func (v *veraPDFValidator) FormatIDs() []string {
 
 func (v *veraPDFValidator) Name() string {
 	return "veraPDF"
+}
+
+func (v *veraPDFValidator) PREMISAgent() premis.Agent {
+	name, err := v.Version()
+	if err != nil || name == "" {
+		name = fmt.Sprintf("%s (version unknown)", v.Name())
+	}
+
+	return premis.Agent{
+		Type:    "software",
+		Name:    name,
+		IdType:  "url",
+		IdValue: "https://verapdf.org",
+	}
 }
 
 func (v *veraPDFValidator) Validate(path string) (string, error) {

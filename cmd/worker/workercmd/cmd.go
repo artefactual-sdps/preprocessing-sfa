@@ -14,6 +14,7 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"github.com/go-logr/logr"
+	"github.com/jonboulle/clockwork"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_client "go.temporal.io/sdk/client"
@@ -99,13 +100,8 @@ func (m *Main) Run(ctx context.Context) error {
 
 	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path)
 
-	veraPDFVersion, err := veraPDFValidator.Version()
-	if err != nil {
-		return err
-	}
-
 	w.RegisterWorkflowWithOptions(
-		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath, m.cfg.CheckDuplicates, veraPDFVersion, psvc).Execute,
+		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath, m.cfg.CheckDuplicates, psvc).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Temporal.WorkflowName},
 	)
 
@@ -165,7 +161,11 @@ func (m *Main) Run(ctx context.Context) error {
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISAgentName},
 	)
 	w.RegisterActivityWithOptions(
-		activities.NewAddPREMISValidationEvent(veraPDFValidator).Execute,
+		activities.NewAddPREMISValidationEvent(
+			clockwork.NewRealClock(),
+			rand.Reader,
+			veraPDFValidator,
+		).Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISValidationEventName},
 	)
 	w.RegisterActivityWithOptions(
