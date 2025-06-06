@@ -37,7 +37,6 @@ type (
 	PreprocessingWorkflow struct {
 		sharedPath      string
 		checkDuplicates bool
-		veraPDFVersion  string
 		psvc            persistence.Service
 	}
 
@@ -55,13 +54,11 @@ type (
 func NewPreprocessingWorkflow(
 	sharedPath string,
 	checkDuplicates bool,
-	veraPDFVersion string,
 	psvc persistence.Service,
 ) *PreprocessingWorkflow {
 	return &PreprocessingWorkflow{
 		sharedPath:      sharedPath,
 		checkDuplicates: checkDuplicates,
-		veraPDFVersion:  veraPDFVersion,
 		psvc:            psvc,
 	}
 }
@@ -603,7 +600,7 @@ func (w *PreprocessingWorkflow) Execute(
 
 	// Write PREMIS XML.
 	ev = result.newEvent(ctx, "Create premis.xml")
-	if e = writePREMISFile(ctx, identifySIP.SIP, w.veraPDFVersion); e != nil {
+	if e = writePREMISFile(ctx, identifySIP.SIP); e != nil {
 		result.systemError(
 			ctx,
 			e,
@@ -702,7 +699,7 @@ func withFilesysActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.C
 	})
 }
 
-func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersion string) error {
+func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 	var e error
 	path := filepath.Join(sip.Path, "metadata", "premis.xml")
 
@@ -784,21 +781,13 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersi
 		}
 	}
 
-	// Add PREMIS events for validate file activity.
-	veraPDFAgent := premis.Agent{
-		Type:    "software",
-		Name:    veraPDFVersion,
-		IdType:  "url",
-		IdValue: "https://verapdf.org",
-	}
-
+	// Add PREMIS events for file validation.
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
 		activities.AddPREMISValidationEventName,
 		&activities.AddPREMISValidationEventParams{
 			SIP:            sip,
 			PREMISFilePath: path,
-			Agent:          veraPDFAgent,
 			Summary: premis.EventSummary{
 				Type:          "validation",
 				Detail:        "name=\"Validate SIP file formats\"",
@@ -811,7 +800,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersi
 		return e
 	}
 
-	// Add PREMIS event noting validate metadata result.
+	// Add PREMIS events for metadata validation.
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
 		activities.AddPREMISEventName,
@@ -828,7 +817,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersi
 		return e
 	}
 
-	// Add Enduro and veraPDF PREMIS agents.
+	// Add Enduro PREMIS agent.
 	var addPREMISEnduroAgent activities.AddPREMISAgentResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -838,19 +827,6 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP, veraPDFVersi
 			Agent:          premis.AgentDefault(),
 		},
 	).Get(ctx, &addPREMISEnduroAgent)
-	if e != nil {
-		return e
-	}
-
-	var addPREMISVeraPDFAgent activities.AddPREMISAgentResult
-	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
-		activities.AddPREMISAgentName,
-		&activities.AddPREMISAgentParams{
-			PREMISFilePath: path,
-			Agent:          veraPDFAgent,
-		},
-	).Get(ctx, &addPREMISVeraPDFAgent)
 	if e != nil {
 		return e
 	}
