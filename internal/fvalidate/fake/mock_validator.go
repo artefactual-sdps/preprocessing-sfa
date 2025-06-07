@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	fvalidate "github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
+	premis "github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -111,6 +112,44 @@ func (c *MockValidatorNameCall) Do(f func() string) *MockValidatorNameCall {
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockValidatorNameCall) DoAndReturn(f func() string) *MockValidatorNameCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// PREMISAgent mocks base method.
+func (m *MockValidator) PREMISAgent() premis.Agent {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PREMISAgent")
+	ret0, _ := ret[0].(premis.Agent)
+	return ret0
+}
+
+// PREMISAgent indicates an expected call of PREMISAgent.
+func (mr *MockValidatorMockRecorder) PREMISAgent() *MockValidatorPREMISAgentCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PREMISAgent", reflect.TypeOf((*MockValidator)(nil).PREMISAgent))
+	return &MockValidatorPREMISAgentCall{Call: call}
+}
+
+// MockValidatorPREMISAgentCall wrap *gomock.Call
+type MockValidatorPREMISAgentCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockValidatorPREMISAgentCall) Return(arg0 premis.Agent) *MockValidatorPREMISAgentCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockValidatorPREMISAgentCall) Do(f func() premis.Agent) *MockValidatorPREMISAgentCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockValidatorPREMISAgentCall) DoAndReturn(f func() premis.Agent) *MockValidatorPREMISAgentCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

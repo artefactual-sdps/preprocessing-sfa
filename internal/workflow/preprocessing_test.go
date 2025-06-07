@@ -188,10 +188,10 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISEventName},
 	)
 
-	veraPDFValidator := fvalidate.NewVeraPDFValidator("")
-
 	s.env.RegisterActivityWithOptions(
-		activities.NewAddPREMISValidationEvent(veraPDFValidator).Execute,
+		activities.NewAddPREMISValidationEvent(
+			fvalidate.NewVeraPDFValidator(""),
+		).Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISValidationEventName},
 	)
 	s.env.RegisterActivityWithOptions(
@@ -219,7 +219,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
 	)
 
-	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir, cfg.CheckDuplicates, "VeraPDF 1.1.1", nil)
+	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir, cfg.CheckDuplicates, nil)
 }
 
 func (s *PreprocessingTestSuite) digitizedAIP(path string) sip.SIP {
@@ -466,12 +466,6 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 		&activities.AddPREMISValidationEventParams{
 			SIP:            expectedSIP,
 			PREMISFilePath: premisFilePath,
-			Agent: premis.Agent{
-				Type:    "software",
-				Name:    "VeraPDF 1.1.1",
-				IdType:  "url",
-				IdValue: "https://verapdf.org",
-			},
 			Summary: premis.EventSummary{
 				Type:          "validation",
 				Detail:        "name=\"Validate SIP file formats\"",
@@ -502,21 +496,6 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 		&activities.AddPREMISAgentParams{
 			PREMISFilePath: premisFilePath,
 			Agent:          premis.AgentDefault(),
-		},
-	).Return(
-		&activities.AddPREMISAgentResult{}, nil,
-	)
-	s.env.OnActivity(
-		activities.AddPREMISAgentName,
-		sessionCtx,
-		&activities.AddPREMISAgentParams{
-			PREMISFilePath: premisFilePath,
-			Agent: premis.Agent{
-				Type:    "software",
-				Name:    "VeraPDF 1.1.1",
-				IdType:  "url",
-				IdValue: "https://verapdf.org",
-			},
 		},
 	).Return(
 		&activities.AddPREMISAgentResult{}, nil,

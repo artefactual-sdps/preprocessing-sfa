@@ -73,6 +73,14 @@ const premisObjectAndEventAddContent = `<?xml version="1.0" encoding="UTF-8"?>
       <premis:linkingAgentIdentifierValue>https://github.com/artefactual-sdps/preprocessing-sfa</premis:linkingAgentIdentifierValue>
     </premis:linkingAgentIdentifier>
   </premis:event>
+  <premis:agent>
+    <premis:agentIdentifier>
+      <premis:agentIdentifierType valueURI="http://id.loc.gov/vocabulary/identifiers/local">url</premis:agentIdentifierType>
+      <premis:agentIdentifierValue>https://github.com/artefactual-sdps/preprocessing-sfa</premis:agentIdentifierValue>
+    </premis:agentIdentifier>
+    <premis:agentName>Enduro</premis:agentName>
+    <premis:agentType>software</premis:agentType>
+  </premis:agent>
 </premis:premis>
 `
 
@@ -195,6 +203,9 @@ func TestAppendPREMISEventXML(t *testing.T) {
 		IdValue:      uuid,
 		OriginalName: originalName,
 	})
+	assert.NilError(t, err)
+
+	err = premis.AppendAgentXML(doc, premis.AgentDefault())
 	assert.NilError(t, err)
 
 	// Test adding PREMIS event.

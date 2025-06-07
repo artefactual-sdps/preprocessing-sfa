@@ -99,13 +99,8 @@ func (m *Main) Run(ctx context.Context) error {
 
 	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path)
 
-	veraPDFVersion, err := veraPDFValidator.Version()
-	if err != nil {
-		return err
-	}
-
 	w.RegisterWorkflowWithOptions(
-		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath, m.cfg.CheckDuplicates, veraPDFVersion, psvc).Execute,
+		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath, m.cfg.CheckDuplicates, psvc).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Temporal.WorkflowName},
 	)
 
