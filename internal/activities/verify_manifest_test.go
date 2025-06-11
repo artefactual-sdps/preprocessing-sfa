@@ -48,7 +48,7 @@ const (
 					<name>arelda.xsd</name>
 					<originalName>arelda.xsd</originalName>
 					<pruefalgorithmus>MD5</pruefalgorithmus>
-					<pruefsumme>661c2df1b1e76d1446e90a54816d91ae</pruefsumme>
+					<pruefsumme>661C2DF1B1E76D1446E90A54816D91AE</pruefsumme>
 				</datei>
 			</ordner>
 		</ordner>

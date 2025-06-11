@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	goset "github.com/deckarep/golang-set/v2"
 
@@ -191,7 +192,7 @@ func verifyChecksums(
 		}
 
 		// Compare hash to expected value.
-		if hashResult != file.Checksum.Hash {
+		if hashResult != strings.ToLower(file.Checksum.Hash) {
 			failures = append(
 				failures,
 				fmt.Sprintf(
