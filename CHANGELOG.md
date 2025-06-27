@@ -8,6 +8,13 @@ requests.
 
 ## [Unreleased]
 
+## [0.13.0] - 2025-06-27
+
+### Fixed
+
+- Conditionally add file validator PREMIS agents ([#152])
+- Validate checksums with case insensitivity ([#157])
+
 ## [0.12.0] - 2025-05-01
 
 ### Fixed
@@ -120,7 +127,8 @@ requests.
 
 Initial release.
 
-[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.12.0...HEAD
+[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.9.0...v0.10.0
@@ -133,6 +141,8 @@ Initial release.
 [0.3.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/artefactual-sdps/preprocessing-sfa/releases/tag/v0.1.0
+[#157]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/157
+[#152]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/152
 [#144]: https://github.com/artefactual-sdps/preprocessing-sfa/pull/144
 [#135]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/135
 [#126]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/126
