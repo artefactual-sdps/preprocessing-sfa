@@ -609,7 +609,7 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 					CompletedAt: testTime,
 				},
 				{
-					Name:        "Validate SIP files",
+					Name:        "Validate SIP file formats",
 					Message:     "No invalid files found",
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
@@ -898,8 +898,8 @@ Please review the SIP and ensure that the metadata checksums match those of the 
 					CompletedAt: testTime,
 				},
 				{
-					Name: "Validate SIP file formats",
-					Message: `Content error: file format validation has failed.
+					Name: "Check for disallowed file formats",
+					Message: `Content error: file format check has failed.
 
 One or more file formats are not allowed:
 
@@ -912,8 +912,8 @@ Please review the SIP and remove or replace all disallowed file formats.`,
 					CompletedAt: testTime,
 				},
 				{
-					Name: "Validate SIP files",
-					Message: `Content error: file validation has failed.
+					Name: "Validate SIP file formats",
+					Message: `Content error: file format validation has failed.
 
 - One or more PDF/A files are invalid
 

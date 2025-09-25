@@ -441,9 +441,9 @@ func (w *PreprocessingWorkflow) Execute(
 		checksumEv.Succeed(ctx, "SIP checksums match file contents")
 	}
 
-	// Verify that SIP file formats are on allowlist (SIP types only).
+	// Check for disallowed file formats (SIP types only).
 	if sip.IsSIP() {
-		ev = result.newEvent(ctx, "Validate SIP file formats")
+		ev = result.newEvent(ctx, "Check for disallowed file formats")
 		var ffvalidateResult ffvalidate.Result
 		e = temporalsdk_workflow.ExecuteActivity(
 			withFilesysActOpts(ctx),
@@ -455,8 +455,8 @@ func (w *PreprocessingWorkflow) Execute(
 				ctx,
 				e,
 				ev,
-				"file format validation has failed.",
-				"An error occurred during the file format validation process. Please try again, or ask a system administrator to investigate.",
+				"file format check has failed.",
+				"An error occurred when checking for disallowed file formats. Please try again, or ask a system administrator to investigate.",
 			)
 			return result, nil
 		}
@@ -465,7 +465,7 @@ func (w *PreprocessingWorkflow) Execute(
 			result.validationError(
 				ctx,
 				ev,
-				"file format validation has failed.",
+				"file format check has failed.",
 				"One or more file formats are not allowed:",
 				ul(ffvalidateResult.Failures),
 				"Please review the SIP and remove or replace all disallowed file formats.",
@@ -475,8 +475,8 @@ func (w *PreprocessingWorkflow) Execute(
 		}
 	}
 
-	// Validate the SIP files.
-	ev = result.newEvent(ctx, "Validate SIP files")
+	// Validate SIP file formats against the format specifications.
+	ev = result.newEvent(ctx, "Validate SIP file formats")
 	var validateFilesResult activities.ValidateFilesResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		temporalsdk_workflow.WithActivityOptions(
@@ -496,8 +496,8 @@ func (w *PreprocessingWorkflow) Execute(
 			ctx,
 			e,
 			ev,
-			"file validation has failed.",
-			"An error occurred during the file validation process. Please try again, or ask a system administrator to investigate.",
+			"file format validation has failed.",
+			"An error occurred during the file format validation process. Please try again, or ask a system administrator to investigate.",
 		)
 		return result, nil
 	}
@@ -506,7 +506,7 @@ func (w *PreprocessingWorkflow) Execute(
 		result.validationError(
 			ctx,
 			ev,
-			"file validation has failed.",
+			"file format validation has failed.",
 			// TODO: Add tool name and version info.
 			ul(validateFilesResult.Failures),
 			"Please ensure all files are well-formed.",
@@ -763,7 +763,8 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 	}
 
 	if sip.IsSIP() {
-		// Add PREMIS events for validate file format activity (SIP types only).
+		// Add PREMIS events for the disallowed file format check (SIP types
+		// only).
 		e = temporalsdk_workflow.ExecuteActivity(
 			withFilesysActOpts(ctx),
 			activities.AddPREMISEventName,
@@ -771,7 +772,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 				PREMISFilePath: path,
 				Agent:          premis.AgentDefault(),
 				Type:           "validation",
-				Detail:         "name=\"Validate file format\"",
+				Detail:         "name=\"Check for disallowed file formats\"",
 				OutcomeDetail:  "Format allowed",
 				Failures:       nil,
 			},
@@ -781,7 +782,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 		}
 	}
 
-	// Add PREMIS events for file validation.
+	// Add PREMIS events for file format validation.
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
 		activities.AddPREMISValidationEventName,
