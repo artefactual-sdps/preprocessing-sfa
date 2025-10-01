@@ -8,6 +8,12 @@ requests.
 
 ## [Unreleased]
 
+## [0.14.0] - 2025-10-01
+
+### Changed
+
+- Rename the disallowed and validate file format activities ([#141])
+
 ## [0.13.0] - 2025-06-27
 
 ### Fixed
@@ -127,7 +133,8 @@ requests.
 
 Initial release.
 
-[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.13.0...HEAD
+[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.10.0...v0.11.0
@@ -144,6 +151,7 @@ Initial release.
 [#157]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/157
 [#152]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/152
 [#144]: https://github.com/artefactual-sdps/preprocessing-sfa/pull/144
+[#141]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/141
 [#135]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/135
 [#126]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/126
 [#122]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/122
