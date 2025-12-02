@@ -33,13 +33,13 @@ func TestFromManifest(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		manifest manifest.Manifest
+		manifest *manifest.Manifest
 		want     []identifiers.File
 		wantErr  string
 	}{
 		{
 			name: "Returns a digitized AIP identifier list",
-			manifest: manifest.Manifest{
+			manifest: &manifest.Manifest{Files: map[string]*manifest.File{
 				"content/d_0000001/00000001.jp2": {
 					ID: "_miEf29GTkFR7ymi91IV4fO",
 					Checksum: manifest.Checksum{
@@ -75,7 +75,7 @@ func TestFromManifest(t *testing.T) {
 						Hash:      "f8454632e1ebf97e0aa8d9527ce2641f",
 					},
 				},
-			},
+			}},
 			want: []identifiers.File{
 				{
 					Path: "content/d_0000001/00000001.jp2",
@@ -126,7 +126,7 @@ func TestFromManifest(t *testing.T) {
 		},
 		{
 			name:     "Errors when manifest is empty",
-			manifest: manifest.Manifest{},
+			manifest: &manifest.Manifest{},
 			wantErr:  "no files in manifest",
 		},
 	}

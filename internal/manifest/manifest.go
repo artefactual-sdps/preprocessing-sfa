@@ -8,9 +8,18 @@ import (
 	"slices"
 )
 
+// Allowed manifest schema versions.
+var AllowedSchemaVersions = []string{"4.0", "5.0"}
+
 type (
-	// Manifest is a map of SIP file paths to File metadata.
-	Manifest map[string]*File
+	// Manifest represents a parsed manifest file.
+	Manifest struct {
+		// SchemaVersion is the manifest schema version.
+		SchemaVersion string
+
+		// Files is a map of SIP file paths to File metadata.
+		Files map[string]*File
+	}
 
 	// File represents manifest metadata about a file.
 	File struct {
@@ -35,9 +44,9 @@ var relevantElements = []string{
 	"pruefsumme",
 }
 
-// Files parses an XML manifest data stream r and returns a Manifest
-// representing the manifest file metadata.
-func Files(r io.Reader) (Manifest, error) {
+// Parse parses an XML manifest data stream r and returns a Manifest
+// representing the manifest metadata.
+func Parse(r io.Reader) (*Manifest, error) {
 	var (
 		file *File
 		path string
@@ -46,7 +55,7 @@ func Files(r io.Reader) (Manifest, error) {
 	// openElems is a stack representing open elements. It has an arbitrarily
 	// large capacity to avoid unnecessary copies of the underlying array.
 	openElems := make([]string, 0, 100)
-	files := make(map[string]*File)
+	manifest := &Manifest{Files: make(map[string]*File)}
 
 	// decoder is an XML stream parser reading from r.
 	decoder := xml.NewDecoder(r)
@@ -64,7 +73,15 @@ func Files(r io.Reader) (Manifest, error) {
 			e := elem.Name.Local
 			switch {
 			case slices.Contains(relevantElements, e):
-				if e == "datei" {
+				if e == "paket" {
+					// Parse schemaVersion attribute from paket element.
+					for _, a := range elem.Attr {
+						if a.Name.Local == "schemaVersion" {
+							manifest.SchemaVersion = a.Value
+							break
+						}
+					}
+				} else if e == "datei" {
 					var id string
 					for _, a := range elem.Attr {
 						if a.Name.Local == "id" {
@@ -86,13 +103,13 @@ func Files(r io.Reader) (Manifest, error) {
 			if e := elem.Name.Local; e == openElems[len(openElems)-1] {
 				switch e {
 				case "datei":
-					files[path] = file
+					manifest.Files[path] = file
 					file = nil // Close file instance.
 					fallthrough
 				case "ordner":
 					path = filepath.Dir(path) // Remove name from path.
 				case "inhaltsverzeichnis":
-					return files, nil // Stop parsing.
+					return manifest, nil // Stop parsing.
 				}
 
 				openElems = openElems[:len(openElems)-1] // Close element.
@@ -114,5 +131,5 @@ func Files(r io.Reader) (Manifest, error) {
 		}
 	}
 
-	return files, nil
+	return manifest, nil
 }

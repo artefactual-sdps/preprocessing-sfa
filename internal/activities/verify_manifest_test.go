@@ -332,6 +332,11 @@ const (
 	</inhaltsverzeichnis>
 </paket>
 `
+
+	unsupportedSchemaMetadata = `<?xml version="1.0" encoding="UTF-8"?>
+<paket xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://bar.admin.ch/arelda/v4" xsi:type="paketSIP" schemaVersion="5.1">
+</paket>
+`
 )
 
 func testSIP(t *testing.T, path string) sip.SIP {
@@ -506,7 +511,6 @@ func TestVerifyManifest(t *testing.T) {
 				),
 			},
 			want: activities.VerifyManifestResult{
-				Failed: true,
 				MissingFiles: []string{
 					fmt.Sprintf(
 						"Missing file: %s/content/content/d_0000001/00000001.jp2",
@@ -528,7 +532,6 @@ func TestVerifyManifest(t *testing.T) {
 				),
 			},
 			want: activities.VerifyManifestResult{
-				Failed: true,
 				UnexpectedFiles: []string{
 					fmt.Sprintf(
 						"Unexpected file: %s/content/content/d_0000001/extra_file.txt",
@@ -575,11 +578,27 @@ func TestVerifyManifest(t *testing.T) {
 				),
 			},
 			want: activities.VerifyManifestResult{
-				Failed: true,
 				ChecksumFailures: []string{
 					`Checksum mismatch for "content/content/d_0000001/00000001.jp2" (expected: "827ccb0eea8a706c4c34a16891f84e7b", got: "2714364e3a0ac68e8bf9b898b31ff303")`,
 					`Checksum mismatch for "content/header/old/SIP/metadata.xml" (expected: "2c5afa141670292c96c3c111c47b83b5", got: "dff24b6a34ff7ab645cb477e090bee5f")`,
 				},
+			},
+		},
+		{
+			name: "Returns an unsupported schema version error",
+			params: activities.VerifyManifestParams{
+				SIP: testSIP(
+					t,
+					fs.NewDir(t, "Test_Extra_Files",
+						fs.WithDir("additional",
+							fs.WithFile("UpdatedAreldaMetadata.xml", unsupportedSchemaMetadata),
+						),
+						fs.WithDir("content"),
+					).Path(),
+				),
+			},
+			want: activities.VerifyManifestResult{
+				ManifestFailures: []string{"Unsupported schema version: 5.1"},
 			},
 		},
 	}

@@ -416,13 +416,12 @@ func (w *PreprocessingWorkflow) Execute(
 		return result, nil
 	}
 
-	if len(verifyManifest.MissingFiles) > 0 || len(verifyManifest.UnexpectedFiles) > 0 {
-		failures := slices.Concat(verifyManifest.MissingFiles, verifyManifest.UnexpectedFiles)
+	if len(verifyManifest.ManifestFailures) > 0 || len(verifyManifest.MissingFiles) > 0 || len(verifyManifest.UnexpectedFiles) > 0 {
 		result.validationError(
 			ctx,
 			manifestEv,
-			fmt.Sprintf("SIP contents do not match the %q manifest.", filepath.Base(sip.ManifestPath)),
-			ul(failures),
+			fmt.Sprintf("%q manifest could not be verified against the contents of the SIP.", filepath.Base(sip.ManifestPath)),
+			ul(slices.Concat(verifyManifest.ManifestFailures, verifyManifest.MissingFiles, verifyManifest.UnexpectedFiles)),
 			"Please review the SIP and ensure that its contents match those listed in the metadata manifest.",
 		)
 	} else {

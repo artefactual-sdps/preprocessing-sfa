@@ -48,7 +48,7 @@ func (a *WriteIdentifierFileActivity) write(pip pips.PIP) (string, error) {
 	}
 	defer r.Close()
 
-	m, err := manifest.Files(r)
+	m, err := manifest.Parse(r)
 	if err != nil {
 		return "", err
 	}

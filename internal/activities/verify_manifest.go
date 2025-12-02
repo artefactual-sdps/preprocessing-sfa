@@ -30,8 +30,8 @@ type (
 		SIP sip.SIP
 	}
 	VerifyManifestResult struct {
-		Failed           bool
 		ChecksumFailures []string
+		ManifestFailures []string
 		MissingFiles     []string
 		UnexpectedFiles  []string
 	}
@@ -45,18 +45,18 @@ func NewVerifyManifest() *VerifyManifest {
 // the SIP directory. Any missing or unexpected files on disk are reported as
 // failures.
 func (a *VerifyManifest) Execute(ctx context.Context, params *VerifyManifestParams) (*VerifyManifestResult, error) {
-	manifestFiles, err := manifestFiles(params.SIP)
+	m, err := getManifest(params.SIP)
 	if err != nil {
 		return nil, fmt.Errorf("verify manifest: parse manifest: %v", err)
 	}
-	manifestSet := goset.NewSetFromMapKeys(manifestFiles)
+	manifestSet := goset.NewSetFromMapKeys(m.Files)
 
 	sipFiles, err := sipFiles(params.SIP)
 	if err != nil {
 		return nil, fmt.Errorf("verify manifest: get SIP contents: %v", err)
 	}
 
-	badChecksums, err := verifyChecksums(manifestFiles, sipFiles, params.SIP.Path)
+	badChecksums, err := verifyChecksums(m.Files, sipFiles, params.SIP.Path)
 	if err != nil {
 		return nil, fmt.Errorf("verify checksums: %v", err)
 	}
@@ -65,37 +65,41 @@ func (a *VerifyManifest) Execute(ctx context.Context, params *VerifyManifestPara
 	missing := missingFiles(sipBase, manifestSet, sipFiles)
 	unexpected := unexpectedFiles(sipBase, manifestSet, sipFiles)
 
+	var manifestFailures []string
+	if !slices.Contains(manifest.AllowedSchemaVersions, m.SchemaVersion) {
+		manifestFailures = []string{fmt.Sprintf("Unsupported schema version: %s", m.SchemaVersion)}
+	}
+
 	return &VerifyManifestResult{
-		Failed:           len(missing) > 0 || len(unexpected) > 0 || len(badChecksums) > 0,
 		ChecksumFailures: badChecksums,
+		ManifestFailures: manifestFailures,
 		MissingFiles:     missing,
 		UnexpectedFiles:  unexpected,
 	}, nil
 }
 
-// manifestFiles parses the SIP manifest and returns a map of file paths
-// (relative to the SIP root directory) to files.
-func manifestFiles(s sip.SIP) (map[string]*manifest.File, error) {
+// getManifest parses the SIP manifest and returns a Manifest.
+func getManifest(s sip.SIP) (*manifest.Manifest, error) {
 	f, err := os.Open(s.ManifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("open: %v", err)
 	}
 
-	files, err := manifest.Files(f)
+	m, err := manifest.Parse(f)
 	if err != nil {
 		return nil, err
 	}
 
 	// Prefix "content/" to AIP file paths.
 	if s.IsAIP() {
-		m := make(map[string]*manifest.File, len(files))
-		for k, v := range files {
-			m[filepath.Join("content", k)] = v
+		files := make(map[string]*manifest.File, len(m.Files))
+		for k, v := range m.Files {
+			files[filepath.Join("content", k)] = v
 		}
-		files = m
+		m.Files = files
 	}
 
-	return files, nil
+	return m, nil
 }
 
 // sipFiles recursively walks dir's tree and returns the set of all file

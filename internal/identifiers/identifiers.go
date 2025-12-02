@@ -29,14 +29,14 @@ func Compare(a, b File) int {
 	return strings.Compare(a.Path, b.Path)
 }
 
-func FromManifest(m manifest.Manifest) ([]File, error) {
-	if len(m) == 0 {
+func FromManifest(m *manifest.Manifest) ([]File, error) {
+	if m == nil || len(m.Files) == 0 {
 		return nil, errors.New("no files in manifest")
 	}
 
-	res := make([]File, len(m))
+	res := make([]File, len(m.Files))
 	i := 0
-	for path, file := range m {
+	for path, file := range m.Files {
 		res[i] = File{
 			Path: path,
 			Identifiers: []Identifier{

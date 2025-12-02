@@ -774,12 +774,12 @@ func (s *PreprocessingTestSuite) TestValidationError() {
 		&activities.VerifyManifestParams{SIP: expectedSIP},
 	).Return(
 		&activities.VerifyManifestResult{
-			Failed: true,
 			ChecksumFailures: []string{
 				`Checksum mismatch for "content/content/d_0000001/00000001.jp2" (expected: "827ccb0eea8a706c4c34a16891f84e7b", got: "2714364e3a0ac68e8bf9b898b31ff303")`,
 			},
-			MissingFiles:    []string{"Missing file: d_0000001/00000001.jp2"},
-			UnexpectedFiles: []string{"Unexpected file: d_0000001/extra_file.txt"},
+			ManifestFailures: []string{"Unsupported schema version: 5.1"},
+			MissingFiles:     []string{"Missing file: d_0000001/00000001.jp2"},
+			UnexpectedFiles:  []string{"Unexpected file: d_0000001/extra_file.txt"},
 		},
 		nil,
 	)
@@ -876,8 +876,9 @@ Please review the naming conventions specified for this type of SIP.`,
 				},
 				{
 					Name: "Verify SIP manifest",
-					Message: `Content error: SIP contents do not match the "metadata.xml" manifest.
+					Message: `Content error: "metadata.xml" manifest could not be verified against the contents of the SIP.
 
+- Unsupported schema version: 5.1
 - Missing file: d_0000001/00000001.jp2
 - Unexpected file: d_0000001/extra_file.txt
 
