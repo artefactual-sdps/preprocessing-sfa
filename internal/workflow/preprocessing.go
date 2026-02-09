@@ -478,15 +478,7 @@ func (w *PreprocessingWorkflow) Execute(
 	ev = result.newEvent(ctx, "Validate SIP file formats")
 	var validateFilesResult activities.ValidateFilesResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		temporalsdk_workflow.WithActivityOptions(
-			ctx,
-			temporalsdk_workflow.ActivityOptions{
-				ScheduleToCloseTimeout: time.Hour,
-				RetryPolicy: &temporalsdk_temporal.RetryPolicy{
-					MaximumAttempts: 1,
-				},
-			},
-		),
+		withFilesysActOpts(ctx),
 		activities.ValidateFilesName,
 		&activities.ValidateFilesParams{SIP: sip},
 	).Get(ctx, &validateFilesResult)
@@ -678,11 +670,10 @@ func withLocalActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Con
 	return temporalsdk_workflow.WithLocalActivityOptions(
 		ctx,
 		temporalsdk_workflow.LocalActivityOptions{
-			ScheduleToCloseTimeout: 5 * time.Second,
+			StartToCloseTimeout: time.Second * 10,
 			RetryPolicy: &temporalsdk_temporal.RetryPolicy{
 				InitialInterval:    time.Second,
 				BackoffCoefficient: 2,
-				MaximumInterval:    time.Minute,
 				MaximumAttempts:    3,
 			},
 		},
@@ -691,7 +682,7 @@ func withLocalActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Con
 
 func withFilesysActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
 	return temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
-		ScheduleToCloseTimeout: 5 * time.Minute,
+		StartToCloseTimeout: time.Hour * 2,
 		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
 			MaximumAttempts: 1,
 		},

@@ -18,7 +18,6 @@ func withActivityOptsForLongLivedRequest(ctx temporalsdk_workflow.Context) tempo
 		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
 			InitialInterval:    time.Second,
 			BackoffCoefficient: 2,
-			MaximumInterval:    time.Minute * 10,
 			MaximumAttempts:    5,
 			NonRetryableErrorTypes: []string{
 				"TemporalTimeout:StartToClose",
@@ -32,7 +31,7 @@ func withActivityOptsForLongLivedRequest(ctx temporalsdk_workflow.Context) tempo
 // require a retry policy attached.
 func withFilesystemActivityOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
 	return temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
-		StartToCloseTimeout: time.Hour,
+		StartToCloseTimeout: time.Hour * 2,
 		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
 			MaximumAttempts: 1,
 		},
