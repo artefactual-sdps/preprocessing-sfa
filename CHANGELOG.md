@@ -8,6 +8,12 @@ requests.
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-02-10
+
+### Fixed
+
+- Update activity options timeouts ([#171])
+
 ## [0.15.0] - 2025-12-03
 
 ### Added
