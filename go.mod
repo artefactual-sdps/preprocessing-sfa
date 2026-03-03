@@ -30,7 +30,7 @@ require (
 
 require (
 	ariga.io/atlas v0.19.2 // indirect
-	filippo.io/edwards25519 v1.1.0 // indirect
+	filippo.io/edwards25519 v1.1.1 // indirect
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
