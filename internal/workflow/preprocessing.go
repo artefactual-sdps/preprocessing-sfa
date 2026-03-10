@@ -416,12 +416,22 @@ func (w *PreprocessingWorkflow) Execute(
 		return result, nil
 	}
 
-	if len(verifyManifest.ManifestFailures) > 0 || len(verifyManifest.MissingFiles) > 0 || len(verifyManifest.UnexpectedFiles) > 0 {
+	if len(verifyManifest.ManifestFailures) > 0 || len(verifyManifest.MissingFiles) > 0 ||
+		len(verifyManifest.UnexpectedFiles) > 0 {
 		result.validationError(
 			ctx,
 			manifestEv,
-			fmt.Sprintf("%q manifest could not be verified against the contents of the SIP.", filepath.Base(sip.ManifestPath)),
-			ul(slices.Concat(verifyManifest.ManifestFailures, verifyManifest.MissingFiles, verifyManifest.UnexpectedFiles)),
+			fmt.Sprintf(
+				"%q manifest could not be verified against the contents of the SIP.",
+				filepath.Base(sip.ManifestPath),
+			),
+			ul(
+				slices.Concat(
+					verifyManifest.ManifestFailures,
+					verifyManifest.MissingFiles,
+					verifyManifest.UnexpectedFiles,
+				),
+			),
 			"Please review the SIP and ensure that its contents match those listed in the metadata manifest.",
 		)
 	} else {
@@ -831,10 +841,10 @@ func ul(items []string) string {
 		return ""
 	}
 
-	var s string
+	var s strings.Builder
 	for _, i := range items {
-		s += fmt.Sprintf("- %s\n", i)
+		fmt.Fprintf(&s, "- %s\n", i)
 	}
 
-	return strings.TrimSuffix(s, "\n")
+	return strings.TrimSuffix(s.String(), "\n")
 }

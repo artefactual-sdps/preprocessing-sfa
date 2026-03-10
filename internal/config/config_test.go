@@ -147,7 +147,6 @@ Persistence.Driver: missing required value`,
 			wantErrContains: "configuration file not found: ",
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 

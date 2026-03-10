@@ -1,7 +1,6 @@
 package fformat_test
 
 import (
-	"context"
 	"path/filepath"
 	"testing"
 
@@ -26,10 +25,7 @@ func TestIdentifyFormats(t *testing.T) {
 		ContentPath: testDir.Path(),
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	fileformats, err := fformat.IdentifyFormats(ctx, fformat.NewSiegfriedEmbed(), testSIP)
+	fileformats, err := fformat.IdentifyFormats(t.Context(), fformat.NewSiegfriedEmbed(), testSIP)
 	assert.NilError(t, err)
 
 	assert.Equal(t, len(fileformats), 2)
