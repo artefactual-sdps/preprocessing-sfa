@@ -22,52 +22,52 @@ type SIPUpdate struct {
 }
 
 // Where appends a list predicates to the SIPUpdate builder.
-func (su *SIPUpdate) Where(ps ...predicate.SIP) *SIPUpdate {
-	su.mutation.Where(ps...)
-	return su
+func (_u *SIPUpdate) Where(ps ...predicate.SIP) *SIPUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetName sets the "name" field.
-func (su *SIPUpdate) SetName(s string) *SIPUpdate {
-	su.mutation.SetName(s)
-	return su
+func (_u *SIPUpdate) SetName(v string) *SIPUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (su *SIPUpdate) SetNillableName(s *string) *SIPUpdate {
-	if s != nil {
-		su.SetName(*s)
+func (_u *SIPUpdate) SetNillableName(v *string) *SIPUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return su
+	return _u
 }
 
 // SetChecksum sets the "checksum" field.
-func (su *SIPUpdate) SetChecksum(s string) *SIPUpdate {
-	su.mutation.SetChecksum(s)
-	return su
+func (_u *SIPUpdate) SetChecksum(v string) *SIPUpdate {
+	_u.mutation.SetChecksum(v)
+	return _u
 }
 
 // SetNillableChecksum sets the "checksum" field if the given value is not nil.
-func (su *SIPUpdate) SetNillableChecksum(s *string) *SIPUpdate {
-	if s != nil {
-		su.SetChecksum(*s)
+func (_u *SIPUpdate) SetNillableChecksum(v *string) *SIPUpdate {
+	if v != nil {
+		_u.SetChecksum(*v)
 	}
-	return su
+	return _u
 }
 
 // Mutation returns the SIPMutation object of the builder.
-func (su *SIPUpdate) Mutation() *SIPMutation {
-	return su.mutation
+func (_u *SIPUpdate) Mutation() *SIPMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (su *SIPUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, su.sqlSave, su.mutation, su.hooks)
+func (_u *SIPUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (su *SIPUpdate) SaveX(ctx context.Context) int {
-	affected, err := su.Save(ctx)
+func (_u *SIPUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -75,34 +75,34 @@ func (su *SIPUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (su *SIPUpdate) Exec(ctx context.Context) error {
-	_, err := su.Save(ctx)
+func (_u *SIPUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (su *SIPUpdate) ExecX(ctx context.Context) {
-	if err := su.Exec(ctx); err != nil {
+func (_u *SIPUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (su *SIPUpdate) sqlSave(ctx context.Context) (n int, err error) {
+func (_u *SIPUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	_spec := sqlgraph.NewUpdateSpec(sip.Table, sip.Columns, sqlgraph.NewFieldSpec(sip.FieldID, field.TypeInt))
-	if ps := su.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := su.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(sip.FieldName, field.TypeString, value)
 	}
-	if value, ok := su.mutation.Checksum(); ok {
+	if value, ok := _u.mutation.Checksum(); ok {
 		_spec.SetField(sip.FieldChecksum, field.TypeString, value)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{sip.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -110,8 +110,8 @@ func (su *SIPUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	su.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // SIPUpdateOne is the builder for updating a single SIP entity.
@@ -123,59 +123,59 @@ type SIPUpdateOne struct {
 }
 
 // SetName sets the "name" field.
-func (suo *SIPUpdateOne) SetName(s string) *SIPUpdateOne {
-	suo.mutation.SetName(s)
-	return suo
+func (_u *SIPUpdateOne) SetName(v string) *SIPUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (suo *SIPUpdateOne) SetNillableName(s *string) *SIPUpdateOne {
-	if s != nil {
-		suo.SetName(*s)
+func (_u *SIPUpdateOne) SetNillableName(v *string) *SIPUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return suo
+	return _u
 }
 
 // SetChecksum sets the "checksum" field.
-func (suo *SIPUpdateOne) SetChecksum(s string) *SIPUpdateOne {
-	suo.mutation.SetChecksum(s)
-	return suo
+func (_u *SIPUpdateOne) SetChecksum(v string) *SIPUpdateOne {
+	_u.mutation.SetChecksum(v)
+	return _u
 }
 
 // SetNillableChecksum sets the "checksum" field if the given value is not nil.
-func (suo *SIPUpdateOne) SetNillableChecksum(s *string) *SIPUpdateOne {
-	if s != nil {
-		suo.SetChecksum(*s)
+func (_u *SIPUpdateOne) SetNillableChecksum(v *string) *SIPUpdateOne {
+	if v != nil {
+		_u.SetChecksum(*v)
 	}
-	return suo
+	return _u
 }
 
 // Mutation returns the SIPMutation object of the builder.
-func (suo *SIPUpdateOne) Mutation() *SIPMutation {
-	return suo.mutation
+func (_u *SIPUpdateOne) Mutation() *SIPMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the SIPUpdate builder.
-func (suo *SIPUpdateOne) Where(ps ...predicate.SIP) *SIPUpdateOne {
-	suo.mutation.Where(ps...)
-	return suo
+func (_u *SIPUpdateOne) Where(ps ...predicate.SIP) *SIPUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (suo *SIPUpdateOne) Select(field string, fields ...string) *SIPUpdateOne {
-	suo.fields = append([]string{field}, fields...)
-	return suo
+func (_u *SIPUpdateOne) Select(field string, fields ...string) *SIPUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated SIP entity.
-func (suo *SIPUpdateOne) Save(ctx context.Context) (*SIP, error) {
-	return withHooks(ctx, suo.sqlSave, suo.mutation, suo.hooks)
+func (_u *SIPUpdateOne) Save(ctx context.Context) (*SIP, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (suo *SIPUpdateOne) SaveX(ctx context.Context) *SIP {
-	node, err := suo.Save(ctx)
+func (_u *SIPUpdateOne) SaveX(ctx context.Context) *SIP {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -183,26 +183,26 @@ func (suo *SIPUpdateOne) SaveX(ctx context.Context) *SIP {
 }
 
 // Exec executes the query on the entity.
-func (suo *SIPUpdateOne) Exec(ctx context.Context) error {
-	_, err := suo.Save(ctx)
+func (_u *SIPUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (suo *SIPUpdateOne) ExecX(ctx context.Context) {
-	if err := suo.Exec(ctx); err != nil {
+func (_u *SIPUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (suo *SIPUpdateOne) sqlSave(ctx context.Context) (_node *SIP, err error) {
+func (_u *SIPUpdateOne) sqlSave(ctx context.Context) (_node *SIP, err error) {
 	_spec := sqlgraph.NewUpdateSpec(sip.Table, sip.Columns, sqlgraph.NewFieldSpec(sip.FieldID, field.TypeInt))
-	id, ok := suo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`db: missing "SIP.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := suo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, sip.FieldID)
 		for _, f := range fields {
@@ -214,23 +214,23 @@ func (suo *SIPUpdateOne) sqlSave(ctx context.Context) (_node *SIP, err error) {
 			}
 		}
 	}
-	if ps := suo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := suo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(sip.FieldName, field.TypeString, value)
 	}
-	if value, ok := suo.mutation.Checksum(); ok {
+	if value, ok := _u.mutation.Checksum(); ok {
 		_spec.SetField(sip.FieldChecksum, field.TypeString, value)
 	}
-	_node = &SIP{config: suo.config}
+	_node = &SIP{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, suo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{sip.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -238,6 +238,6 @@ func (suo *SIPUpdateOne) sqlSave(ctx context.Context) (_node *SIP, err error) {
 		}
 		return nil, err
 	}
-	suo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

@@ -20,30 +20,30 @@ type SIPCreate struct {
 }
 
 // SetName sets the "name" field.
-func (sc *SIPCreate) SetName(s string) *SIPCreate {
-	sc.mutation.SetName(s)
-	return sc
+func (_c *SIPCreate) SetName(v string) *SIPCreate {
+	_c.mutation.SetName(v)
+	return _c
 }
 
 // SetChecksum sets the "checksum" field.
-func (sc *SIPCreate) SetChecksum(s string) *SIPCreate {
-	sc.mutation.SetChecksum(s)
-	return sc
+func (_c *SIPCreate) SetChecksum(v string) *SIPCreate {
+	_c.mutation.SetChecksum(v)
+	return _c
 }
 
 // Mutation returns the SIPMutation object of the builder.
-func (sc *SIPCreate) Mutation() *SIPMutation {
-	return sc.mutation
+func (_c *SIPCreate) Mutation() *SIPMutation {
+	return _c.mutation
 }
 
 // Save creates the SIP in the database.
-func (sc *SIPCreate) Save(ctx context.Context) (*SIP, error) {
-	return withHooks(ctx, sc.sqlSave, sc.mutation, sc.hooks)
+func (_c *SIPCreate) Save(ctx context.Context) (*SIP, error) {
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (sc *SIPCreate) SaveX(ctx context.Context) *SIP {
-	v, err := sc.Save(ctx)
+func (_c *SIPCreate) SaveX(ctx context.Context) *SIP {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -51,35 +51,35 @@ func (sc *SIPCreate) SaveX(ctx context.Context) *SIP {
 }
 
 // Exec executes the query.
-func (sc *SIPCreate) Exec(ctx context.Context) error {
-	_, err := sc.Save(ctx)
+func (_c *SIPCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (sc *SIPCreate) ExecX(ctx context.Context) {
-	if err := sc.Exec(ctx); err != nil {
+func (_c *SIPCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (sc *SIPCreate) check() error {
-	if _, ok := sc.mutation.Name(); !ok {
+func (_c *SIPCreate) check() error {
+	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`db: missing required field "SIP.name"`)}
 	}
-	if _, ok := sc.mutation.Checksum(); !ok {
+	if _, ok := _c.mutation.Checksum(); !ok {
 		return &ValidationError{Name: "checksum", err: errors.New(`db: missing required field "SIP.checksum"`)}
 	}
 	return nil
 }
 
-func (sc *SIPCreate) sqlSave(ctx context.Context) (*SIP, error) {
-	if err := sc.check(); err != nil {
+func (_c *SIPCreate) sqlSave(ctx context.Context) (*SIP, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := sc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, sc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -87,21 +87,21 @@ func (sc *SIPCreate) sqlSave(ctx context.Context) (*SIP, error) {
 	}
 	id := _spec.ID.Value.(int64)
 	_node.ID = int(id)
-	sc.mutation.id = &_node.ID
-	sc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (sc *SIPCreate) createSpec() (*SIP, *sqlgraph.CreateSpec) {
+func (_c *SIPCreate) createSpec() (*SIP, *sqlgraph.CreateSpec) {
 	var (
-		_node = &SIP{config: sc.config}
+		_node = &SIP{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(sip.Table, sqlgraph.NewFieldSpec(sip.FieldID, field.TypeInt))
 	)
-	if value, ok := sc.mutation.Name(); ok {
+	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(sip.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := sc.mutation.Checksum(); ok {
+	if value, ok := _c.mutation.Checksum(); ok {
 		_spec.SetField(sip.FieldChecksum, field.TypeString, value)
 		_node.Checksum = value
 	}
@@ -116,16 +116,16 @@ type SIPCreateBulk struct {
 }
 
 // Save creates the SIP entities in the database.
-func (scb *SIPCreateBulk) Save(ctx context.Context) ([]*SIP, error) {
-	if scb.err != nil {
-		return nil, scb.err
+func (_c *SIPCreateBulk) Save(ctx context.Context) ([]*SIP, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(scb.builders))
-	nodes := make([]*SIP, len(scb.builders))
-	mutators := make([]Mutator, len(scb.builders))
-	for i := range scb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*SIP, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := scb.builders[i]
+			builder := _c.builders[i]
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*SIPMutation)
 				if !ok {
@@ -138,11 +138,11 @@ func (scb *SIPCreateBulk) Save(ctx context.Context) ([]*SIP, error) {
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, scb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, scb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -166,7 +166,7 @@ func (scb *SIPCreateBulk) Save(ctx context.Context) ([]*SIP, error) {
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, scb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -174,8 +174,8 @@ func (scb *SIPCreateBulk) Save(ctx context.Context) ([]*SIP, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (scb *SIPCreateBulk) SaveX(ctx context.Context) []*SIP {
-	v, err := scb.Save(ctx)
+func (_c *SIPCreateBulk) SaveX(ctx context.Context) []*SIP {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -183,14 +183,14 @@ func (scb *SIPCreateBulk) SaveX(ctx context.Context) []*SIP {
 }
 
 // Exec executes the query.
-func (scb *SIPCreateBulk) Exec(ctx context.Context) error {
-	_, err := scb.Save(ctx)
+func (_c *SIPCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (scb *SIPCreateBulk) ExecX(ctx context.Context) {
-	if err := scb.Exec(ctx); err != nil {
+func (_c *SIPCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

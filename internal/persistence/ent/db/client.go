@@ -251,8 +251,8 @@ func (c *SIPClient) Update() *SIPUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *SIPClient) UpdateOne(s *SIP) *SIPUpdateOne {
-	mutation := newSIPMutation(c.config, OpUpdateOne, withSIP(s))
+func (c *SIPClient) UpdateOne(_m *SIP) *SIPUpdateOne {
+	mutation := newSIPMutation(c.config, OpUpdateOne, withSIP(_m))
 	return &SIPUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -269,8 +269,8 @@ func (c *SIPClient) Delete() *SIPDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *SIPClient) DeleteOne(s *SIP) *SIPDeleteOne {
-	return c.DeleteOneID(s.ID)
+func (c *SIPClient) DeleteOne(_m *SIP) *SIPDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.

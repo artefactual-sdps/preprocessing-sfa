@@ -7,7 +7,7 @@ $(call _assert_var,CACHE_BIN)
 
 # Keep in sync with the ent version in go.mod.
 # See https://entgo.io/docs/code-gen/#version-compatibility-between-entc-and-ent
-ENT_VERSION ?= 0.14.1
+ENT_VERSION ?= 0.14.5
 
 ENT := $(CACHE_VERSIONS)/ent/$(ENT_VERSION)
 $(ENT):
