@@ -21,6 +21,7 @@ import (
 type MockClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockClientMockRecorder
+	isgomock struct{}
 }
 
 // MockClientMockRecorder is the mock recorder for MockClient.
@@ -41,17 +42,17 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 }
 
 // DownloadAIPFile mocks base method.
-func (m *MockClient) DownloadAIPFile(arg0 context.Context, arg1, arg2 string, arg3 io.Writer) error {
+func (m *MockClient) DownloadAIPFile(ctx context.Context, aipUUID, path string, writer io.Writer) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DownloadAIPFile", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "DownloadAIPFile", ctx, aipUUID, path, writer)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DownloadAIPFile indicates an expected call of DownloadAIPFile.
-func (mr *MockClientMockRecorder) DownloadAIPFile(arg0, arg1, arg2, arg3 any) *MockClientDownloadAIPFileCall {
+func (mr *MockClientMockRecorder) DownloadAIPFile(ctx, aipUUID, path, writer any) *MockClientDownloadAIPFileCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadAIPFile", reflect.TypeOf((*MockClient)(nil).DownloadAIPFile), arg0, arg1, arg2, arg3)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadAIPFile", reflect.TypeOf((*MockClient)(nil).DownloadAIPFile), ctx, aipUUID, path, writer)
 	return &MockClientDownloadAIPFileCall{Call: call}
 }
 
@@ -79,18 +80,18 @@ func (c *MockClientDownloadAIPFileCall) DoAndReturn(f func(context.Context, stri
 }
 
 // GetAIPPath mocks base method.
-func (m *MockClient) GetAIPPath(arg0 context.Context, arg1 string) (string, error) {
+func (m *MockClient) GetAIPPath(ctx context.Context, aipUUID string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAIPPath", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetAIPPath", ctx, aipUUID)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAIPPath indicates an expected call of GetAIPPath.
-func (mr *MockClientMockRecorder) GetAIPPath(arg0, arg1 any) *MockClientGetAIPPathCall {
+func (mr *MockClientMockRecorder) GetAIPPath(ctx, aipUUID any) *MockClientGetAIPPathCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAIPPath", reflect.TypeOf((*MockClient)(nil).GetAIPPath), arg0, arg1)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAIPPath", reflect.TypeOf((*MockClient)(nil).GetAIPPath), ctx, aipUUID)
 	return &MockClientGetAIPPathCall{Call: call}
 }
 

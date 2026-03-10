@@ -21,6 +21,7 @@ import (
 type MockValidator struct {
 	ctrl     *gomock.Controller
 	recorder *MockValidatorMockRecorder
+	isgomock struct{}
 }
 
 // MockValidatorMockRecorder is the mock recorder for MockValidator.
@@ -193,18 +194,18 @@ func (c *MockValidatorScopeCall) DoAndReturn(f func() fvalidate.TargetType) *Moc
 }
 
 // Validate mocks base method.
-func (m *MockValidator) Validate(arg0 string) (string, error) {
+func (m *MockValidator) Validate(path string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Validate", arg0)
+	ret := m.ctrl.Call(m, "Validate", path)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Validate indicates an expected call of Validate.
-func (mr *MockValidatorMockRecorder) Validate(arg0 any) *MockValidatorValidateCall {
+func (mr *MockValidatorMockRecorder) Validate(path any) *MockValidatorValidateCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Validate", reflect.TypeOf((*MockValidator)(nil).Validate), arg0)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Validate", reflect.TypeOf((*MockValidator)(nil).Validate), path)
 	return &MockValidatorValidateCall{Call: call}
 }
 

@@ -20,6 +20,7 @@ import (
 type MockIdentifier struct {
 	ctrl     *gomock.Controller
 	recorder *MockIdentifierMockRecorder
+	isgomock struct{}
 }
 
 // MockIdentifierMockRecorder is the mock recorder for MockIdentifier.
@@ -40,18 +41,18 @@ func (m *MockIdentifier) EXPECT() *MockIdentifierMockRecorder {
 }
 
 // Identify mocks base method.
-func (m *MockIdentifier) Identify(arg0 string) (*fformat.FileFormat, error) {
+func (m *MockIdentifier) Identify(path string) (*fformat.FileFormat, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Identify", arg0)
+	ret := m.ctrl.Call(m, "Identify", path)
 	ret0, _ := ret[0].(*fformat.FileFormat)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Identify indicates an expected call of Identify.
-func (mr *MockIdentifierMockRecorder) Identify(arg0 any) *MockIdentifierIdentifyCall {
+func (mr *MockIdentifierMockRecorder) Identify(path any) *MockIdentifierIdentifyCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Identify", reflect.TypeOf((*MockIdentifier)(nil).Identify), arg0)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Identify", reflect.TypeOf((*MockIdentifier)(nil).Identify), path)
 	return &MockIdentifierIdentifyCall{Call: call}
 }
 

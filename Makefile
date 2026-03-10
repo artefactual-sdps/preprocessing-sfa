@@ -14,28 +14,6 @@ else
     MAKEFLAGS += -s
 endif
 
-include hack/make/bootstrap.mk
-include hack/make/dep_ent.mk
-include hack/make/dep_go_enum.mk
-include hack/make/dep_golangci_lint.mk
-include hack/make/dep_gomajor.mk
-include hack/make/dep_gosec.mk
-include hack/make/dep_gotestsum.mk
-include hack/make/dep_mockgen.mk
-include hack/make/dep_shfmt.mk
-include hack/make/dep_tparse.mk
-include hack/make/enums.mk
-
-# Lazy-evaluated list of tools.
-TOOLS = $(ENT) \
-	$(GOLANGCI_LINT) \
-	$(GOMAJOR) \
-	$(GOSEC) \
-	$(GOTESTSUM) \
-	$(MOCKGEN) \
-	$(SHFMT) \
-	$(TPARSE)
-
 define NEWLINE
 
 
@@ -53,11 +31,12 @@ PACKAGES := $(shell go list ./...)
 TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
 TEST_IGNORED_PACKAGES := $(filter $(IGNORED_PACKAGES),$(PACKAGES))
 
-export PATH:=$(GOBIN):$(PATH)
+# Configure bine.
+export PATH := $(shell go tool bine path):$(PATH)
 
 deps: # @HELP List available module dependency updates.
-deps: $(GOMAJOR)
-	gomajor list
+deps: tool-go-mod-outdated
+	go list -u -m -json all | go-mod-outdated -direct -update
 
 env: # @HELP Print Go env variables.
 env:
@@ -65,17 +44,25 @@ env:
 
 fmt: # @HELP Format the project Go files with golangci-lint.
 fmt: FMT_FLAGS ?=
-fmt: $(GOLANGCI_LINT)
+fmt: tool-golangci-lint
 	golangci-lint fmt $(FMT_FLAGS)
 
 gen-ent: # @HELP Generate Ent assets.
-gen-ent: $(ENT)
+gen-ent: tool-ent
 	ent generate ./internal/persistence/ent/schema \
 		--feature sql/versioned-migration \
 		--target=./internal/persistence/ent/db
 
+gen-enums: # @HELP Generate go-enum assets.
+gen-enums: ENUM_FLAGS = --names --template=$(CURDIR)/hack/make/enums.tmpl
+gen-enums: tool-go-enum
+	go-enum $(ENUM_FLAGS) \
+		--nocomments \
+		-f internal/enums/sip_type.go \
+		-f internal/enums/event_outcome.go
+
 gen-mock: # @HELP Generate mocks.
-gen-mock: $(MOCKGEN)
+gen-mock: tool-mockgen
 	mockgen -typed -destination=./internal/amss/fake/mock_client.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/amss Client
 	mockgen -typed -destination=./internal/fformat/fake/mock_identifier.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/fformat Identifier
 	mockgen -typed -destination=./internal/fvalidate/fake/mock_validator.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate Validator
@@ -83,7 +70,7 @@ gen-mock: $(MOCKGEN)
 
 gosec: # @HELP Run gosec security scanner.
 gosec: GOSEC_VERBOSITY ?= "-terse"
-gosec: $(GOSEC)
+gosec: tool-gosec
 	gosec \
 		$(GOSEC_VERBOSITY) \
 		-exclude-dir=hack \
@@ -96,7 +83,7 @@ help: # @HELP Print this message.
 
 lint: # @HELP Lint the project Go files with golangci-lint.
 lint: LINT_FLAGS ?= --timeout=5m --fix --output.text.colors
-lint: $(GOLANGCI_LINT)
+lint: tool-golangci-lint
 	golangci-lint run $(LINT_FLAGS)
 
 list-ignored-packages: # @HELP Print a list of packages ignored in testing.
@@ -109,16 +96,16 @@ list-tested-packages:
 
 pre-commit: # @HELP Check that code is ready to commit.
 pre-commit:
-	ENDURO_PP_INTEGRATION_TEST=1 $(MAKE) -j \
-	fmt \
-	gen-enums \
-	gosec GOSEC_VERBOSITY="-quiet" \
-	lint \
-	shfmt \
-	test-race
+	$(MAKE) -j \
+		fmt \
+		gen-enums \
+		gosec GOSEC_VERBOSITY="-quiet" \
+		lint \
+		shfmt \
+		test-race
 
 shfmt: SHELL_PROGRAMS := $(shell find $(CURDIR)/hack -name *.sh)
-shfmt: $(SHFMT) # @HELP Run shfmt to format shell programs in the hack directory.
+shfmt: tool-shfmt # @HELP Run shfmt to format shell programs in the hack directory.
 	shfmt \
 		--list \
 		--write \
@@ -135,20 +122,24 @@ test: # @HELP Run all tests and output a summary using gotestsum.
 test: TFORMAT ?= short
 test: GOTEST_FLAGS ?=
 test: COMBINED_FLAGS ?= $(GOTEST_FLAGS) $(TEST_PACKAGES)
-test: $(GOTESTSUM)
+test: tool-gotestsum
 	gotestsum --format=$(TFORMAT) -- $(COMBINED_FLAGS)
 
 test-ci: # @HELP Run all tests in CI with coverage and the race detector.
 test-ci:
-	ENDURO_PP_INTEGRATION_TEST=1 $(MAKE) test GOTEST_FLAGS="-race -coverprofile=covreport -covermode=atomic"
+	$(MAKE) test GOTEST_FLAGS="-race -coverprofile=covreport -covermode=atomic"
 
 test-race: # @HELP Run all tests with the race detector.
 test-race:
 	$(MAKE) test GOTEST_FLAGS="-race"
 
 test-tparse: # @HELP Run all tests and output a coverage report using tparse.
-test-tparse: $(TPARSE)
+test-tparse: tool-tparse
 	go test -count=1 -json -cover $(TEST_PACKAGES) | tparse -follow -all -notests
 
-tools: # @HELP Install tools.
-tools: $(TOOLS)
+tool-%:
+	@go tool bine get $* 1> /dev/null
+
+tools: # @HELP Install all tools managed by bine.
+tools:
+	go tool bine sync
