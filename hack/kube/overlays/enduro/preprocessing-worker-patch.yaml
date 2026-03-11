@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: preprocessing-worker
+spec:
+  template:
+    spec:
+      containers:
+        - name: preprocessing-worker
+          volumeMounts:
+            - name: shared-dir
+              mountPath: /home/preprocessing/shared
+      volumes:
+        - name: shared-dir
+          persistentVolumeClaim:
+            claimName: preprocessing-pvc
