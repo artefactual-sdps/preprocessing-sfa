@@ -71,10 +71,8 @@ gen-mock: tool-mockgen
 gosec: # @HELP Run gosec security scanner.
 gosec: GOSEC_VERBOSITY ?= "-terse"
 gosec: tool-gosec
-	gosec \
-		$(GOSEC_VERBOSITY) \
-		-exclude-dir=hack \
-		./...
+	go tool bine upgrade gosec
+	gosec $(GOSEC_VERBOSITY) -exclude-dir=hack ./...
 
 help: # @HELP Print this message.
 	echo "TARGETS:"

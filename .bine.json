@@ -28,7 +28,7 @@
     {
       "name": "gosec",
       "go_package": "github.com/securego/gosec/v2/cmd/gosec",
-      "version": "2.24.7"
+      "version": "latest"
     },
     {
       "name": "gotestsum",
