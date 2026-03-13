@@ -15,6 +15,7 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"github.com/go-logr/logr"
 	"github.com/jonboulle/clockwork"
+	"go.artefactual.dev/tools/clientauth"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_client "go.temporal.io/sdk/client"
@@ -23,6 +24,7 @@ import (
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
@@ -100,8 +102,27 @@ func (m *Main) Run(ctx context.Context) error {
 
 	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path)
 
+	// Set up APIS client.
+	var apisClient apis.Client
+	if m.cfg.APIS.Enabled {
+		var tokenProvider clientauth.AccessTokenProvider
+		if m.cfg.APIS.OIDC.Enabled {
+			tokenProvider, err = clientauth.NewOIDCAccessTokenProvider(
+				ctx, m.cfg.APIS.OIDC.OIDCAccessTokenProviderConfig,
+			)
+			if err != nil {
+				m.logger.Error(err, "Unable to create OIDC token provider for APIS client.")
+				return err
+			}
+		}
+		if apisClient, err = apis.NewClient(m.cfg.APIS, nil, tokenProvider); err != nil {
+			m.logger.Error(err, "Unable to create APIS client.")
+			return err
+		}
+	}
+
 	w.RegisterWorkflowWithOptions(
-		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath, m.cfg.CheckDuplicates, psvc).Execute,
+		workflow.NewPreprocessingWorkflow(psvc, m.cfg.SharedPath, m.cfg.CheckDuplicates, m.cfg.APIS.Enabled).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Temporal.WorkflowName},
 	)
 
@@ -183,6 +204,14 @@ func (m *Main) Run(ctx context.Context) error {
 	w.RegisterActivityWithOptions(
 		activities.NewWriteIdentifierFile().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.WriteIdentifierFileName},
+	)
+	w.RegisterActivityWithOptions(
+		apis.NewCreateImportTaskActivity(apisClient).Execute,
+		temporalsdk_activity.RegisterOptions{Name: apis.CreateImportTaskActivityName},
+	)
+	w.RegisterActivityWithOptions(
+		apis.NewPollImportTaskStatusActivity(apisClient, m.cfg.APIS.PollInterval).Execute,
+		temporalsdk_activity.RegisterOptions{Name: apis.PollImportTaskStatusActivityName},
 	)
 	w.RegisterActivityWithOptions(
 		bagcreate.New(m.cfg.Bagit).Execute,

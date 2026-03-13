@@ -21,6 +21,7 @@ import (
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
@@ -210,11 +211,19 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: activities.WriteIdentifierFileName},
 	)
 	s.env.RegisterActivityWithOptions(
+		apis.NewCreateImportTaskActivity(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: apis.CreateImportTaskActivityName},
+	)
+	s.env.RegisterActivityWithOptions(
+		apis.NewPollImportTaskStatusActivity(nil, 0).Execute,
+		temporalsdk_activity.RegisterOptions{Name: apis.PollImportTaskStatusActivityName},
+	)
+	s.env.RegisterActivityWithOptions(
 		bagcreate.New(cfg.Bagit).Execute,
 		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
 	)
 
-	s.workflow = workflow.NewPreprocessingWorkflow(s.testDir, cfg.CheckDuplicates, nil)
+	s.workflow = workflow.NewPreprocessingWorkflow(nil, s.testDir, cfg.CheckDuplicates, cfg.APIS.Enabled)
 }
 
 func (s *PreprocessingTestSuite) digitizedAIP(path string) sip.SIP {
@@ -304,7 +313,10 @@ Tag-File-Character-Encoding: UTF-8
 }
 
 func (s *PreprocessingTestSuite) TestSuccess() {
-	s.SetupTest(&config.Configuration{CheckDuplicates: true})
+	s.SetupTest(&config.Configuration{
+		CheckDuplicates: true,
+		APIS:            apis.Config{Enabled: true},
+	})
 	s.writeBagitTxt(s.sipPath)
 
 	expectedSIP := s.digitizedAIP(s.sipPath)
@@ -315,6 +327,7 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
 	premisFilePath := filepath.Join(expectedSIP.Path, "metadata", "premis.xml")
 	checksum := "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+	apisTaskID := "task-000001"
 
 	s.env.OnActivity(
 		activities.ChecksumSIPName,
@@ -414,6 +427,23 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 		&activities.ValidatePREMISParams{Path: expectedSIP.LogicalMDPath},
 	).Return(
 		&activities.ValidatePREMISResult{}, nil,
+	)
+	s.env.OnActivity(
+		apis.CreateImportTaskActivityName,
+		sessionCtx,
+		&apis.CreateImportTaskParams{
+			SIP:      expectedSIP,
+			Username: "preprocessing-sfa",
+		},
+	).Return(
+		&apis.CreateImportTaskResult{TaskID: apisTaskID}, nil,
+	)
+	s.env.OnActivity(
+		apis.PollImportTaskStatusActivityName,
+		sessionCtx,
+		&apis.PollImportTaskStatusParams{TaskID: apisTaskID},
+	).Return(
+		&apis.PollImportTaskStatusResult{AnalysisResult: "AlleNeu"}, nil,
 	)
 
 	// PREMIS activities.
@@ -627,6 +657,20 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 				{
 					Name:        "Validate logical metadata",
 					Message:     "Logical metadata validation successful",
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
+					Name:        "Submit metadata to APIS",
+					Message:     `Submitted metadata to APIS with import task ID "task-000001"`,
+					Outcome:     enums.EventOutcomeSuccess,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+				{
+					Name:        "Wait for APIS analysis",
+					Message:     `APIS analysis completed for import task ID "task-000001" with result "AlleNeu"`,
 					Outcome:     enums.EventOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,

@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 )
@@ -46,6 +47,7 @@ type Configuration struct {
 	Temporal     Temporal
 	Worker       WorkerConfig
 	Bagit        bagcreate.Config
+	APIS         apis.Config
 	AIS          ais.Config
 	FileFormat   ffvalidate.Config
 	FileValidate fvalidate.Config
@@ -99,6 +101,9 @@ func (c Configuration) Validate() error {
 	if err := c.Bagit.Validate(); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("Bagit.%v", err))
 	}
+	if err := c.APIS.Validate(); err != nil {
+		errs = errors.Join(errs, err)
+	}
 
 	if c.CheckDuplicates {
 		if c.Persistence.DSN == "" {
@@ -124,6 +129,8 @@ func Read(config *Configuration, configFile string) (found bool, configFileUsed 
 	v.AutomaticEnv()
 
 	// Defaults.
+	v.SetDefault("APIS.Timeout", apis.DefaultTimeout)
+	v.SetDefault("APIS.PollInterval", apis.DefaultPollInterval)
 	v.SetDefault("Worker.MaxConcurrentSessions", 1)
 
 	if configFile != "" {

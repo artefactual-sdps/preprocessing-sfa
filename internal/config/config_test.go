@@ -2,11 +2,13 @@ package config_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 )
@@ -29,6 +31,9 @@ workflowName = "preprocessing"
 maxConcurrentSessions = 1
 [bagit]
 checksumAlgorithm = "md5"
+[apis]
+enabled = true
+url = "http://apis.example.test"
 `
 
 func TestConfig(t *testing.T) {
@@ -71,6 +76,12 @@ func TestConfig(t *testing.T) {
 				},
 				Bagit: bagcreate.Config{
 					ChecksumAlgorithm: "md5",
+				},
+				APIS: apis.Config{
+					Enabled:      true,
+					URL:          "http://apis.example.test",
+					Timeout:      apis.DefaultTimeout,
+					PollInterval: apis.DefaultPollInterval,
 				},
 			},
 		},
@@ -129,6 +140,119 @@ Persistence.DSN: missing required value
 Persistence.Driver: missing required value`,
 		},
 		{
+			name:       "Loads APIS defaults when only URL is configured",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+[apis]
+enabled = true
+url = "http://apis.example.test"
+`,
+			wantFound: true,
+			wantCfg: config.Configuration{
+				SharedPath: "/home/preprocessing/shared",
+				Temporal: config.Temporal{
+					TaskQueue:    "preprocessing",
+					WorkflowName: "preprocessing",
+				},
+				Worker: config.WorkerConfig{
+					MaxConcurrentSessions: 1,
+				},
+				APIS: apis.Config{
+					Enabled:      true,
+					URL:          "http://apis.example.test",
+					Timeout:      apis.DefaultTimeout,
+					PollInterval: apis.DefaultPollInterval,
+				},
+			},
+		},
+		{
+			name:       "Errors when APIS URL is missing",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+[apis]
+enabled = true
+`,
+			wantFound: true,
+			wantErr: `invalid configuration
+APIS.URL: missing required value`,
+		},
+		{
+			name:       "Errors when APIS timeout is invalid",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+[apis]
+enabled = true
+url = "http://apis.example.test"
+timeout = "-1s"
+`,
+			wantFound: true,
+			wantErr: `invalid configuration
+APIS.Timeout: value -1s is less than 0`,
+		},
+		{
+			name:       "Errors when APIS poll interval is invalid",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+[apis]
+enabled = true
+url = "http://apis.example.test"
+pollInterval = "-1s"
+`,
+			wantFound: true,
+			wantErr: `invalid configuration
+APIS.PollInterval: value -1s is less than or equal to 0`,
+		},
+		{
+			name:       "Loads explicit APIS timeout and poll interval",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+[apis]
+enabled = true
+url = "http://apis.example.test"
+timeout = "45s"
+pollInterval = "2m"
+token = "mock-token"
+`,
+			wantFound: true,
+			wantCfg: config.Configuration{
+				SharedPath: "/home/preprocessing/shared",
+				Temporal: config.Temporal{
+					TaskQueue:    "preprocessing",
+					WorkflowName: "preprocessing",
+				},
+				Worker: config.WorkerConfig{
+					MaxConcurrentSessions: 1,
+				},
+				APIS: apis.Config{
+					Enabled:      true,
+					URL:          "http://apis.example.test",
+					Timeout:      45 * time.Second,
+					PollInterval: 2 * time.Minute,
+					Token:        "mock-token",
+				},
+			},
+		},
+		{
 			name:       "Errors when TOML is invalid",
 			configFile: "preprocessing.toml",
 			toml:       "bad TOML",
@@ -166,7 +290,7 @@ Persistence.Driver: missing required value`,
 			}
 			if tc.wantErrContains != "" {
 				assert.Equal(t, found, tc.wantFound)
-				assert.ErrorContains(t, err, tc.wantErr)
+				assert.ErrorContains(t, err, tc.wantErrContains)
 				return
 			}
 
