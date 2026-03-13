@@ -2,9 +2,15 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: enduro-sdps
 resources:
+  - ../../base/apis-mock
+  - ../../base/preprocessing-worker
   - minio-ais-bucket-job.yaml
   - mysql-create-prep-database-job.yaml
   - mysql-recreate-prep-database-job.yaml
-  - preprocessing-worker.yaml
   - preprocessing-pvc.yaml
   - preprocessing-secret.yaml
+patches:
+  - path: preprocessing-worker-patch.yaml
+    target:
+      kind: StatefulSet
+      name: preprocessing-worker

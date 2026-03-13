@@ -1,0 +1,1306 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "APIS API",
+    "description": "This is the API definition of APIS (archive plan analysis and import service)",
+    "contact": {
+      "name": "Evelix GmbH",
+      "url": "https://www.evelix.ch",
+      "email": "info@evelix.ch"
+    },
+    "version": "v1"
+  },
+  "paths": {
+    "/api/Healthz": {
+      "get": {
+        "tags": [
+          "Healthz"
+        ],
+        "summary": "Get health status information",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatusResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatusResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatusResult"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatusResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatusResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatusResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ImportTasks": {
+      "post": {
+        "tags": [
+          "ImportTasks"
+        ],
+        "summary": "Creates a new import task.",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file",
+                  "sipType",
+                  "username"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "The metadata.xml file according to eCH-0160",
+                    "format": "binary"
+                  },
+                  "sipType": {
+                    "$ref": "#/components/schemas/SipType"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "The username that is logged as the creator of the import task. Can be the email for example."
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                },
+                "sipType": {
+                  "style": "form"
+                },
+                "username": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateImportTaskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateImportTaskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateImportTaskResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateImportTaskResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ImportTasks/{id}/status": {
+      "get": {
+        "tags": [
+          "ImportTasks"
+        ],
+        "summary": "Query the status of an ongoing analysis or import",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The id of the import task to query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTaskStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ImportTasks/{id}": {
+      "patch": {
+        "tags": [
+          "ImportTasks"
+        ],
+        "summary": "Updates the status of an existing import task.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the import task to be updated.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The request containing the new status and related details for the import task. Only the status Evelix.Apis.Contract.Common.Entities.CodeValues.ImportTaskStatus.Abgebrochen is allowed.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelImportTaskRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelImportTaskRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelImportTaskRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The import task was successfully updated.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTaskDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTaskDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTaskDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested status transition is not allowed.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified import task was not found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ImportTasks/{id}/importRuns": {
+      "post": {
+        "tags": [
+          "ImportTasks"
+        ],
+        "summary": "Starts a new import run for the given import task.\r\nCreates a new import execution (\"run\") resource.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ImportTask identifier.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "The METS file required for the import.\r\n(To be decided: Or a zip file containing the METS and the metadata.xml file?))",
+                    "format": "binary"
+                  },
+                  "importBehaviour": {
+                    "$ref": "#/components/schemas/ImportBehaviourType"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                },
+                "importBehaviour": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateImportRunResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateImportRunResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateImportRunResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ImportTasks/{id}/importRuns/{runId}/status": {
+      "get": {
+        "tags": [
+          "ImportTasks"
+        ],
+        "summary": "Gets the status of a specific import run.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRunStatusResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRunStatusResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRunStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnalysisRecordDto": {
+        "type": "object",
+        "properties": {
+          "analysisRecordId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte"
+          },
+          "importTaskId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comparisonDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "targetPrimaryKey": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "docKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "referenceCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "level": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourcePrimaryKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "positionNumber": {
+            "type": "string"
+          },
+          "sourceTitle": {
+            "type": "string"
+          },
+          "destinationTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceField1": {
+            "type": "string",
+            "nullable": true
+          },
+          "destinationField1": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceField2": {
+            "type": "string",
+            "nullable": true
+          },
+          "destinationField2": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceField3": {
+            "type": "string",
+            "nullable": true
+          },
+          "destinationField3": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceField4": {
+            "type": "string",
+            "nullable": true
+          },
+          "destinationField4": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceField5": {
+            "type": "string",
+            "nullable": true
+          },
+          "destinationField5": {
+            "type": "string",
+            "nullable": true
+          },
+          "titleIsDifferent": {
+            "type": "boolean"
+          },
+          "field1IsDifferent": {
+            "type": "boolean"
+          },
+          "field2IsDifferent": {
+            "type": "boolean"
+          },
+          "field3IsDifferent": {
+            "type": "boolean"
+          },
+          "field4IsDifferent": {
+            "type": "boolean"
+          },
+          "field5IsDifferent": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "errorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "containerDocKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "modifiedOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "importTask": {
+            "$ref": "#/components/schemas/ImportTaskDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AnalysisResult": {
+        "enum": [
+          "AlleGleich",
+          "AlleNeu",
+          "Konflikte",
+          "Fehler"
+        ],
+        "type": "string",
+        "description": "Enum values:\r\n- `AlleGleich`: The title of all series are the same\r\n- `AlleNeu`: The titles of all series are new\r\n- `Konflikte`: There are conflicts between titles of existing and new series\r\n- `Fehler`: There are errors in the analysis",
+        "x-enumDescriptions": [
+          "The title of all series are the same",
+          "The titles of all series are new",
+          "There are conflicts between titles of existing and new series",
+          "There are errors in the analysis"
+        ]
+      },
+      "CancelImportTaskRequest": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ImportTaskStatus"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateImportRunResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Gets a value indicating whether the creation of the import run was successful."
+          },
+          "importTaskId": {
+            "type": "string",
+            "description": "Gets the identifier of the import task associated with the response."
+          },
+          "importRunId": {
+            "type": "string",
+            "description": "Gets the unique identifier for the created import run.",
+            "nullable": true
+          },
+          "error": {
+            "type": "string",
+            "description": "Gets or initializes the error message associated with the result of the import run creation.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateImportTaskResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Gets a value indicating whether the creation of the import task was successful."
+          },
+          "error": {
+            "type": "string",
+            "description": "Gets or initializes the error message associated with the result of the import task creation.",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "description": "Gets the unique identifier for the created import task.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DefaultValueDto": {
+        "type": "object",
+        "properties": {
+          "defaultValueId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte"
+          },
+          "importTaskId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "accessionDocKey": {
+            "type": "string"
+          },
+          "accessionIdName": {
+            "type": "string"
+          },
+          "insertNodeDocKey": {
+            "type": "string"
+          },
+          "insertNodeIdName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "protectionBaseDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "protectionCategory": {
+            "type": "string",
+            "nullable": true
+          },
+          "protectionDuration": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "metadataCanBePublished": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "accessibility": {
+            "type": "string",
+            "nullable": true
+          },
+          "usability": {
+            "type": "string",
+            "nullable": true
+          },
+          "permissionType": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "modifiedOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "importTask": {
+            "$ref": "#/components/schemas/ImportTaskDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocumentDto": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte"
+          },
+          "importTaskId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "dataBlob": {
+            "type": "string",
+            "format": "byte"
+          },
+          "uploadDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "xmlSourceType": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "modifiedOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "importTask": {
+            "$ref": "#/components/schemas/ImportTaskDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HealthCheckResult": {
+        "required": [
+          "name",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the service"
+          },
+          "status": {
+            "type": "string",
+            "description": "The current status of the service"
+          },
+          "durationMs": {
+            "type": "number",
+            "description": "How much time passed in querying the service status",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false,
+        "description": "The detailed status of an internal service used by the API"
+      },
+      "HealthStatusResult": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "The overall status"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HealthCheckResult"
+            },
+            "description": "A list with services and it's health statuses",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "The resulting status with health details on different services"
+      },
+      "ImportBehaviourType": {
+        "enum": [
+          "OverwriteAndAppend",
+          "AppendOnly"
+        ],
+        "type": "string",
+        "description": "Enum values:\r\n- `OverwriteAndAppend`\r\n- `AppendOnly`",
+        "x-enumDescriptions": [
+          "",
+          ""
+        ]
+      },
+      "ImportDto": {
+        "type": "object",
+        "properties": {
+          "importId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte"
+          },
+          "taskId": {
+            "type": "string"
+          },
+          "importTaskId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "processedDocumentCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "totalDocumentCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "importDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "importFileBlob": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "modifiedOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "importTask": {
+            "$ref": "#/components/schemas/ImportTaskDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportResult": {
+        "enum": [
+          "Erfolgreich",
+          "Fehler"
+        ],
+        "type": "string",
+        "description": "Enum values:\r\n- `Erfolgreich`: The import was successfull\r\n- `Fehler`: The import failed and has errors",
+        "x-enumDescriptions": [
+          "The import was successfull",
+          "The import failed and has errors"
+        ]
+      },
+      "ImportRunStatusResponse": {
+        "type": "object",
+        "properties": {
+          "importTaskId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "importRunId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "progressPercent": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportTaskDto": {
+        "type": "object",
+        "properties": {
+          "importTaskId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte"
+          },
+          "taskType": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "noAutomaticImport": {
+            "type": "boolean"
+          },
+          "requiresContainers": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "analysisErrorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "analysisResult": {
+            "type": "string",
+            "nullable": true
+          },
+          "analysisProgressInPercent": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "importResult": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "modifiedOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "analysisRecords": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalysisRecordDto"
+            }
+          },
+          "defaultValues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DefaultValueDto"
+            }
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentDto"
+            }
+          },
+          "imports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportDto"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportTaskStatus": {
+        "enum": [
+          "Neu",
+          "InAnalyse",
+          "Analysiert",
+          "WirdImportiert",
+          "Importiert",
+          "Abgebrochen"
+        ],
+        "type": "string",
+        "description": "Enum values:\r\n- `Neu`: The initial status of an import task\r\n- `InAnalyse`: The status during the analyisis process\r\n- `Analysiert`: The status after the analyisis process has ended\r\n- `WirdImportiert`: The status during the import process\r\n- `Importiert`: The status after the import process has ended\r\n- `Abgebrochen`: Indicates that the import task was canceled",
+        "x-enumDescriptions": [
+          "The initial status of an import task",
+          "The status during the analyisis process",
+          "The status after the analyisis process has ended",
+          "The status during the import process",
+          "The status after the import process has ended",
+          "Indicates that the import task was canceled"
+        ]
+      },
+      "ImportTaskStatusResponse": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ImportTaskStatus"
+          },
+          "analysisResult": {
+            "$ref": "#/components/schemas/AnalysisResult"
+          },
+          "analysisProgressInPercent": {
+            "type": "integer",
+            "description": "During the analysis, this indicates the progress in percent.",
+            "format": "int32",
+            "nullable": true
+          },
+          "importResult": {
+            "$ref": "#/components/schemas/ImportResult"
+          },
+          "importProgressInPercent": {
+            "type": "integer",
+            "description": "During the import, this indicates the progress in percent.",
+            "format": "int32",
+            "nullable": true
+          },
+          "processedDocumentCount": {
+            "type": "integer",
+            "description": "How many records were processed by the import",
+            "format": "int32",
+            "nullable": true
+          },
+          "totalDocumentCount": {
+            "type": "integer",
+            "description": "The total number of records that should have been processed by the import",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "SipType": {
+        "enum": [
+          "DigitizedAIP",
+          "DigitizedSIP",
+          "BornDigitalAIP",
+          "BornDigitalSIP"
+        ],
+        "type": "string",
+        "description": "Enum values:\r\n- `DigitizedAIP`\r\n- `DigitizedSIP`\r\n- `BornDigitalAIP`\r\n- `BornDigitalSIP`",
+        "x-enumDescriptions": [
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      "ValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "additionalProperties": { }
+      }
+    },
+    "securitySchemes": {
+      "Smart": {
+        "type": "http",
+        "description": "JWT Authorization header using the Bearer scheme.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "Smart": [ ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "Healthz",
+      "description": "Endpoint to get information about the health of the API"
+    },
+    {
+      "name": "ImportTasks",
+      "description": "Provides endpoints for managing import tasks and their associated operations."
+    }
+  ]
+}
