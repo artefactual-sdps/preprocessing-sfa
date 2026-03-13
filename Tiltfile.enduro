@@ -20,6 +20,7 @@ custom_build(
   command=["hack/build_docker.sh"],
   deps=["."],
 )
+docker_build(ref="apis-mock:dev", context="hack/apis-mock")
 
 # Load Kubernetes resources
 k8s_yaml(kustomize("hack/kube/overlays/enduro"))
@@ -30,6 +31,7 @@ k8s_resource(
   labels=["Preprocessing"],
   trigger_mode=trigger_mode
 )
+k8s_resource("apis-mock", port_forwards="8081:8080", labels=["Preprocessing"])
 k8s_resource("minio-ais-bucket", labels=["Preprocessing"])
 k8s_resource(
   "mysql-recreate-prep-database",
