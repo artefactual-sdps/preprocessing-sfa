@@ -23,6 +23,7 @@ import (
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
@@ -99,6 +100,14 @@ func (m *Main) Run(ctx context.Context) error {
 	}
 
 	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path)
+
+	// Set up APIS client.
+	// TODO: Create token provider with gotools/clientauth.
+	var apisClient apis.Client
+	if apisClient, err = apis.NewClient(m.cfg.APIS, nil, nil); err != nil {
+		m.logger.Error(err, "Unable to create APIS client.")
+		return err
+	}
 
 	w.RegisterWorkflowWithOptions(
 		workflow.NewPreprocessingWorkflow(m.cfg.SharedPath, m.cfg.CheckDuplicates, psvc).Execute,
@@ -183,6 +192,14 @@ func (m *Main) Run(ctx context.Context) error {
 	w.RegisterActivityWithOptions(
 		activities.NewWriteIdentifierFile().Execute,
 		temporalsdk_activity.RegisterOptions{Name: activities.WriteIdentifierFileName},
+	)
+	w.RegisterActivityWithOptions(
+		apis.NewCreateImportTaskActivity(apisClient).Execute,
+		temporalsdk_activity.RegisterOptions{Name: apis.CreateImportTaskActivityName},
+	)
+	w.RegisterActivityWithOptions(
+		apis.NewPollImportTaskStatusActivity(apisClient, m.cfg.APIS.PollInterval).Execute,
+		temporalsdk_activity.RegisterOptions{Name: apis.PollImportTaskStatusActivityName},
 	)
 	w.RegisterActivityWithOptions(
 		bagcreate.New(m.cfg.Bagit).Execute,

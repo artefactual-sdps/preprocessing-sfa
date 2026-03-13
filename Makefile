@@ -22,6 +22,7 @@ endef
 IGNORED_PACKAGES := \
 	github.com/artefactual-sdps/preprocessing-sfa/hack/% \
 	github.com/artefactual-sdps/preprocessing-sfa/internal/%/fake \
+	github.com/artefactual-sdps/preprocessing-sfa/internal/apis/gen \
 	github.com/artefactual-sdps/preprocessing-sfa/internal/enums \
 	github.com/artefactual-sdps/preprocessing-sfa/internal/persistence/ent/db \
 	github.com/artefactual-sdps/preprocessing-sfa/internal/persistence/ent/db/% \
@@ -47,6 +48,16 @@ fmt: FMT_FLAGS ?=
 fmt: tool-golangci-lint
 	golangci-lint fmt $(FMT_FLAGS)
 
+gen-apis: # @HELP Generate APIS client and mock server code from the shared OpenAPI spec.
+	$(MAKE) gen-apis-client
+	$(MAKE) gen-apis-mock
+
+gen-apis-client: # @HELP Generate APIS client from the shared OpenAPI spec.
+	go generate ./internal/apis/gen
+
+gen-apis-mock: # @HELP Generate APIS mock server from the shared OpenAPI spec.
+	(cd ./hack/apis-mock && go generate ./internal/gen)
+
 gen-ent: # @HELP Generate Ent assets.
 gen-ent: tool-ent
 	ent generate ./internal/persistence/ent/schema \
@@ -64,6 +75,7 @@ gen-enums: tool-go-enum
 gen-mock: # @HELP Generate mocks.
 gen-mock: tool-mockgen
 	mockgen -typed -destination=./internal/amss/fake/mock_client.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/amss Client
+	mockgen -typed -destination=./internal/apis/fake/mock_client.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/apis Client
 	mockgen -typed -destination=./internal/fformat/fake/mock_identifier.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/fformat Identifier
 	mockgen -typed -destination=./internal/fvalidate/fake/mock_validator.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate Validator
 	mockgen -typed -destination=./internal/persistence/fake/mock_service.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/persistence Service
