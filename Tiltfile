@@ -20,6 +20,7 @@ custom_build(
   command=["hack/build_docker.sh"],
   deps=["."],
 )
+docker_build(ref="apis-mock:dev", context="hack/apis-mock")
 
 # Load Kubernetes resources
 k8s_yaml(kustomize("hack/kube/overlays/dev"))
@@ -32,6 +33,7 @@ k8s_resource(
 )
 
 # Other resources
+k8s_resource("apis-mock", port_forwards="8081:8080", labels=["02-Others"])
 k8s_resource("mysql", port_forwards="3306", labels=["02-Others"])
 k8s_resource("temporal", labels=["02-Others"])
 k8s_resource("temporal-ui", port_forwards="8080", labels=["02-Others"])
