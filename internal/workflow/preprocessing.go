@@ -17,6 +17,8 @@ import (
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
+	apisgen "github.com/artefactual-sdps/preprocessing-sfa/internal/apis/gen"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/localact"
@@ -361,7 +363,7 @@ func (w *PreprocessingWorkflow) Execute(
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
 		activities.ValidateSIPNameName,
-		&activities.ValidateSIPNameParams{SIP: identifySIP.SIP},
+		&activities.ValidateSIPNameParams{SIP: sip},
 	).Get(ctx, &ValidateSIPName)
 	if e != nil {
 		result.systemError(
@@ -599,9 +601,16 @@ func (w *PreprocessingWorkflow) Execute(
 		return result, nil
 	}
 
+	// Create APIS import task.
+	// TODO: Share task ID and user decision with ais poststorage workflow.
+	_ = w.createAPISImportTask(ctx, result, sip)
+	if result.Outcome == OutcomeSystemError {
+		return result, nil
+	}
+
 	// Write PREMIS XML.
 	ev = result.newEvent(ctx, "Create premis.xml")
-	if e = writePREMISFile(ctx, identifySIP.SIP); e != nil {
+	if e = writePREMISFile(ctx, sip); e != nil {
 		result.systemError(
 			ctx,
 			e,
@@ -609,9 +618,9 @@ func (w *PreprocessingWorkflow) Execute(
 			"premis.xml creation has failed",
 			"An error has occurred while attempting to create the premis.xml file and store it in the metadata directory. Please try again, or ask a system administrator to investigate.",
 		)
-	} else {
-		ev.Succeed(ctx, "Created a premis.xml file and stored it in the metadata directory")
+		return result, nil
 	}
+	ev.Succeed(ctx, "Created a premis.xml file and stored it in the metadata directory")
 
 	// Re-structure SIP.
 	ev = result.newEvent(ctx, "Restructure SIP")
@@ -697,6 +706,113 @@ func withFilesysActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.C
 			MaximumAttempts: 1,
 		},
 	})
+}
+
+func (w *PreprocessingWorkflow) createAPISImportTask(
+	ctx temporalsdk_workflow.Context,
+	result *PreprocessingWorkflowResult,
+	sip sip.SIP,
+) string {
+	ev := result.newEvent(ctx, "Submit metadata to APIS")
+	var createAPISImportTask apis.CreateImportTaskResult
+	err := temporalsdk_workflow.ExecuteActivity(
+		temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
+			StartToCloseTimeout: time.Minute * 5,
+			RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+				InitialInterval:    time.Second * 5,
+				BackoffCoefficient: 2,
+				MaximumAttempts:    3,
+			},
+		}),
+		apis.CreateImportTaskActivityName,
+		&apis.CreateImportTaskParams{
+			SIP:      sip,
+			Username: "preprocessing-sfa", // TODO: Use real username.
+		},
+	).Get(ctx, &createAPISImportTask)
+	if err != nil {
+		result.systemError(
+			ctx,
+			err,
+			ev,
+			"submission to APIS has failed.",
+			"An error occurred while creating the APIS import task. Please try again, or ask a system administrator to investigate.",
+		)
+		return ""
+	}
+	taskID := createAPISImportTask.TaskID
+	ev.Succeed(ctx, fmt.Sprintf("Submitted metadata to APIS with import task ID %q", taskID))
+
+	ev = result.newEvent(ctx, "Wait for APIS analysis")
+	var pollAPISImportTaskStatus apis.PollImportTaskStatusResult
+	err = temporalsdk_workflow.ExecuteActivity(
+		temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
+			StartToCloseTimeout: time.Hour * 24,
+			HeartbeatTimeout:    time.Minute,
+			RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+				InitialInterval:    time.Second * 5,
+				BackoffCoefficient: 2,
+				MaximumAttempts:    3,
+			},
+		}),
+		apis.PollImportTaskStatusActivityName,
+		&apis.PollImportTaskStatusParams{TaskID: taskID},
+	).Get(ctx, &pollAPISImportTaskStatus)
+	if err != nil {
+		result.systemError(
+			ctx,
+			err,
+			ev,
+			"waiting for APIS analysis has failed.",
+			"An error occurred while checking the APIS import task status. Please try again, or ask a system administrator to investigate.",
+		)
+		return ""
+	}
+
+	switch pollAPISImportTaskStatus.AnalysisResult {
+	case apisgen.AnalysisResultAlleNeu, apisgen.AnalysisResultAlleGleich:
+		ev.Succeed(
+			ctx,
+			fmt.Sprintf(
+				"APIS analysis completed for import task ID %q with result %q",
+				taskID,
+				pollAPISImportTaskStatus.AnalysisResult,
+			),
+		)
+		return taskID
+	case apisgen.AnalysisResultKonflikte:
+		// TODO: Signal parent and wait for user decision.
+		result.systemError(
+			ctx,
+			fmt.Errorf("APIS analysis reported metadata conflicts for task %q", taskID),
+			ev,
+			"submission to APIS requires human review.",
+			"APIS detected metadata conflicts and preprocessing cannot continue automatically. Review the APIS task before resuming or canceling the ingest.",
+		)
+		return ""
+	case apisgen.AnalysisResultFehler:
+		result.systemError(
+			ctx,
+			fmt.Errorf("APIS analysis failed for task %q", taskID),
+			ev,
+			"submission to APIS has failed.",
+			"APIS reported an analysis error while processing the submitted metadata. Please try again, or ask a system administrator to investigate.",
+		)
+		return ""
+	default:
+		result.systemError(
+			ctx,
+			fmt.Errorf(
+				"unexpected APIS analysis result %q for task %q",
+				pollAPISImportTaskStatus.AnalysisResult,
+				taskID,
+			),
+			ev,
+			"submission to APIS has failed.",
+			"APIS returned an unexpected analysis result. Please ask a system administrator to investigate.",
+		)
+		return ""
+	}
 }
 
 func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {

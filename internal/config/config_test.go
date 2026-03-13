@@ -2,11 +2,13 @@ package config_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 )
@@ -29,6 +31,8 @@ workflowName = "preprocessing"
 maxConcurrentSessions = 1
 [bagit]
 checksumAlgorithm = "md5"
+[apis]
+url = "http://apis.example.test"
 `
 
 func TestConfig(t *testing.T) {
@@ -72,6 +76,11 @@ func TestConfig(t *testing.T) {
 				Bagit: bagcreate.Config{
 					ChecksumAlgorithm: "md5",
 				},
+				APIS: apis.Config{
+					URL:          "http://apis.example.test",
+					Timeout:      apis.DefaultTimeout,
+					PollInterval: apis.DefaultPollInterval,
+				},
 			},
 		},
 		{
@@ -81,7 +90,8 @@ func TestConfig(t *testing.T) {
 			wantErr: `invalid configuration
 SharedPath: missing required value
 Temporal.TaskQueue: missing required value
-Temporal.WorkflowName: missing required value`,
+Temporal.WorkflowName: missing required value
+missing APIS URL`,
 		},
 		{
 			name:       "Errors when MaxConcurrentSessions is less than 1",
@@ -93,6 +103,8 @@ taskQueue = "preprocessing"
 workflowName = "preprocessing"
 [worker]
 maxConcurrentSessions = -1
+[apis]
+url = "http://apis.example.test"
 `,
 			wantFound: true,
 			wantErr: `invalid configuration
@@ -108,6 +120,8 @@ taskQueue = "preprocessing"
 workflowName = "preprocessing"
 [bagit]
 checksumAlgorithm = "unknown"
+[apis]
+url = "http://apis.example.test"
 `,
 			wantFound: true,
 			wantErr: `invalid configuration
@@ -122,11 +136,118 @@ checkDuplicates = true
 [temporal]
 taskQueue = "preprocessing"
 workflowName = "preprocessing"
+[apis]
+url = "http://apis.example.test"
 `,
 			wantFound: true,
 			wantErr: `invalid configuration
 Persistence.DSN: missing required value
 Persistence.Driver: missing required value`,
+		},
+		{
+			name:       "Loads APIS defaults when only URL is configured",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+[apis]
+url = "http://apis.example.test"
+`,
+			wantFound: true,
+			wantCfg: config.Configuration{
+				SharedPath: "/home/preprocessing/shared",
+				Temporal: config.Temporal{
+					TaskQueue:    "preprocessing",
+					WorkflowName: "preprocessing",
+				},
+				Worker: config.WorkerConfig{
+					MaxConcurrentSessions: 1,
+				},
+				APIS: apis.Config{
+					URL:          "http://apis.example.test",
+					Timeout:      apis.DefaultTimeout,
+					PollInterval: apis.DefaultPollInterval,
+				},
+			},
+		},
+		{
+			name:       "Errors when APIS URL is missing",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+`,
+			wantFound: true,
+			wantErr: `invalid configuration
+missing APIS URL`,
+		},
+		{
+			name:       "Errors when APIS timeout is invalid",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+[apis]
+url = "http://apis.example.test"
+timeout = "-1s"
+`,
+			wantFound: true,
+			wantErr: `invalid configuration
+invalid APIS timeout: -1s`,
+		},
+		{
+			name:       "Errors when APIS poll interval is invalid",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+[apis]
+url = "http://apis.example.test"
+pollInterval = "-1s"
+`,
+			wantFound: true,
+			wantErr: `invalid configuration
+invalid APIS poll interval: -1s`,
+		},
+		{
+			name:       "Loads explicit APIS timeout and poll interval",
+			configFile: "preprocessing.toml",
+			toml: `# Config
+sharedPath = "/home/preprocessing/shared"
+[temporal]
+taskQueue = "preprocessing"
+workflowName = "preprocessing"
+[apis]
+url = "http://apis.example.test"
+timeout = "45s"
+pollInterval = "2m"
+token = "mock-token"
+`,
+			wantFound: true,
+			wantCfg: config.Configuration{
+				SharedPath: "/home/preprocessing/shared",
+				Temporal: config.Temporal{
+					TaskQueue:    "preprocessing",
+					WorkflowName: "preprocessing",
+				},
+				Worker: config.WorkerConfig{
+					MaxConcurrentSessions: 1,
+				},
+				APIS: apis.Config{
+					URL:          "http://apis.example.test",
+					Timeout:      45 * time.Second,
+					PollInterval: 2 * time.Minute,
+					Token:        "mock-token",
+				},
+			},
 		},
 		{
 			name:       "Errors when TOML is invalid",
@@ -166,7 +287,7 @@ Persistence.Driver: missing required value`,
 			}
 			if tc.wantErrContains != "" {
 				assert.Equal(t, found, tc.wantFound)
-				assert.ErrorContains(t, err, tc.wantErr)
+				assert.ErrorContains(t, err, tc.wantErrContains)
 				return
 			}
 
