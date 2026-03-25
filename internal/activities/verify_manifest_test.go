@@ -11,7 +11,6 @@ import (
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 const (
@@ -338,15 +337,6 @@ const (
 </paket>
 `
 )
-
-func testSIP(t *testing.T, path string) sip.SIP {
-	t.Helper()
-	s, err := sip.New(path)
-	if err != nil {
-		t.Fatalf("sip: New(): %v", err)
-	}
-	return s
-}
 
 func TestVerifyManifest(t *testing.T) {
 	t.Parallel()

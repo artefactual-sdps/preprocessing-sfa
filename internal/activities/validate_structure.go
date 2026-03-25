@@ -4,27 +4,47 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/fsutil"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
 const ValidateStructureName = "validate-structure"
 
-type ValidateStructureParams struct {
-	SIP sip.SIP
+type (
+	ValidateStructure       struct{}
+	ValidateStructureParams struct {
+		SIP sip.SIP
+	}
+
+	ValidateStructureResult struct {
+		Failures []string
+	}
+)
+
+// dir represents a file or directory in the SIP, with its path,
+// parent path, and whether it is a directory or not. Both path and parent paths
+// are relative to the SIP base path.
+type dir struct {
+	path     string
+	children int
 }
 
-type ValidateStructureResult struct {
-	Failures []string
+type validationResult struct {
+	dirs                   []dir
+	fileCount              int
+	invalidNames           []string
+	hasContentDir          bool
+	hasXSDDir              bool
+	hasMetadataFile        bool
+	hasUpdatedAreldaMDFile bool
+	hasLogicalMDFile       bool
+	extraDirs              []string
+	extraFiles             []string
 }
-
-type ValidateStructure struct{}
 
 func NewValidateStructure() *ValidateStructure {
 	return &ValidateStructure{}
@@ -36,162 +56,181 @@ func (a *ValidateStructure) Execute(
 ) (*ValidateStructureResult, error) {
 	var failures []string
 
-	// Check for empty directories and invalid (Archivematica incompatible) file/directory names.
-	paths := make(map[string]int)
+	res, err := validateStructure(params.SIP)
+	failures = reportFailures(res, params.SIP)
 
-	err := filepath.WalkDir(params.SIP.Path, func(path string, d fs.DirEntry, err error) error {
+	return &ValidateStructureResult{Failures: failures}, err
+}
+
+// validateStructure walks the SIP directory tree, counts directory children and
+// checks for structural issues like invalid names or missing directories and
+// files.
+func validateStructure(sip sip.SIP) (*validationResult, error) {
+	res := &validationResult{}
+
+	// Walk the SIP directory tree.
+	err := filepath.WalkDir(sip.Path, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		relativePath, err := filepath.Rel(params.SIP.Path, path)
+		relativePath, err := filepath.Rel(sip.Path, path)
 		if err != nil {
-			return err
+			return fmt.Errorf("ValidateStructure: relative path: %w", err)
 		}
 
-		if path != params.SIP.Path {
-			// Initialize this directory's total number of immediate children.
-			if d.IsDir() {
-				paths[relativePath] = 0
-			}
-
-			// Add to parent's total number of immediate children.
-			paths[filepath.Dir(relativePath)] = paths[filepath.Dir(relativePath)] + 1
-		}
-
+		// Validate name.
 		if !validateName(d.Name()) {
-			if relativePath == "." {
-				relativePath = filepath.Base(params.SIP.Path)
-			}
+			res.invalidNames = append(res.invalidNames, relativePath)
+		}
 
-			failures = append(failures, fmt.Sprintf("Name %q contains invalid character(s)", relativePath))
+		// Add directories to the list of dirs to check for emptiness later.
+		if d.IsDir() {
+			res.dirs = append(res.dirs, dir{path: relativePath})
+		} else {
+			res.fileCount += 1
+		}
+
+		// Skip the rest of the checks for the SIP base path.
+		if path == sip.Path {
+			return nil
+		}
+
+		// Add this node to its parent directory's child count.
+		parentPath := filepath.Dir(relativePath)
+		for i := range res.dirs {
+			if res.dirs[i].path == parentPath {
+				res.dirs[i].children += 1
+				break
+			}
+		}
+
+		// Check for unexpected top level directories.
+		if parentPath == "." {
+			if d.IsDir() && !slices.Contains(sip.TopLevelPaths, path) {
+				res.extraDirs = append(res.extraDirs, relativePath)
+			}
+		}
+
+		// Check for unexpected files in the content directory.
+		if filepath.Dir(path) == sip.ContentPath && !d.IsDir() {
+			res.extraFiles = append(res.extraFiles, relativePath)
+		}
+
+		// Check for missing directories.
+		if path == sip.ContentPath {
+			res.hasContentDir = true
+		}
+		if path == sip.XSDPath {
+			res.hasXSDDir = true
+		}
+
+		// Check for missing files.
+		if path == sip.MetadataPath {
+			res.hasMetadataFile = true
+		}
+		if path == sip.UpdatedAreldaMDPath {
+			res.hasUpdatedAreldaMDFile = true
+		}
+		if path == sip.LogicalMDPath {
+			res.hasLogicalMDFile = true
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("ValidateStructure: check for empty directories: %v", err)
+		return nil, fmt.Errorf("ValidateStructure: %v", err)
 	}
 
-	// Report any empty subdirectories.
-	emptyDirFound := false
+	return res, nil
+}
 
-	for path, children := range paths {
-		if children == 0 {
-			failures = append(failures, fmt.Sprintf("An empty directory has been found - %s", path))
-			emptyDirFound = true
+// reportFailures takes the result of validateStructure and returns a list of
+// human-readable failure messages.
+func reportFailures(res *validationResult, sip sip.SIP) []string {
+	var failures []string
+
+	// Report an empty SIP and stop further checks to avoid reporting multiple
+	// failures that are a consequence of the SIP being empty.
+	if len(res.dirs) == 1 && res.fileCount == 0 {
+		failures = append(failures, "The SIP is empty")
+		return failures
+	}
+
+	// Report empty directories.
+	hasEmptyDir := false
+	for _, node := range res.dirs {
+		if node.children == 0 {
+			failures = append(failures, fmt.Sprintf("An empty directory has been found - %s", node.path))
+			hasEmptyDir = true
 		}
 	}
-
-	if emptyDirFound {
-		failures = append(
-			failures,
-			"Please remove the empty directories and update the metadata manifest accordingly",
-		)
+	if hasEmptyDir {
+		failures = append(failures, "Please remove the empty directories and update the metadata manifest accordingly")
 	}
 
-	// Check existence of the content directory.
-	hasContentDir := true
-	if !fsutil.FileExists(params.SIP.ContentPath) {
+	// Report invalid file/directory names.
+	for _, path := range res.invalidNames {
+		failures = append(failures, fmt.Sprintf("Name %q contains invalid character(s)", path))
+	}
+
+	// Report missing content directory.
+	if !res.hasContentDir {
 		failures = append(failures, "Content folder is missing")
-		hasContentDir = false
 	}
 
-	// Check existence of the XSD directory.
-	if !fsutil.FileExists(params.SIP.XSDPath) {
+	// Report missing XSD directory.
+	if !res.hasXSDDir {
 		failures = append(failures, "XSD folder is missing")
 	}
 
-	// Check existence of metadata file.
-	if !fsutil.FileExists(params.SIP.MetadataPath) {
+	// Report missing metadata file.
+	if !res.hasMetadataFile {
 		failures = append(failures, fmt.Sprintf(
-			"%s is missing", filepath.Base(params.SIP.MetadataPath),
+			"%s is missing", filepath.Base(sip.MetadataPath),
 		))
 	}
 
-	// Check existence of UpdatedAreldaMetadata file (AIPs only).
-	if params.SIP.IsAIP() && !fsutil.FileExists(params.SIP.UpdatedAreldaMDPath) {
+	// Report missing UpdatedAreldaMetadata file (AIPs only).
+	if sip.IsAIP() && !res.hasUpdatedAreldaMDFile {
 		failures = append(failures, fmt.Sprintf(
-			"%s is missing", filepath.Base(params.SIP.UpdatedAreldaMDPath),
+			"%s is missing", filepath.Base(sip.UpdatedAreldaMDPath),
 		))
 	}
 
-	// Check existence of logical metadata file (AIPs only).
-	if params.SIP.IsAIP() && !fsutil.FileExists(params.SIP.LogicalMDPath) {
-		failures = append(failures, fmt.Sprintf("%s is missing", filepath.Base(params.SIP.LogicalMDPath)))
+	// Report missing logical metadata file (AIPs only).
+	if sip.IsAIP() && !res.hasLogicalMDFile {
+		failures = append(failures, fmt.Sprintf("%s is missing", filepath.Base(sip.LogicalMDPath)))
 	}
 
-	// Check for unexpected top-level directories.
-	sipBase := params.SIP.Path
-	extras, err := extraNodes(sipBase, params.SIP.Path, params.SIP.TopLevelPaths, true)
-	if err != nil {
-		return nil, fmt.Errorf("ValidateStructure: check for unexpected dirs: %v", err)
-	}
-	failures = append(failures, extras...)
-
-	// Check for unexpected files in the content directory.
-	if hasContentDir {
-		extras, err := extraNodes(sipBase, params.SIP.ContentPath, []string{}, false)
-		if err != nil {
-			return nil, fmt.Errorf("ValidateStructure: check for unexpected files: %v", err)
-		}
-		failures = append(failures, extras...)
+	// Report unexpected directories.
+	for _, path := range res.extraDirs {
+		failures = append(failures, fmt.Sprintf("Unexpected directory: %q", path))
 	}
 
-	// Check that digitized packages only have one dossier in the content dir.
-	if params.SIP.Type == enums.SIPTypeDigitizedSIP || params.SIP.Type == enums.SIPTypeDigitizedAIP && hasContentDir {
-		entries, err := os.ReadDir(params.SIP.ContentPath)
-		if err != nil {
-			return nil, fmt.Errorf("ValidateStructure: check for unexpected dossiers: %v", err)
-		}
+	// Report unexpected files.
+	for _, path := range res.extraFiles {
+		failures = append(failures, fmt.Sprintf("Unexpected file: %q", path))
+	}
 
-		dirs := 0
-		for _, e := range entries {
-			if e.IsDir() {
-				dirs += 1
-			}
-			if dirs > 1 {
+	// Report more than one dossier in the content dir for digitized SIPs and
+	// AIPs.
+	if sip.Type == enums.SIPTypeDigitizedSIP || sip.Type == enums.SIPTypeDigitizedAIP && res.hasContentDir {
+		for _, d := range res.dirs {
+			if filepath.Join(sip.Path, d.path) == sip.ContentPath {
+				if d.children > 1 {
+					failures = append(failures, "More than one dossier in the content directory")
+				}
 				break
 			}
 		}
-
-		if dirs > 1 {
-			failures = append(failures, "More than one dossier in the content directory")
-		}
 	}
 
-	return &ValidateStructureResult{Failures: failures}, nil
+	return failures
 }
 
-func extraNodes(sipBase, path string, expected []string, matchDir bool) ([]string, error) {
-	var extras []string
-
-	ftype := "file"
-	if matchDir {
-		ftype = "directory"
-	}
-
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		return nil, fmt.Errorf("can't read directory: %v", err)
-	}
-
-	for _, entry := range entries {
-		fp := filepath.Join(path, entry.Name())
-		if entry.IsDir() == matchDir && !slices.Contains(expected, fp) {
-			rel, err := filepath.Rel(sipBase, fp)
-			if err != nil {
-				return nil, fmt.Errorf("can't determine relative path: %v", err)
-			}
-			rel = filepath.Join(filepath.Base(sipBase), rel)
-			extras = append(extras, fmt.Sprintf("Unexpected %s: %q", ftype, rel))
-		}
-	}
-
-	return extras, nil
-}
-
-// validateName makes sure only valid characters exist in name.
+// validateName checks that all characters in the name are valid. Valid
+// characters are letters, numbers, "-", "_", ".", "(", and ")".
 func validateName(name string) bool {
 	const validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.()"
 
