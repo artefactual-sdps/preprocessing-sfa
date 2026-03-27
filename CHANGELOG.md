@@ -8,6 +8,12 @@ requests.
 
 ## [Unreleased]
 
+## [0.17.0] - 2025-03-27
+
+### Added
+
+- Initial APIS integration in preprocessing workflow ([#173])
+
 ## [0.16.0] - 2026-02-10
 
 ### Fixed
@@ -145,7 +151,9 @@ requests.
 
 Initial release.
 
-[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.15.0...HEAD
+[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.16.0...v0.17.0
+[0.16.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.12.0...v0.13.0
@@ -161,6 +169,8 @@ Initial release.
 [0.3.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/artefactual-sdps/preprocessing-sfa/releases/tag/v0.1.0
+[#173]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/173
+[#171]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/171
 [#164]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/164
 [#157]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/157
 [#152]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/152
