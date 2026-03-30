@@ -12,41 +12,51 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
-func TestValidateStructure(t *testing.T) {
-	t.Parallel()
+func digitizedAIP(t *testing.T, hasNoContent bool) sip.SIP {
+	t.Helper()
 
-	digitizedAIP, err := sip.New(
-		fs.NewDir(t, "extract-",
-			fs.WithDir("7537ab2c-4e6b-4820-95bf-bd2c577351c3",
-				fs.WithDir("additional",
-					fs.WithFile("7537ab2c-4e6b-4820-95bf-bd2c577351c3-premis.xml", ""),
-					fs.WithFile("UpdatedAreldaMetadata.xml", ""),
-				),
+	path := fs.NewDir(t, "extract-",
+		fs.WithDir("7537ab2c-4e6b-4820-95bf-bd2c577351c3",
+			fs.WithDir("additional",
+				fs.WithFile("7537ab2c-4e6b-4820-95bf-bd2c577351c3-premis.xml", ""),
+				fs.WithFile("UpdatedAreldaMetadata.xml", ""),
+			),
+			fs.WithDir("content",
 				fs.WithDir("content",
-					fs.WithDir("content",
-						fs.WithDir("d_0000001",
+					func() fs.PathOp {
+						if hasNoContent {
+							// Return an empty dossier.
+							return fs.WithDir("d_0000001")
+						}
+
+						return fs.WithDir("d_0000001",
 							fs.WithFile("00000001.jp2", ""),
 							fs.WithFile("00000001_PREMIS.xml", ""),
 							fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+						)
+					}(),
+				),
+				fs.WithDir("header",
+					fs.WithDir("old",
+						fs.WithDir("SIP",
+							fs.WithFile("metadata.xml", ""),
 						),
 					),
-					fs.WithDir("header",
-						fs.WithDir("old",
-							fs.WithDir("SIP",
-								fs.WithFile("metadata.xml", ""),
-							),
-						),
-						fs.WithDir("xsd",
-							fs.WithFile("arelda.xsd", ""),
-						),
+					fs.WithDir("xsd",
+						fs.WithFile("arelda.xsd", ""),
 					),
 				),
 			),
-		).Join("7537ab2c-4e6b-4820-95bf-bd2c577351c3"),
-	)
-	assert.NilError(t, err)
+		),
+	).Join("7537ab2c-4e6b-4820-95bf-bd2c577351c3")
 
-	digitizedSIP, err := sip.New(fs.NewDir(t, "extract-",
+	return testSIP(t, path)
+}
+
+func digitizedSIP(t *testing.T, hasExtraDossier bool) sip.SIP {
+	t.Helper()
+
+	path := fs.NewDir(t, "extract-",
 		fs.WithDir("SIP_202200915_dept",
 			fs.WithDir("content",
 				fs.WithDir("d_0000001",
@@ -54,6 +64,18 @@ func TestValidateStructure(t *testing.T) {
 					fs.WithFile("00000001_PREMIS.xml", ""),
 					fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
 				),
+				func() fs.PathOp {
+					if hasExtraDossier {
+						return fs.WithDir("d_0000002",
+							fs.WithFile("00000002.jp2", ""),
+							fs.WithFile("00000002_PREMIS.xml", ""),
+							fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+						)
+					}
+
+					// Don't modify path (no-op).
+					return func(path fs.Path) error { return nil }
+				}(),
 			),
 			fs.WithDir("header",
 				fs.WithFile("metadata.xml", ""),
@@ -62,135 +84,63 @@ func TestValidateStructure(t *testing.T) {
 				),
 			),
 		),
-	).Join("SIP_202200915_dept"))
-	assert.NilError(t, err)
+	).Join("SIP_202200915_dept")
 
-	emptySIP, err := sip.New(
-		fs.NewDir(t, "extract-",
-			fs.WithDir("AIP-1234"),
-		).Join("AIP-1234"),
-	)
-	assert.NilError(t, err)
+	return testSIP(t, path)
+}
 
-	unexpectedPiecesSIP, err := sip.New(
-		fs.NewDir(t, "extract-",
-			fs.WithDir("SIP_202200915_dept",
-				fs.WithDir("content",
-					fs.WithDir("d_0000001",
-						fs.WithFile("content.txt", ""),
-					),
-					fs.WithFile("unexpected.txt", ""),
-				),
-				fs.WithDir("header",
-					fs.WithFile("metadata.xml", ""),
-					fs.WithDir("xsd",
-						fs.WithFile("arelda.xsd", ""),
-					),
-				),
-				fs.WithDir("unexpected",
-					fs.WithFile("data.txt", ""),
-				),
-			),
-		).Join("SIP_202200915_dept"),
-	)
-	assert.NilError(t, err)
+func unexpectedNamesSIP(t *testing.T) sip.SIP {
+	t.Helper()
 
-	missingPiecesSIP, err := sip.New(
-		fs.NewDir(t, "extract-",
-			fs.WithDir("SIP_202200915_dept",
-				fs.WithDir("header",
-					fs.WithFile("metadata.xml", ""),
-				),
-			),
-		).Join("SIP_202200915_dept"),
-	)
-	assert.NilError(t, err)
-
-	missingPiecesAIP, err := sip.New(
-		fs.NewDir(t, "extract-",
-			fs.WithDir("AIP-1234",
-				fs.WithDir("additional",
+	path := fs.NewDir(t, "extract-",
+		fs.WithDir("SIP_202200915_dept",
+			fs.WithDir("content",
+				fs.WithDir("d_0000001",
 					fs.WithFile("content.txt", ""),
 				),
-				fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+				fs.WithFile("unexpected.txt", ""),
 			),
-		).Join("AIP-1234"),
-	)
-	assert.NilError(t, err)
+			fs.WithDir("header",
+				fs.WithFile("metadata.xml", ""),
+				fs.WithDir("xsd",
+					fs.WithFile("arelda.xsd", ""),
+				),
+			),
+			fs.WithDir("unexpected",
+				fs.WithFile("data.txt", ""),
+			),
+		),
+	).Join("SIP_202200915_dept")
 
-	digitizedSIPExtraDossier, err := sip.New(
-		fs.NewDir(t, "extract-",
-			fs.WithDir("SIP_20251015_Vecteur_987654",
-				fs.WithDir("content",
-					fs.WithDir("d_0000001",
-						fs.WithFile("00000001.jp2", ""),
-						fs.WithFile("00000001_PREMIS.xml", ""),
-						fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
-					),
-					fs.WithDir("d_0000002",
-						fs.WithFile("00000002.jp2", ""),
-						fs.WithFile("00000002_PREMIS.xml", ""),
-						fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
-					),
-				),
-				fs.WithDir("header",
-					fs.WithFile("metadata.xml", ""),
-					fs.WithDir("xsd",
-						fs.WithFile("arelda.xsd", ""),
-					),
-				),
-			),
-		).Join("SIP_20251015_Vecteur_987654"),
-	)
-	assert.NilError(t, err)
+	return testSIP(t, path)
+}
 
-	badNameSIP, err := sip.New(
-		fs.NewDir(t, "extract-",
-			fs.WithDir("SIP_20251015_Vecteur_987654",
-				fs.WithDir("content",
-					fs.WithDir("d_0000001",
-						fs.WithFile("00000001$.jp2", ""),
-						fs.WithFile("00000001$_PREMIS.xml", ""),
-					),
-				),
-				fs.WithDir("header",
-					fs.WithFile("content!.txt", ""),
-					fs.WithFile("metadata.xml", ""),
-					fs.WithDir("xsd",
-						fs.WithFile("arelda.xsd", ""),
-					),
-				),
-			),
-		).Join("SIP_20251015_Vecteur_987654"),
-	)
-	assert.NilError(t, err)
+func badNamesSIP(t *testing.T) sip.SIP {
+	t.Helper()
 
-	digitizedAIPEmptyDir, err := sip.New(
-		fs.NewDir(t, "extract-",
-			fs.WithDir("AIP-1234",
-				fs.WithDir("additional",
-					fs.WithFile("UpdatedAreldaMetadata.xml", ""),
-					fs.WithFile("AIP-1234-premis.xml", ""),
-				),
-				fs.WithDir("content",
-					fs.WithDir("content",
-						fs.WithDir("d_0000001"),
-					),
-					fs.WithDir("header",
-						fs.WithDir("old",
-							fs.WithDir("SIP",
-								fs.WithFile("metadata.xml", ""),
-							),
-						),
-						fs.WithDir("xsd",
-							fs.WithFile("arelda.xsd", ""),
-						),
-					),
+	path := fs.NewDir(t, "extract-",
+		fs.WithDir("SIP_20251015_Vecteur_987654",
+			fs.WithDir("content",
+				fs.WithDir("d_0000001",
+					fs.WithFile("00000001$.jp2", ""),
+					fs.WithFile("00000001$_PREMIS.xml", ""),
 				),
 			),
-		).Join("AIP-1234"),
-	)
-	assert.NilError(t, err)
+			fs.WithDir("header",
+				fs.WithFile("content!.txt", ""),
+				fs.WithFile("metadata.xml", ""),
+				fs.WithDir("xsd",
+					fs.WithFile("arelda.xsd", ""),
+				),
+			),
+		),
+	).Join("SIP_20251015_Vecteur_987654")
+
+	return testSIP(t, path)
+}
+
+func TestValidateStructure(t *testing.T) {
+	t.Parallel()
 
 	tests := []struct {
 		name    string
@@ -199,16 +149,12 @@ func TestValidateStructure(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name:   "Validates a digitized AIP",
-			params: activities.ValidateStructureParams{SIP: digitizedAIP},
-		},
-		{
-			name:   "Validates a digitized SIP",
-			params: activities.ValidateStructureParams{SIP: digitizedSIP},
-		},
-		{
-			name:   "Returns failures when the SIP is empty",
-			params: activities.ValidateStructureParams{SIP: emptySIP},
+			name: "Returns failures when a SIP is empty",
+			params: activities.ValidateStructureParams{
+				SIP: testSIP(t, fs.NewDir(t, "extract-",
+					fs.WithDir("AIP-1234"),
+				).Join("AIP-1234")),
+			},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
 					"The SIP is empty",
@@ -216,8 +162,25 @@ func TestValidateStructure(t *testing.T) {
 			},
 		},
 		{
-			name:   "Returns failures when the SIP has unexpected components",
-			params: activities.ValidateStructureParams{SIP: unexpectedPiecesSIP},
+			name: "Returns failures when a SIP has a single file",
+			params: activities.ValidateStructureParams{
+				SIP: testSIP(t, fs.NewDir(t, "extract-",
+					fs.WithDir("AIP-1234",
+						fs.WithFile("file.txt", ""),
+					),
+				).Join("AIP-1234")),
+			},
+			want: activities.ValidateStructureResult{
+				Failures: []string{
+					"Content folder is missing",
+					"XSD folder is missing",
+					"metadata.xml is missing",
+				},
+			},
+		},
+		{
+			name:   "Returns failures when a SIP has unexpected files or directories",
+			params: activities.ValidateStructureParams{SIP: unexpectedNamesSIP(t)},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
 					`Unexpected directory: "unexpected"`,
@@ -226,8 +189,16 @@ func TestValidateStructure(t *testing.T) {
 			},
 		},
 		{
-			name:   "Returns failures when the SIP is missing components",
-			params: activities.ValidateStructureParams{SIP: missingPiecesSIP},
+			name: "Returns failures when a SIP is missing files or directories",
+			params: activities.ValidateStructureParams{
+				SIP: testSIP(t, fs.NewDir(t, "extract-",
+					fs.WithDir("SIP_202200915_dept",
+						fs.WithDir("header",
+							fs.WithFile("metadata.xml", ""),
+						),
+					),
+				).Join("SIP_202200915_dept")),
+			},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
 					"Content folder is missing",
@@ -236,28 +207,19 @@ func TestValidateStructure(t *testing.T) {
 			},
 		},
 		{
-			name:   "Returns failures when a digitized AIP is missing components",
-			params: activities.ValidateStructureParams{SIP: missingPiecesAIP},
-			want: activities.ValidateStructureResult{
-				Failures: []string{
-					"Content folder is missing",
-					"XSD folder is missing",
-					"metadata.xml is missing",
-					"UpdatedAreldaMetadata.xml is missing",
-					"AIP-1234-premis.xml is missing",
-				},
-			},
+			name:   "Validates a digitized SIP",
+			params: activities.ValidateStructureParams{SIP: digitizedSIP(t, false)},
 		},
 		{
 			name:   "Returns a failure when a digitized SIP has more than one dossier",
-			params: activities.ValidateStructureParams{SIP: digitizedSIPExtraDossier},
+			params: activities.ValidateStructureParams{SIP: digitizedSIP(t, true)},
 			want: activities.ValidateStructureResult{
 				Failures: []string{"More than one dossier in the content directory"},
 			},
 		},
 		{
-			name:   "Returns a failure when the name of files and/or directories in a SIP have invalid characters",
-			params: activities.ValidateStructureParams{SIP: badNameSIP},
+			name:   "Returns a failure when a digitized SIP has bad file or directory names",
+			params: activities.ValidateStructureParams{SIP: badNamesSIP(t)},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
 					"Name \"content/d_0000001/00000001$.jp2\" contains invalid character(s)",
@@ -267,12 +229,40 @@ func TestValidateStructure(t *testing.T) {
 			},
 		},
 		{
+			name:   "Validates a digitized AIP",
+			params: activities.ValidateStructureParams{SIP: digitizedAIP(t, false)},
+		},
+		{
 			name:   "Returns a failure when a digitized AIP has an empty directory",
-			params: activities.ValidateStructureParams{SIP: digitizedAIPEmptyDir},
+			params: activities.ValidateStructureParams{SIP: digitizedAIP(t, true)},
 			want: activities.ValidateStructureResult{
 				Failures: []string{
 					"An empty directory has been found - content/content/d_0000001",
 					"Please remove the empty directories and update the metadata manifest accordingly",
+				},
+			},
+		},
+		{
+			name: "Returns failures when a digitized AIP is missing files and directories",
+			params: activities.ValidateStructureParams{
+				SIP: testSIP(t,
+					fs.NewDir(t, "extract-",
+						fs.WithDir("AIP-1234",
+							fs.WithDir("additional",
+								fs.WithFile("content.txt", ""),
+							),
+							fs.WithFile("Prozess_Digitalisierung_PREMIS.xml", ""),
+						),
+					).Join("AIP-1234"),
+				),
+			},
+			want: activities.ValidateStructureResult{
+				Failures: []string{
+					"Content folder is missing",
+					"XSD folder is missing",
+					"metadata.xml is missing",
+					"UpdatedAreldaMetadata.xml is missing",
+					"AIP-1234-premis.xml is missing",
 				},
 			},
 		},
