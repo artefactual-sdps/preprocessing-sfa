@@ -35,6 +35,7 @@ type dir struct {
 
 type validationResult struct {
 	dirs                   []dir
+	fileCount              int
 	invalidNames           []string
 	hasContentDir          bool
 	hasXSDDir              bool
@@ -86,6 +87,8 @@ func validateStructure(sip sip.SIP) (*validationResult, error) {
 		// Add directories to the list of dirs to check for emptiness later.
 		if d.IsDir() {
 			res.dirs = append(res.dirs, dir{path: relativePath})
+		} else {
+			res.fileCount += 1
 		}
 
 		// Skip the rest of the checks for the SIP base path.
@@ -147,9 +150,9 @@ func validateStructure(sip sip.SIP) (*validationResult, error) {
 func reportFailures(res *validationResult, sip sip.SIP) []string {
 	var failures []string
 
-	// Report an empty SIP and stop further checks since to avoid reporting
-	// multiple failures that are a consequence of the SIP being empty.
-	if len(res.dirs) == 1 {
+	// Report an empty SIP and stop further checks to avoid reporting multiple
+	// failures that are a consequence of the SIP being empty.
+	if len(res.dirs) == 1 && res.fileCount == 0 {
 		failures = append(failures, "The SIP is empty")
 		return failures
 	}
