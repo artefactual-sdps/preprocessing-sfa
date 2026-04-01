@@ -13,8 +13,10 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"go.artefactual.dev/tools/fsutil"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
@@ -33,7 +35,13 @@ import (
 )
 
 const (
-	relPath  = "sip"
+	sipName = "SIP_20240606_dept.zip"
+
+	// The relPath reflects an actual SFA ZIP path passed from Enduro to
+	// preprocessing-sfa — it seems that ingest prepends "SIP_" to the original
+	// file name and appends a UUID.
+	relPath = "8fdfaea1-06ed-4cf6-8bdf-d15d80420f35/SIP_SIP_20240606_dept_8fdfaea1-06ed-4cf6-8bdf-d15d80420f35.zip"
+
 	manifest = `
 <?xml version="1.0" encoding="UTF-8"?>
 <paket
@@ -52,7 +60,7 @@ const (
 			<ordner>
 				<name>old</name>
 				<ordner>
-					<name>SIP</name>
+					<name>SIP_20240606_123456</name>
 					<datei id="OLD_SIP">
 						<name>metadata.xml</name>
 						<originalName>metadata.xml</originalName>
@@ -112,7 +120,10 @@ const (
 `
 )
 
-var testTime = time.Date(2024, 6, 6, 15, 8, 39, 0, time.UTC)
+var (
+	testTime = time.Date(2024, 6, 6, 15, 8, 39, 0, time.UTC)
+	sipUUID  = uuid.MustParse("8fdfaea1-06ed-4cf6-8bdf-d15d80420f35")
+)
 
 type PreprocessingTestSuite struct {
 	suite.Suite
@@ -132,7 +143,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 	cfg.SharedPath = s.testDir
 
 	sp := filepath.Join(s.testDir, relPath)
-	if err := os.Mkdir(sp, os.FileMode(0o700)); err != nil {
+	if err := os.MkdirAll(sp, os.FileMode(0o700)); err != nil {
 		s.T().Fatalf("create sip dir: %v", err)
 	}
 	s.sipPath = sp
@@ -245,7 +256,7 @@ func (s *PreprocessingTestSuite) digitizedAIP(path string) sip.SIP {
 			),
 			fs.WithDir("header",
 				fs.WithDir("old",
-					fs.WithDir("SIP",
+					fs.WithDir("SIP_20240606_123456",
 						fs.WithFile("metadata.xml", ""),
 					),
 				),
@@ -319,7 +330,8 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 	})
 	s.writeBagitTxt(s.sipPath)
 
-	expectedSIP := s.digitizedAIP(s.sipPath)
+	extractPath := filepath.Join(filepath.Dir(s.sipPath), fsutil.BaseNoExt(filepath.Base(sipName)))
+	expectedSIP := s.digitizedAIP(extractPath)
 	expectedPIP := pips.NewFromSIP(expectedSIP)
 
 	// Mock activities.
@@ -347,38 +359,39 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 	).Return(
 		&localact.CheckDuplicateResult{}, nil,
 	)
+
 	s.env.OnActivity(
 		archiveextract.Name,
 		sessionCtx,
 		&archiveextract.Params{SourcePath: s.sipPath},
 	).Return(
-		&archiveextract.Result{ExtractPath: s.sipPath}, nil,
+		&archiveextract.Result{ExtractPath: extractPath}, nil,
 	)
 	s.env.OnActivity(
 		localact.IsBag,
 		ctx,
-		&localact.IsBagParams{Path: s.sipPath},
+		&localact.IsBagParams{Path: extractPath},
 	).Return(
 		&localact.IsBagResult{IsBag: true}, nil,
 	)
 	s.env.OnActivity(
 		bagvalidate.Name,
 		sessionCtx,
-		&bagvalidate.Params{Path: s.sipPath},
+		&bagvalidate.Params{Path: extractPath},
 	).Return(
 		&bagvalidate.Result{Valid: true}, nil,
 	)
 	s.env.OnActivity(
 		activities.UnbagName,
 		sessionCtx,
-		&activities.UnbagParams{Path: s.sipPath},
+		&activities.UnbagParams{Path: extractPath},
 	).Return(
-		&activities.UnbagResult{Path: s.sipPath}, nil,
+		&activities.UnbagResult{Path: extractPath}, nil,
 	)
 	s.env.OnActivity(
 		activities.IdentifySIPName,
 		sessionCtx,
-		&activities.IdentifySIPParams{Path: s.sipPath},
+		&activities.IdentifySIPParams{Path: extractPath},
 	).Return(
 		&activities.IdentifySIPResult{SIP: expectedSIP}, nil,
 	)
@@ -479,8 +492,10 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 			Agent:          premis.AgentDefault(),
 			Type:           "validation",
 			Detail:         "name=\"Validate SIP name\"",
-			OutcomeDetail:  "SIP name \"sip\" matches validation criteria.",
-			Failures:       nil,
+			OutcomeDetail: fmt.Sprintf(
+				"SIP name %q matches validation criteria.", expectedSIP.Name(),
+			),
+			Failures: nil,
 		},
 	).Return(
 		&activities.AddPREMISEventResult{}, nil,
@@ -548,20 +563,27 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 	s.env.OnActivity(
 		bagcreate.Name,
 		sessionCtx,
-		&bagcreate.Params{SourcePath: s.sipPath},
+		&bagcreate.Params{SourcePath: extractPath},
 	).Return(
 		&bagcreate.Result{}, nil,
 	)
 
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{RelativePath: relPath},
+		&workflow.PreprocessingWorkflowParams{
+			RelativePath: relPath,
+			SIPID:        sipUUID,
+			SIPName:      sipName,
+		},
 	)
-
 	s.True(s.env.IsWorkflowCompleted())
 
+	// Update the relative path to the extracted SIP path.
+	relPath, err := filepath.Rel(s.testDir, extractPath)
+	s.NoError(err)
+
 	var result workflow.PreprocessingWorkflowResult
-	err := s.env.GetWorkflowResult(&result)
+	err = s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 	s.Equal(
 		&workflow.PreprocessingWorkflowResult{
@@ -711,34 +733,42 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 
 func (s *PreprocessingTestSuite) TestIdentifySIPFailure() {
 	s.SetupTest(&config.Configuration{})
-	sipPath := filepath.Join(s.testDir, relPath)
+
+	extractPath := filepath.Join(filepath.Dir(s.sipPath), fsutil.BaseNoExt(filepath.Base(sipName)))
+	sessionCtx := mock.AnythingOfType("*context.timerCtx")
 
 	// Mock activities.
-	sessionCtx := mock.AnythingOfType("*context.timerCtx")
 	s.env.OnActivity(
 		archiveextract.Name,
 		sessionCtx,
 		&archiveextract.Params{SourcePath: s.sipPath},
 	).Return(
-		&archiveextract.Result{ExtractPath: s.sipPath}, nil,
+		&archiveextract.Result{ExtractPath: extractPath}, nil,
 	)
 	s.env.OnActivity(
 		activities.IdentifySIPName,
 		sessionCtx,
-		&activities.IdentifySIPParams{Path: sipPath},
+		&activities.IdentifySIPParams{Path: extractPath},
 	).Return(
 		nil, fmt.Errorf("IdentifySIP: NewSIP: stat : no such file or directory"),
 	)
 
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{RelativePath: relPath},
+		&workflow.PreprocessingWorkflowParams{
+			RelativePath: relPath,
+			SIPID:        sipUUID,
+			SIPName:      sipName,
+		},
 	)
 
 	s.True(s.env.IsWorkflowCompleted())
 
+	relPath, err := filepath.Rel(s.testDir, extractPath)
+	s.NoError(err)
+
 	var result workflow.PreprocessingWorkflowResult
-	err := s.env.GetWorkflowResult(&result)
+	err = s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 	s.Equal(
 		&workflow.PreprocessingWorkflowResult{
@@ -770,8 +800,8 @@ Enduro could not identify the package type. Please ensure that your SIP matches 
 func (s *PreprocessingTestSuite) TestValidationError() {
 	s.SetupTest(&config.Configuration{})
 
-	sipPath := filepath.Join(s.testDir, relPath)
-	expectedSIP := s.bornDigitalSIP(sipPath)
+	extractPath := filepath.Join(filepath.Dir(s.sipPath), fsutil.BaseNoExt(filepath.Base(sipName)))
+	expectedSIP := s.bornDigitalSIP(extractPath)
 
 	// Mock activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
@@ -780,12 +810,12 @@ func (s *PreprocessingTestSuite) TestValidationError() {
 		sessionCtx,
 		&archiveextract.Params{SourcePath: s.sipPath},
 	).Return(
-		&archiveextract.Result{ExtractPath: s.sipPath}, nil,
+		&archiveextract.Result{ExtractPath: extractPath}, nil,
 	)
 	s.env.OnActivity(
 		activities.IdentifySIPName,
 		sessionCtx,
-		&activities.IdentifySIPParams{Path: sipPath},
+		&activities.IdentifySIPParams{Path: extractPath},
 	).Return(
 		&activities.IdentifySIPResult{SIP: expectedSIP}, nil,
 	)
@@ -866,13 +896,20 @@ func (s *PreprocessingTestSuite) TestValidationError() {
 	// Execute workflow.
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{RelativePath: relPath},
+		&workflow.PreprocessingWorkflowParams{
+			RelativePath: relPath,
+			SIPID:        sipUUID,
+			SIPName:      sipName,
+		},
 	)
 
 	s.True(s.env.IsWorkflowCompleted())
 
+	relPath, err := filepath.Rel(s.testDir, extractPath)
+	s.NoError(err)
+
 	var result workflow.PreprocessingWorkflowResult
-	err := s.env.GetWorkflowResult(&result)
+	err = s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 	s.Equal(
 		&workflow.PreprocessingWorkflowResult{
@@ -999,7 +1036,11 @@ func (s *PreprocessingTestSuite) TestSystemError() {
 	// Execute workflow.
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{RelativePath: relPath},
+		&workflow.PreprocessingWorkflowParams{
+			RelativePath: relPath,
+			SIPID:        sipUUID,
+			SIPName:      sipName,
+		},
 	)
 
 	s.True(s.env.IsWorkflowCompleted())
@@ -1019,6 +1060,65 @@ func (s *PreprocessingTestSuite) TestSystemError() {
 
 %q could not be successfully extracted.`,
 						filepath.Base(relPath),
+					),
+					Outcome:     enums.EventOutcomeSystemFailure,
+					StartedAt:   testTime,
+					CompletedAt: testTime,
+				},
+			},
+		},
+		&result,
+	)
+}
+
+func (s *PreprocessingTestSuite) TestExtractionError() {
+	cfg := &config.Configuration{}
+	s.SetupTest(cfg)
+
+	sessionCtx := mock.AnythingOfType("*context.timerCtx")
+	extractPath := filepath.Join(cfg.SharedPath, "extract-123456")
+
+	// Mock activities.
+	s.env.OnActivity(
+		archiveextract.Name,
+		sessionCtx,
+		&archiveextract.Params{SourcePath: s.sipPath},
+	).Return(
+		&archiveextract.Result{
+			ExtractPath: extractPath,
+		},
+		nil,
+	)
+
+	// Execute workflow.
+	s.env.ExecuteWorkflow(
+		s.workflow.Execute,
+		&workflow.PreprocessingWorkflowParams{
+			RelativePath: relPath,
+			SIPID:        sipUUID,
+			SIPName:      sipName,
+		},
+	)
+
+	s.True(s.env.IsWorkflowCompleted())
+
+	var result workflow.PreprocessingWorkflowResult
+	err := s.env.GetWorkflowResult(&result)
+	s.NoError(err)
+	s.Equal(
+		&workflow.PreprocessingWorkflowResult{
+			Outcome:      workflow.OutcomeSystemError,
+			RelativePath: relPath,
+			PreservationTasks: []*eventlog.Event{
+				{
+					Name: "Extract SIP",
+					Message: fmt.Sprintf(
+						`System error: SIP extraction has failed.
+
+The extracted SIP is missing the top-level %q folder.
+
+Please ensure that the SIP is well-formed and try again.`,
+						fsutil.BaseNoExt(sipName),
 					),
 					Outcome:     enums.EventOutcomeSystemFailure,
 					StartedAt:   testTime,

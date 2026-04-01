@@ -12,6 +12,8 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
+	"github.com/google/uuid"
+	"go.artefactual.dev/tools/fsutil"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
@@ -44,7 +46,18 @@ type (
 	}
 
 	PreprocessingWorkflowParams struct {
+		// Relative path to the shared path.
 		RelativePath string
+
+		// SIPID is the identifier of the SIP being processed.
+		SIPID uuid.UUID
+
+		// BatchID is the identifier of the batch being processed. If the SIP is not
+		// part of a batch, this will equal uuid.Nil.
+		BatchID uuid.UUID
+
+		// SIPName is the original filename of the SIP being processed.
+		SIPName string
 	}
 
 	PreprocessingWorkflowResult struct {
@@ -200,36 +213,13 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 
 	// Extract SIP.
-	ev := result.newEvent(ctx, "Extract SIP")
-	var archiveExtract archiveextract.Result
-	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
-		archiveextract.Name,
-		&archiveextract.Params{SourcePath: localPath},
-	).Get(ctx, &archiveExtract)
+	localPath, e = w.extractSIP(ctx, result, localPath, params.SIPName)
 	if e != nil {
-		result.systemError(
-			ctx,
-			e,
-			ev,
-			"SIP extraction has failed.",
-			fmt.Sprintf(`%q could not be successfully extracted.`, filepath.Base(localPath)),
-		)
 		return result, nil
 	}
-
-	localPath = archiveExtract.ExtractPath
-	if e := result.SetRelativePath(w.sharedPath, localPath); e != nil {
-		result.systemError(
-			ctx,
-			e,
-			ev,
-			"SIP extraction has failed.",
-			fmt.Sprintf(`%s could not be successfully extracted.`, filepath.Base(localPath)),
-		)
+	if result.Outcome == OutcomeSystemError {
 		return result, nil
 	}
-	ev.Succeed(ctx, "SIP extracted")
 
 	// Check if the SIP is a BagIt bag.
 	var isBag localact.IsBagResult
@@ -310,7 +300,7 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 
 	// Identify SIP.
-	ev = result.newEvent(ctx, "Identify SIP structure")
+	ev := result.newEvent(ctx, "Identify SIP structure")
 	var identifySIP activities.IdentifySIPResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -818,6 +808,62 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 		)
 		return ""
 	}
+}
+
+func (w *PreprocessingWorkflow) extractSIP(
+	ctx temporalsdk_workflow.Context,
+	result *PreprocessingWorkflowResult,
+	path string,
+	sipName string,
+) (string, error) {
+	ev := result.newEvent(ctx, "Extract SIP")
+	var archiveExtract archiveextract.Result
+	e := temporalsdk_workflow.ExecuteActivity(
+		withFilesysActOpts(ctx),
+		archiveextract.Name,
+		&archiveextract.Params{SourcePath: path},
+	).Get(ctx, &archiveExtract)
+	if e != nil {
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"SIP extraction has failed.",
+			fmt.Sprintf(`%q could not be successfully extracted.`, filepath.Base(path)),
+		)
+		return "", nil
+	}
+
+	// Verify that the extraction directory has the same name as the uploaded
+	// archive minus the file extension (e.g. "example.zip" -> "example").
+	if filepath.Base(archiveExtract.ExtractPath) != fsutil.BaseNoExt(sipName) {
+		result.systemError(
+			ctx,
+			fmt.Errorf("extracted path %q does not match expected name", filepath.Base(archiveExtract.ExtractPath)),
+			ev,
+			"SIP extraction has failed.",
+			fmt.Sprintf(
+				"The extracted SIP is missing the top-level %q folder.",
+				fsutil.BaseNoExt(sipName),
+			),
+			"Please ensure that the SIP is well-formed and try again.",
+		)
+		return "", nil
+	}
+
+	if e := result.SetRelativePath(w.sharedPath, archiveExtract.ExtractPath); e != nil {
+		result.systemError(
+			ctx,
+			e,
+			ev,
+			"SIP extraction has failed.",
+			fmt.Sprintf(`%s could not be successfully extracted.`, filepath.Base(path)),
+		)
+		return "", nil
+	}
+	ev.Succeed(ctx, "SIP extracted")
+
+	return archiveExtract.ExtractPath, nil
 }
 
 func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
