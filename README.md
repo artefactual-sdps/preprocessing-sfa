@@ -218,6 +218,16 @@ Dependencies are downloaded automatically.
 
 The debug mode produces more output, including the commands executed. E.g.:
 
+```shell
+$ make env DBG_MAKEFILE=1
+Makefile:10: ***** starting Makefile for goal(s) "env"
+Makefile:11: ***** Fri 10 Nov 2023 11:16:16 AM CET
+go env
+GO111MODULE=''
+GOARCH='amd64'
+...
+```
+
 ## Available activities
 
 * [Calculate SIP checksum](#calculate-sip-checksum)
@@ -550,16 +560,6 @@ the AIS for synchronization.
 * Metadata bundle is successfully generated and deposited
 * AIS is able to receive and ingest the metadata
 
-
-```shell
-$ make env DBG_MAKEFILE=1
-Makefile:10: ***** starting Makefile for goal(s) "env"
-Makefile:11: ***** Fri 10 Nov 2023 11:16:16 AM CET
-go env
-GO111MODULE=''
-GOARCH='amd64'
-...
-```
 
 [enduro documentation]: https://github.com/artefactual-sdps/enduro/blob/main/docs/src/dev-manual/preprocessing.md
 [docker]: https://docs.docker.com/get-docker/
