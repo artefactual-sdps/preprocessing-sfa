@@ -42,7 +42,6 @@ type Handler struct {
 // taskState stores the minimal in-memory state for an APIS import task.
 type taskState struct {
 	id             string
-	seqID          int32
 	name           string
 	createdBy      string
 	createdAt      time.Time
@@ -64,16 +63,16 @@ func NewHandler() *Handler {
 // APIHealthzGet is left unimplemented because the preprocessing
 // integration work only depends on the import-task endpoints.
 func (h *Handler) APIHealthzGet(_ context.Context) (gen.APIHealthzGetRes, error) {
-	return nil, errors.New("not implemented")
+	return &gen.APIHealthzGetOK{Status: "OK"}, nil
 }
 
-// APIImportTasksPost creates one in-memory task with a predetermined analysis
+// APIImporttasksPost creates one in-memory task with a predetermined analysis
 // outcome. Later polling simply walks that task through the expected APIS
 // lifecycle until the terminal result becomes visible.
-func (h *Handler) APIImportTasksPost(
+func (h *Handler) APIImporttasksPost(
 	_ context.Context,
-	req gen.OptAPIImportTasksPostReq,
-) (gen.APIImportTasksPostRes, error) {
+	req gen.OptAPIImporttasksPostReq,
+) (gen.APIImporttasksPostRes, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -81,7 +80,6 @@ func (h *Handler) APIImportTasksPost(
 	taskID := fmt.Sprintf("task-%06d", h.nextTask)
 	task := &taskState{
 		id:             taskID,
-		seqID:          int32(h.nextTask),
 		createdAt:      time.Now().UTC(),
 		status:         gen.ImportTaskStatusNeu,
 		analysisResult: gen.AnalysisResultAlleNeu,
@@ -98,39 +96,31 @@ func (h *Handler) APIImportTasksPost(
 
 	h.tasks[taskID] = task
 
-	return &gen.APIImportTasksPostCreated{
-		Success: gen.NewOptBool(true),
-		ID:      gen.NewOptNilString(taskID),
+	return &gen.CreateImportTaskResponse{
+		ImportTaskId: taskID,
 	}, nil
 }
 
-// APIImportTasksIDPatch only supports the cancellation transition used by the
+// APIImporttasksIDCancelPost only supports the cancellation transition used by the
 // preprocessing conflict flow.
-func (h *Handler) APIImportTasksIDPatch(
+func (h *Handler) APIImporttasksIDCancelPost(
 	_ context.Context,
-	req gen.APIImportTasksIDPatchReq,
-	params gen.APIImportTasksIDPatchParams,
-) (gen.APIImportTasksIDPatchRes, error) {
+	_ gen.APIImporttasksIDCancelPostReq,
+	params gen.APIImporttasksIDCancelPostParams,
+) (gen.APIImporttasksIDCancelPostRes, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	task, ok := h.tasks[params.ID]
 	if !ok {
-		notFound := gen.APIImportTasksIDPatchNotFound(
+		notFound := gen.APIImporttasksIDCancelPostNotFound(
 			problem(404, "Not Found", "import task does not exist"),
 		)
 		return &notFound, nil
 	}
 
-	status, ok := patchStatus(req)
-	if !ok || status != gen.ImportTaskStatusAbgebrochen {
-		conflict := gen.APIImportTasksIDPatchConflict(
-			problem(409, "Conflict", "only status=Abgebrochen can be applied"),
-		)
-		return &conflict, nil
-	}
 	if task.status == gen.ImportTaskStatusImportiert {
-		conflict := gen.APIImportTasksIDPatchConflict(
+		conflict := gen.APIImporttasksIDCancelPostConflict(
 			problem(409, "Conflict", "cannot cancel an already imported task"),
 		)
 		return &conflict, nil
@@ -138,54 +128,38 @@ func (h *Handler) APIImportTasksIDPatch(
 
 	task.status = gen.ImportTaskStatusAbgebrochen
 
-	return taskDTO(task), nil
+	return &gen.APIImporttasksIDCancelPostNoContent{}, nil
 }
 
-// APIImportTasksIDImportRunsPost starts the import phase after a successful
+// APIImporttasksIDImportrunsPost starts the import phase after a successful
 // analysis result. The POST itself only allocates the run; subsequent polling
 // on the task status endpoint exposes the import lifecycle.
-func (h *Handler) APIImportTasksIDImportRunsPost(
+func (h *Handler) APIImporttasksIDImportrunsPost(
 	_ context.Context,
-	req gen.OptAPIImportTasksIDImportRunsPostReq,
-	params gen.APIImportTasksIDImportRunsPostParams,
-) (gen.APIImportTasksIDImportRunsPostRes, error) {
+	req gen.OptAPIImporttasksIDImportrunsPostReq,
+	params gen.APIImporttasksIDImportrunsPostParams,
+) (gen.APIImporttasksIDImportrunsPostRes, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	task, ok := h.tasks[params.ID]
 	if !ok {
-		notFound := gen.APIImportTasksIDImportRunsPostNotFound(
+		notFound := gen.APIImporttasksIDImportrunsPostNotFound(
 			problem(404, "Not Found", "import task does not exist"),
 		)
 		return &notFound, nil
 	}
 	if task.status == gen.ImportTaskStatusAbgebrochen {
-		return validationProblem(
-			"cannot create import run for canceled task",
-			"status",
-			"task is canceled",
-		), nil
+		return badRequest("cannot create import run for canceled task"), nil
 	}
 	if task.status != gen.ImportTaskStatusAnalysiert {
-		return validationProblem(
-			"cannot create import run before analysis has finished",
-			"status",
-			"task analysis is still running",
-		), nil
+		return badRequest("cannot create import run before analysis has finished"), nil
 	}
 	if task.analysisResult != gen.AnalysisResultAlleNeu && task.analysisResult != gen.AnalysisResultAlleGleich {
-		return validationProblem(
-			"cannot create import run for this analysis result",
-			"analysisResult",
-			string(task.analysisResult),
-		), nil
+		return badRequest("cannot create import run for this analysis result"), nil
 	}
 	if task.runID != "" {
-		return validationProblem(
-			"cannot create a second import run for the same task",
-			"status",
-			"task already has an import run",
-		), nil
+		return badRequest("cannot create a second import run for the same task"), nil
 	}
 
 	h.nextRun++
@@ -201,32 +175,30 @@ func (h *Handler) APIImportTasksIDImportRunsPost(
 	}
 
 	return &gen.CreateImportRunResponse{
-		Success:      gen.NewOptBool(true),
-		ImportTaskId: gen.NewOptString(task.id),
-		ImportRunId:  gen.NewOptNilString(runID),
+		ImportRunId: runID,
 	}, nil
 }
 
-// APIImportTasksIDImportRunsRunIdStatusGet mirrors the current import phase in
+// APIImporttasksIDImportrunsRunIdStatusGet mirrors the current import phase in
 // the lighter-weight run-specific vocabulary from the spec. It never advances
 // state on its own; the task status endpoint remains the single lifecycle
 // driver for the mock.
-func (h *Handler) APIImportTasksIDImportRunsRunIdStatusGet(
+func (h *Handler) APIImporttasksIDImportrunsRunIdStatusGet(
 	_ context.Context,
-	params gen.APIImportTasksIDImportRunsRunIdStatusGetParams,
-) (gen.APIImportTasksIDImportRunsRunIdStatusGetRes, error) {
+	params gen.APIImporttasksIDImportrunsRunIdStatusGetParams,
+) (gen.APIImporttasksIDImportrunsRunIdStatusGetRes, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	task, ok := h.tasks[params.ID]
 	if !ok {
-		notFound := gen.APIImportTasksIDImportRunsRunIdStatusGetNotFound(
+		notFound := gen.APIImporttasksIDImportrunsRunIdStatusGetNotFound(
 			problem(404, "Not Found", "import task does not exist"),
 		)
 		return &notFound, nil
 	}
 	if task.runID == "" || task.runID != params.RunId {
-		notFound := gen.APIImportTasksIDImportRunsRunIdStatusGetNotFound(
+		notFound := gen.APIImporttasksIDImportrunsRunIdStatusGetNotFound(
 			problem(404, "Not Found", "import run does not exist"),
 		)
 		return &notFound, nil
@@ -235,41 +207,30 @@ func (h *Handler) APIImportTasksIDImportRunsRunIdStatusGet(
 	return importRunStatusResponse(task), nil
 }
 
-// APIImportTasksIDStatusGet is the canonical lifecycle endpoint for the mock.
+// APIImporttasksIDStatusGet is the canonical lifecycle endpoint for the mock.
 // Each poll advances analysis or import by one deterministic step because the
 // real integration also treats this endpoint as the main source of truth.
 //
-// The shared spec only models a 200 response here. The mock still fails fast
-// for unknown task IDs instead of fabricating a happy-path task because that
-// catches worker bugs earlier during development.
-func (h *Handler) APIImportTasksIDStatusGet(
+// The mock still returns a proper 404 response for unknown task IDs instead of
+// fabricating a happy-path task because that catches worker bugs earlier.
+func (h *Handler) APIImporttasksIDStatusGet(
 	_ context.Context,
-	params gen.APIImportTasksIDStatusGetParams,
-) (*gen.ImportTaskStatusResponse, error) {
+	params gen.APIImporttasksIDStatusGetParams,
+) (gen.APIImporttasksIDStatusGetRes, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	task, ok := h.tasks[params.ID]
 	if !ok {
-		return nil, fmt.Errorf("import task does not exist: %s", params.ID)
+		notFound := gen.APIImporttasksIDStatusGetNotFound(
+			problem(404, "Not Found", "import task does not exist"),
+		)
+		return &notFound, nil
 	}
 
 	advanceTask(task)
 
 	return taskStatusResponse(task), nil
-}
-
-// patchStatus extracts the requested task status from either generated PATCH
-// request wrapper used by ogen.
-func patchStatus(req gen.APIImportTasksIDPatchReq) (gen.ImportTaskStatus, bool) {
-	switch t := req.(type) {
-	case *gen.CancelImportTaskRequest:
-		return t.Status, true
-	case *gen.CancelImportTaskRequestWithContentType:
-		return t.Content.Status, true
-	default:
-		return "", false
-	}
 }
 
 // advanceTask encodes the smallest state machine that still matches the flows
@@ -311,59 +272,23 @@ func taskStatusResponse(task *taskState) *gen.ImportTaskStatusResponse {
 // importRunStatusResponse projects task import state onto the run status
 // endpoint for callers that still want a run-specific view.
 func importRunStatusResponse(task *taskState) *gen.ImportRunStatusResponse {
-	status := "Neu"
+	res := &gen.ImportRunStatusResponse{Status: gen.ImportStatusCreated}
 
 	switch task.status {
 	case gen.ImportTaskStatusAbgebrochen:
-		status = "Abgebrochen"
+		res.Status = gen.ImportStatusCanceled
 	case gen.ImportTaskStatusWirdImportiert:
-		status = "WirdImportiert"
+		res.Status = gen.ImportStatusStarted
 	case gen.ImportTaskStatusImportiert:
 		if task.importResult == gen.ImportResultFehler {
-			status = "Fehler"
+			res.Status = gen.ImportStatusFailed
 		} else {
-			status = "Abgeschlossen"
+			res.Status = gen.ImportStatusCompleted
 		}
-	}
-
-	res := &gen.ImportRunStatusResponse{
-		ImportTaskId: gen.NewOptInt32(task.seqID),
-		ImportRunId:  gen.NewOptString(task.runID),
-		Status:       gen.NewOptString(status),
-	}
-	if status == "Fehler" {
-		res.Error = gen.NewOptNilString("mock import failed")
+		res.ImportResult = gen.NewOptImportResult(task.importResult)
 	}
 
 	return res
-}
-
-// taskDTO builds the narrow PATCH response payload needed by clients after a
-// cancellation request.
-func taskDTO(task *taskState) *gen.ImportTaskDto {
-	dto := &gen.ImportTaskDto{
-		ImportTaskId:       gen.NewOptInt32(task.seqID),
-		RowVersion:         []byte{},
-		TaskType:           gen.NewOptString("MockImportTask"),
-		Name:               gen.NewOptNilString(task.name),
-		NoAutomaticImport:  gen.NewOptBool(false),
-		RequiresContainers: gen.NewOptBool(false),
-		Status:             gen.NewOptString(string(task.status)),
-		CreatedBy:          gen.NewOptString(task.createdBy),
-		CreatedOn:          gen.NewOptDateTime(task.createdAt),
-		AnalysisRecords:    []gen.AnalysisRecordDto{},
-		DefaultValues:      []gen.DefaultValueDto{},
-		Documents:          []gen.DocumentDto{},
-		Imports:            []gen.ImportDto{},
-	}
-	if task.analysisDone {
-		dto.AnalysisResult = gen.NewOptNilString(string(task.analysisResult))
-	}
-	if task.importDone {
-		dto.ImportResult = gen.NewOptNilString(string(task.importResult))
-	}
-
-	return dto
 }
 
 // problem builds the common RFC 7807-style response payloads used by the
@@ -376,16 +301,11 @@ func problem(status int32, title, detail string) gen.ProblemDetails {
 	}
 }
 
-// validationProblem returns the field-oriented 400 response shape generated
-// from the APIS spec for rejected import-run requests.
-func validationProblem(detail, field, message string) *gen.ValidationProblemDetails {
-	return &gen.ValidationProblemDetails{
+func badRequest(detail string) *gen.APIImporttasksIDImportrunsPostBadRequest {
+	return &gen.APIImporttasksIDImportrunsPostBadRequest{
 		Status: gen.NewOptNilInt32(400),
 		Title:  gen.NewOptNilString("Bad Request"),
 		Detail: gen.NewOptNilString(detail),
-		Errors: gen.NewOptValidationProblemDetailsErrors(
-			gen.ValidationProblemDetailsErrors{field: {message}},
-		),
 	}
 }
 

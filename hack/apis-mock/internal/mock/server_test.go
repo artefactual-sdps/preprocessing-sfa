@@ -3,9 +3,7 @@ package mock_test
 import (
 	"context"
 	"testing"
-	"time"
 
-	"github.com/google/go-cmp/cmp/cmpopts"
 	ogenhttp "github.com/ogen-go/ogen/http"
 	"gotest.tools/v3/assert"
 
@@ -37,9 +35,7 @@ func TestTaskStatusDrivesAnalysisAndImportLifecycle(t *testing.T) {
 	runID := createRun(t, ctx, h, taskID, "METS.xml", "")
 	runStatus := getImportRunStatus(t, ctx, h, taskID, runID)
 	assert.DeepEqual(t, runStatus, &gen.ImportRunStatusResponse{
-		Status:       gen.NewOptString("WirdImportiert"),
-		ImportTaskId: gen.NewOptInt32(1),
-		ImportRunId:  gen.NewOptString("run-000001"),
+		Status: gen.ImportStatusStarted,
 	})
 
 	status = getTaskStatus(t, ctx, h, taskID)
@@ -50,9 +46,7 @@ func TestTaskStatusDrivesAnalysisAndImportLifecycle(t *testing.T) {
 
 	runStatus = getImportRunStatus(t, ctx, h, taskID, runID)
 	assert.DeepEqual(t, runStatus, &gen.ImportRunStatusResponse{
-		Status:       gen.NewOptString("WirdImportiert"),
-		ImportTaskId: gen.NewOptInt32(1),
-		ImportRunId:  gen.NewOptString("run-000001"),
+		Status: gen.ImportStatusStarted,
 	})
 
 	status = getTaskStatus(t, ctx, h, taskID)
@@ -64,9 +58,8 @@ func TestTaskStatusDrivesAnalysisAndImportLifecycle(t *testing.T) {
 
 	runStatus = getImportRunStatus(t, ctx, h, taskID, runID)
 	assert.DeepEqual(t, runStatus, &gen.ImportRunStatusResponse{
-		Status:       gen.NewOptString("Abgeschlossen"),
-		ImportTaskId: gen.NewOptInt32(1),
-		ImportRunId:  gen.NewOptString("run-000001"),
+		Status:       gen.ImportStatusCompleted,
+		ImportResult: gen.NewOptImportResult(gen.ImportResultErfolgreich),
 	})
 }
 
@@ -83,28 +76,13 @@ func TestConflictTaskCanBeCancelled(t *testing.T) {
 		AnalysisResult: gen.NewOptAnalysisResult(gen.AnalysisResultKonflikte),
 	})
 
-	patchRes, err := h.APIImportTasksIDPatch(
+	cancelRes, err := h.APIImporttasksIDCancelPost(
 		ctx,
-		&gen.CancelImportTaskRequest{Status: gen.ImportTaskStatusAbgebrochen},
-		gen.APIImportTasksIDPatchParams{ID: taskID},
+		&gen.CancelImportTaskRequest{},
+		gen.APIImporttasksIDCancelPostParams{ID: taskID},
 	)
 	assert.NilError(t, err)
-	assert.DeepEqual(t, patchRes, &gen.ImportTaskDto{
-		Status:             gen.NewOptString(string(gen.ImportTaskStatusAbgebrochen)),
-		AnalysisResult:     gen.NewOptNilString(string(gen.AnalysisResultKonflikte)),
-		ImportTaskId:       gen.NewOptInt32(1),
-		RowVersion:         []uint8{},
-		TaskType:           gen.NewOptString("MockImportTask"),
-		Name:               gen.NewOptNilString("metadata-mock-konflikte.xml"),
-		NoAutomaticImport:  gen.NewOptBool(false),
-		RequiresContainers: gen.NewOptBool(false),
-		CreatedBy:          gen.NewOptString("dev@example.com"),
-		CreatedOn:          gen.NewOptDateTime(time.Now()),
-		AnalysisRecords:    []gen.AnalysisRecordDto{},
-		DefaultValues:      []gen.DefaultValueDto{},
-		Documents:          []gen.DocumentDto{},
-		Imports:            []gen.ImportDto{},
-	}, cmpopts.EquateApproxTime(time.Second))
+	assert.DeepEqual(t, cancelRes, &gen.APIImporttasksIDCancelPostNoContent{})
 
 	status = getTaskStatus(t, ctx, h, taskID)
 	assert.DeepEqual(t, status, &gen.ImportTaskStatusResponse{
@@ -112,21 +90,18 @@ func TestConflictTaskCanBeCancelled(t *testing.T) {
 		AnalysisResult: gen.NewOptAnalysisResult(gen.AnalysisResultKonflikte),
 	})
 
-	runRes, err := h.APIImportTasksIDImportRunsPost(
+	runRes, err := h.APIImporttasksIDImportrunsPost(
 		ctx,
-		gen.NewOptAPIImportTasksIDImportRunsPostReq(gen.APIImportTasksIDImportRunsPostReq{
+		gen.NewOptAPIImporttasksIDImportrunsPostReq(gen.APIImporttasksIDImportrunsPostReq{
 			File: ogenhttp.MultipartFile{Name: "METS.xml"},
 		}),
-		gen.APIImportTasksIDImportRunsPostParams{ID: taskID},
+		gen.APIImporttasksIDImportrunsPostParams{ID: taskID},
 	)
 	assert.NilError(t, err)
-	assert.DeepEqual(t, runRes, &gen.ValidationProblemDetails{
+	assert.DeepEqual(t, runRes, &gen.APIImporttasksIDImportrunsPostBadRequest{
 		Title:  gen.NewOptNilString("Bad Request"),
 		Status: gen.NewOptNilInt32(400),
 		Detail: gen.NewOptNilString("cannot create import run for canceled task"),
-		Errors: gen.NewOptValidationProblemDetailsErrors(
-			gen.ValidationProblemDetailsErrors{"status": {"task is canceled"}},
-		),
 	})
 }
 
@@ -150,10 +125,8 @@ func TestImportFailureIsSurfacedThroughTaskStatus(t *testing.T) {
 
 	runStatus := getImportRunStatus(t, ctx, h, taskID, runID)
 	assert.DeepEqual(t, runStatus, &gen.ImportRunStatusResponse{
-		Status:       gen.NewOptString("Fehler"),
-		ImportTaskId: gen.NewOptInt32(1),
-		ImportRunId:  gen.NewOptString("run-000001"),
-		Error:        gen.NewOptNilString("mock import failed"),
+		Status:       gen.ImportStatusFailed,
+		ImportResult: gen.NewOptImportResult(gen.ImportResultFehler),
 	})
 }
 
@@ -161,25 +134,30 @@ func TestPatchUnknownTaskReturnsNotFound(t *testing.T) {
 	ctx := t.Context()
 	h := mock.NewHandler()
 
-	res, err := h.APIImportTasksIDPatch(
+	res, err := h.APIImporttasksIDCancelPost(
 		ctx,
-		&gen.CancelImportTaskRequest{Status: gen.ImportTaskStatusAbgebrochen},
-		gen.APIImportTasksIDPatchParams{ID: "missing"},
+		&gen.CancelImportTaskRequest{},
+		gen.APIImporttasksIDCancelPostParams{ID: "missing"},
 	)
 	assert.NilError(t, err)
-	assert.DeepEqual(t, res, &gen.APIImportTasksIDPatchNotFound{
+	assert.DeepEqual(t, res, &gen.APIImporttasksIDCancelPostNotFound{
 		Title:  gen.NewOptNilString("Not Found"),
 		Status: gen.NewOptNilInt32(404),
 		Detail: gen.NewOptNilString("import task does not exist"),
 	})
 }
 
-func TestStatusUnknownTaskReturnsError(t *testing.T) {
+func TestStatusUnknownTaskReturnsNotFound(t *testing.T) {
 	ctx := t.Context()
 	h := mock.NewHandler()
 
-	_, err := h.APIImportTasksIDStatusGet(ctx, gen.APIImportTasksIDStatusGetParams{ID: "missing"})
-	assert.Error(t, err, "import task does not exist: missing")
+	res, err := h.APIImporttasksIDStatusGet(ctx, gen.APIImporttasksIDStatusGetParams{ID: "missing"})
+	assert.NilError(t, err)
+	assert.DeepEqual(t, res, &gen.APIImporttasksIDStatusGetNotFound{
+		Title:  gen.NewOptNilString("Not Found"),
+		Status: gen.NewOptNilInt32(404),
+		Detail: gen.NewOptNilString("import task does not exist"),
+	})
 }
 
 func TestSecurityHandlerTokenValidation(t *testing.T) {
@@ -196,18 +174,17 @@ func TestSecurityHandlerTokenValidation(t *testing.T) {
 func createTask(t *testing.T, ctx context.Context, h *mock.Handler, filename, username string) string {
 	t.Helper()
 
-	res, err := h.APIImportTasksPost(ctx, gen.NewOptAPIImportTasksPostReq(gen.APIImportTasksPostReq{
+	res, err := h.APIImporttasksPost(ctx, gen.NewOptAPIImporttasksPostReq(gen.APIImporttasksPostReq{
 		File:     ogenhttp.MultipartFile{Name: filename},
 		SipType:  gen.SipTypeBornDigitalSIP,
 		Username: username,
 	}))
 	assert.NilError(t, err)
-	assert.DeepEqual(t, res, &gen.APIImportTasksPostCreated{
-		ID:      gen.NewOptNilString("task-000001"),
-		Success: gen.NewOptBool(true),
+	assert.DeepEqual(t, res, &gen.CreateImportTaskResponse{
+		ImportTaskId: "task-000001",
 	})
 
-	return res.(*gen.APIImportTasksPostCreated).ID.Value
+	return res.(*gen.CreateImportTaskResponse).ImportTaskId
 }
 
 func createRun(
@@ -220,26 +197,24 @@ func createRun(
 ) string {
 	t.Helper()
 
-	req := gen.APIImportTasksIDImportRunsPostReq{
+	req := gen.APIImporttasksIDImportrunsPostReq{
 		File: ogenhttp.MultipartFile{Name: filename},
 	}
 	if behaviour != "" {
 		req.ImportBehaviour = gen.NewOptImportBehaviourType(behaviour)
 	}
 
-	res, err := h.APIImportTasksIDImportRunsPost(
+	res, err := h.APIImporttasksIDImportrunsPost(
 		ctx,
-		gen.NewOptAPIImportTasksIDImportRunsPostReq(req),
-		gen.APIImportTasksIDImportRunsPostParams{ID: taskID},
+		gen.NewOptAPIImporttasksIDImportrunsPostReq(req),
+		gen.APIImporttasksIDImportrunsPostParams{ID: taskID},
 	)
 	assert.NilError(t, err)
 	assert.DeepEqual(t, res, &gen.CreateImportRunResponse{
-		ImportTaskId: gen.NewOptString("task-000001"),
-		ImportRunId:  gen.NewOptNilString("run-000001"),
-		Success:      gen.NewOptBool(true),
+		ImportRunId: "run-000001",
 	})
 
-	return res.(*gen.CreateImportRunResponse).ImportRunId.Value
+	return res.(*gen.CreateImportRunResponse).ImportRunId
 }
 
 func getTaskStatus(
@@ -250,10 +225,13 @@ func getTaskStatus(
 ) *gen.ImportTaskStatusResponse {
 	t.Helper()
 
-	res, err := h.APIImportTasksIDStatusGet(ctx, gen.APIImportTasksIDStatusGetParams{ID: taskID})
+	res, err := h.APIImporttasksIDStatusGet(ctx, gen.APIImporttasksIDStatusGetParams{ID: taskID})
 	assert.NilError(t, err)
 
-	return res
+	status, ok := res.(*gen.ImportTaskStatusResponse)
+	assert.Assert(t, ok, "expected import task status response, got %T", res)
+
+	return status
 }
 
 func getImportRunStatus(
@@ -264,7 +242,7 @@ func getImportRunStatus(
 ) *gen.ImportRunStatusResponse {
 	t.Helper()
 
-	res, err := h.APIImportTasksIDImportRunsRunIdStatusGet(ctx, gen.APIImportTasksIDImportRunsRunIdStatusGetParams{
+	res, err := h.APIImporttasksIDImportrunsRunIdStatusGet(ctx, gen.APIImporttasksIDImportrunsRunIdStatusGetParams{
 		ID:    taskID,
 		RunId: runID,
 	})
