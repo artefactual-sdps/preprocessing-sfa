@@ -61,291 +61,6 @@
         }
       }
     },
-    "/api/importtasks": {
-      "post": {
-        "tags": [
-          "ImportTasks"
-        ],
-        "summary": "Creates a new import task.",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "required": [
-                  "file",
-                  "sipType",
-                  "username"
-                ],
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "description": "The metadata.xml file according to eCH-0160",
-                    "format": "binary"
-                  },
-                  "sipType": {
-                    "$ref": "#/components/schemas/SipType"
-                  },
-                  "username": {
-                    "type": "string",
-                    "description": "The username that is logged as the creator of the import task. Can be the email for example."
-                  }
-                }
-              },
-              "encoding": {
-                "file": {
-                  "style": "form"
-                },
-                "sipType": {
-                  "style": "form"
-                },
-                "username": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateImportTaskResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "Unsupported Media Type",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/importtasks/{id}/status": {
-      "get": {
-        "tags": [
-          "ImportTasks"
-        ],
-        "summary": "Query the status of an ongoing analysis (import task).",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The id of the import task to query.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImportTaskStatusResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "description": "This endpoint returns the status of the import task analysis phase only.\r\nFor import run progress and results, use the import run status endpoint."
-      }
-    },
-    "/api/importtasks/{id}/cancel": {
-      "post": {
-        "tags": [
-          "ImportTasks"
-        ],
-        "summary": "Cancels an existing import task.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "The unique identifier of the import task to cancel.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "Optional cancellation details including reason.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CancelImportTaskRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CancelImportTaskRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CancelImportTaskRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "409": {
-            "description": "The import task cannot be cancelled in its current state.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The specified import task was not found.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "The import task was successfully cancelled."
-          },
-          "401": {
-            "description": "The user is not authorized.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/importtasks/{id}/importruns": {
       "post": {
         "tags": [
@@ -505,12 +220,112 @@
         }
       }
     },
+    "/api/importtasks": {
+      "post": {
+        "tags": [
+          "ImportTasks"
+        ],
+        "summary": "Creates a new import task.",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file",
+                  "sipType",
+                  "username"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "The metadata.xml file according to eCH-0160",
+                    "format": "binary"
+                  },
+                  "sipType": {
+                    "$ref": "#/components/schemas/SipType"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "The username that is logged as the creator of the import task. Can be the email for example."
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                },
+                "sipType": {
+                  "style": "form"
+                },
+                "username": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateImportTaskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/importtasks/{id}/importruns/{runId}/status": {
       "get": {
         "tags": [
           "ImportTasks"
         ],
         "summary": "Gets the status of a specific import run.",
+        "description": "If the import has started in ACTApro (TaskId is present), the status is fetched from ACTApro.\r\nOtherwise, the local status from the database is returned.",
         "parameters": [
           {
             "name": "id",
@@ -612,8 +427,193 @@
               }
             }
           }
+        }
+      }
+    },
+    "/api/importtasks/{id}/status": {
+      "get": {
+        "tags": [
+          "ImportTasks"
+        ],
+        "summary": "Query the status of an ongoing analysis (import task).",
+        "description": "This endpoint returns the status of the import task analysis phase only.\r\nFor import run progress and results, use the import run status endpoint.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The id of the import task to query.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTaskStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/importtasks/{id}/cancel": {
+      "post": {
+        "tags": [
+          "ImportTasks"
+        ],
+        "summary": "Cancels an existing import task.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the import task to cancel.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Optional cancellation details including reason.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelImportTaskRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelImportTaskRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelImportTaskRequest"
+              }
+            }
+          }
         },
-        "description": "If the import has started in ACTApro (TaskId is present), the status is fetched from ACTApro.\r\nOtherwise, the local status from the database is returned."
+        "responses": {
+          "204": {
+            "description": "The import task was successfully cancelled."
+          },
+          "401": {
+            "description": "The user is not authorized.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified import task was not found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The import task cannot be cancelled in its current state.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -653,6 +653,9 @@
         "description": "Request to cancel an import task."
       },
       "CreateImportRunResponse": {
+        "required": [
+          "importRunId"
+        ],
         "type": "object",
         "properties": {
           "importRunId": {
@@ -661,12 +664,12 @@
           }
         },
         "additionalProperties": false,
-        "required": [
-          "importRunId"
-        ],
         "description": "Response returned when an import run is successfully created."
       },
       "CreateImportTaskResponse": {
+        "required": [
+          "importTaskId"
+        ],
         "type": "object",
         "properties": {
           "importTaskId": {
@@ -675,9 +678,6 @@
           }
         },
         "additionalProperties": false,
-        "required": [
-          "importTaskId"
-        ],
         "description": "Response returned when an import task is successfully created."
       },
       "HealthCheckResult": {
@@ -687,6 +687,11 @@
         ],
         "type": "object",
         "properties": {
+          "durationMs": {
+            "type": "number",
+            "description": "How much time passed in querying the service status",
+            "format": "double"
+          },
           "name": {
             "type": "string",
             "description": "The name of the service"
@@ -694,11 +699,6 @@
           "status": {
             "type": "string",
             "description": "The current status of the service"
-          },
-          "durationMs": {
-            "type": "number",
-            "description": "How much time passed in querying the service status",
-            "format": "double"
           }
         },
         "additionalProperties": false,
@@ -710,10 +710,6 @@
         ],
         "type": "object",
         "properties": {
-          "status": {
-            "type": "string",
-            "description": "The overall status"
-          },
           "checks": {
             "type": "array",
             "items": {
@@ -721,6 +717,10 @@
             },
             "description": "A list with services and it's health statuses",
             "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "The overall status"
           }
         },
         "additionalProperties": false,
@@ -751,6 +751,9 @@
         ]
       },
       "ImportRunStatusResponse": {
+        "required": [
+          "status"
+        ],
         "type": "object",
         "properties": {
           "status": {
@@ -758,9 +761,9 @@
           },
           "progressPercent": {
             "type": "integer",
+            "description": "The progress of the import run in percent (0-100), if available.",
             "format": "int32",
-            "nullable": true,
-            "description": "The progress of the import run in percent (0-100), if available."
+            "nullable": true
           },
           "importResult": {
             "$ref": "#/components/schemas/ImportResult"
@@ -779,10 +782,35 @@
           }
         },
         "additionalProperties": false,
-        "required": [
-          "status"
-        ],
         "description": "Response containing the status of an import run."
+      },
+      "ImportStatus": {
+        "enum": [
+          "RequestStart",
+          "RequestCancel",
+          "Started",
+          "Failed",
+          "Canceled",
+          "Completed",
+          "UndoStarted",
+          "UndoCompleted",
+          "Created",
+          "Preparing"
+        ],
+        "type": "string",
+        "description": "Enum values:\r\n- `RequestStart`\r\n- `RequestCancel`\r\n- `Started`\r\n- `Failed`\r\n- `Canceled`\r\n- `Completed`\r\n- `UndoStarted`\r\n- `UndoCompleted`\r\n- `Created`\r\n- `Preparing`",
+        "x-enumDescriptions": [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
       },
       "ImportTaskStatus": {
         "enum": [
@@ -822,13 +850,13 @@
             "format": "int32",
             "nullable": true
           },
-          "importResult": {
-            "$ref": "#/components/schemas/ImportResult"
-          },
           "analysisErrorMessage": {
             "type": "string",
             "description": "If there was an error during the analysis, this contains the error message.",
             "nullable": true
+          },
+          "importResult": {
+            "$ref": "#/components/schemas/ImportResult"
           }
         },
         "additionalProperties": false,
@@ -871,34 +899,6 @@
         "type": "string",
         "description": "Enum values:\r\n- `DigitizedAIP`\r\n- `DigitizedSIP`\r\n- `BornDigitalAIP`\r\n- `BornDigitalSIP`",
         "x-enumDescriptions": [
-          "",
-          "",
-          "",
-          ""
-        ]
-      },
-      "ImportStatus": {
-        "enum": [
-          "RequestStart",
-          "RequestCancel",
-          "Started",
-          "Failed",
-          "Canceled",
-          "Completed",
-          "UndoStarted",
-          "UndoCompleted",
-          "Created",
-          "Preparing"
-        ],
-        "type": "string",
-        "description": "Enum values:\r\n- `RequestStart`\r\n- `RequestCancel`\r\n- `Started`\r\n- `Failed`\r\n- `Canceled`\r\n- `Completed`\r\n- `UndoStarted`\r\n- `UndoCompleted`\r\n- `Created`\r\n- `Preparing`",
-        "x-enumDescriptions": [
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
           "",
           "",
           "",
