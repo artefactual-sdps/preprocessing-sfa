@@ -25,7 +25,7 @@ func (s *APIHealthzGetServiceUnavailable) Validate() error {
 	return nil
 }
 
-func (s *APIImportTasksIDImportRunsPostReq) Validate() error {
+func (s *APIImporttasksIDImportrunsPostReq) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -55,7 +55,7 @@ func (s *APIImportTasksIDImportRunsPostReq) Validate() error {
 	return nil
 }
 
-func (s *APIImportTasksPostReq) Validate() error {
+func (s *APIImporttasksPostReq) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -91,52 +91,6 @@ func (s AnalysisResult) Validate() error {
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
-}
-
-func (s *CancelImportTaskRequest) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Status.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "status",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s *CancelImportTaskRequestWithContentType) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Content.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "Content",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
 }
 
 func (s *HealthCheckResult) Validate() error {
@@ -238,6 +192,74 @@ func (s ImportResult) Validate() error {
 	}
 }
 
+func (s *ImportRunStatusResponse) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Status.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "status",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.ImportResult.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "importResult",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s ImportStatus) Validate() error {
+	switch s {
+	case "RequestStart":
+		return nil
+	case "RequestCancel":
+		return nil
+	case "Started":
+		return nil
+	case "Failed":
+		return nil
+	case "Canceled":
+		return nil
+	case "Completed":
+		return nil
+	case "UndoStarted":
+		return nil
+	case "UndoCompleted":
+		return nil
+	case "Created":
+		return nil
+	case "Preparing":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s ImportTaskStatus) Validate() error {
 	switch s {
 	case "Neu":
@@ -329,56 +351,4 @@ func (s SipType) Validate() error {
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
-}
-
-func (s *ValidationProblemDetails) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if value, ok := s.Errors.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "errors",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s ValidationProblemDetailsErrors) Validate() error {
-	var failures []validate.FieldError
-	for key, elem := range s {
-		if err := func() error {
-			if elem == nil {
-				return errors.New("nil is invalid value")
-			}
-			return nil
-		}(); err != nil {
-			failures = append(failures, validate.FieldError{
-				Name:  key,
-				Error: err,
-			})
-		}
-	}
-
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
 }

@@ -13,57 +13,59 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// APIHealthzGet implements GET /api/Healthz operation.
+// APIHealthzGet implements GET /api/healthz operation.
 //
 // Get health status information.
 //
-// GET /api/Healthz
+// GET /api/healthz
 func (UnimplementedHandler) APIHealthzGet(ctx context.Context) (r APIHealthzGetRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// APIImportTasksIDImportRunsPost implements POST /api/ImportTasks/{id}/importRuns operation.
+// APIImporttasksIDCancelPost implements POST /api/importtasks/{id}/cancel operation.
+//
+// Cancels an existing import task.
+//
+// POST /api/importtasks/{id}/cancel
+func (UnimplementedHandler) APIImporttasksIDCancelPost(ctx context.Context, req APIImporttasksIDCancelPostReq, params APIImporttasksIDCancelPostParams) (r APIImporttasksIDCancelPostRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APIImporttasksIDImportrunsPost implements POST /api/importtasks/{id}/importruns operation.
 //
 // Starts a new import run for the given import task.
 // Creates a new import execution ("run") resource.
 //
-// POST /api/ImportTasks/{id}/importRuns
-func (UnimplementedHandler) APIImportTasksIDImportRunsPost(ctx context.Context, req OptAPIImportTasksIDImportRunsPostReq, params APIImportTasksIDImportRunsPostParams) (r APIImportTasksIDImportRunsPostRes, _ error) {
+// POST /api/importtasks/{id}/importruns
+func (UnimplementedHandler) APIImporttasksIDImportrunsPost(ctx context.Context, req OptAPIImporttasksIDImportrunsPostReq, params APIImporttasksIDImportrunsPostParams) (r APIImporttasksIDImportrunsPostRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// APIImportTasksIDImportRunsRunIdStatusGet implements GET /api/ImportTasks/{id}/importRuns/{runId}/status operation.
+// APIImporttasksIDImportrunsRunIdStatusGet implements GET /api/importtasks/{id}/importruns/{runId}/status operation.
 //
-// Gets the status of a specific import run.
+// If the import has started in ACTApro (TaskId is present), the status is fetched from ACTApro.
+// Otherwise, the local status from the database is returned.
 //
-// GET /api/ImportTasks/{id}/importRuns/{runId}/status
-func (UnimplementedHandler) APIImportTasksIDImportRunsRunIdStatusGet(ctx context.Context, params APIImportTasksIDImportRunsRunIdStatusGetParams) (r APIImportTasksIDImportRunsRunIdStatusGetRes, _ error) {
+// GET /api/importtasks/{id}/importruns/{runId}/status
+func (UnimplementedHandler) APIImporttasksIDImportrunsRunIdStatusGet(ctx context.Context, params APIImporttasksIDImportrunsRunIdStatusGetParams) (r APIImporttasksIDImportrunsRunIdStatusGetRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// APIImportTasksIDPatch implements PATCH /api/ImportTasks/{id} operation.
+// APIImporttasksIDStatusGet implements GET /api/importtasks/{id}/status operation.
 //
-// Updates the status of an existing import task.
+// This endpoint returns the status of the import task analysis phase only.
+// For import run progress and results, use the import run status endpoint.
 //
-// PATCH /api/ImportTasks/{id}
-func (UnimplementedHandler) APIImportTasksIDPatch(ctx context.Context, req APIImportTasksIDPatchReq, params APIImportTasksIDPatchParams) (r APIImportTasksIDPatchRes, _ error) {
+// GET /api/importtasks/{id}/status
+func (UnimplementedHandler) APIImporttasksIDStatusGet(ctx context.Context, params APIImporttasksIDStatusGetParams) (r APIImporttasksIDStatusGetRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// APIImportTasksIDStatusGet implements GET /api/ImportTasks/{id}/status operation.
-//
-// Query the status of an ongoing analysis or import.
-//
-// GET /api/ImportTasks/{id}/status
-func (UnimplementedHandler) APIImportTasksIDStatusGet(ctx context.Context, params APIImportTasksIDStatusGetParams) (r *ImportTaskStatusResponse, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// APIImportTasksPost implements POST /api/ImportTasks operation.
+// APIImporttasksPost implements POST /api/importtasks operation.
 //
 // Creates a new import task.
 //
-// POST /api/ImportTasks
-func (UnimplementedHandler) APIImportTasksPost(ctx context.Context, req OptAPIImportTasksPostReq) (r APIImportTasksPostRes, _ error) {
+// POST /api/importtasks
+func (UnimplementedHandler) APIImporttasksPost(ctx context.Context, req OptAPIImporttasksPostReq) (r APIImporttasksPostRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

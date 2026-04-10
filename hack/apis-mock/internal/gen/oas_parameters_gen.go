@@ -14,13 +14,13 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-// APIImportTasksIDImportRunsPostParams is parameters of POST /api/ImportTasks/{id}/importRuns operation.
-type APIImportTasksIDImportRunsPostParams struct {
-	// ImportTask identifier.
+// APIImporttasksIDCancelPostParams is parameters of POST /api/importtasks/{id}/cancel operation.
+type APIImporttasksIDCancelPostParams struct {
+	// The unique identifier of the import task to cancel.
 	ID string
 }
 
-func unpackAPIImportTasksIDImportRunsPostParams(packed middleware.Parameters) (params APIImportTasksIDImportRunsPostParams) {
+func unpackAPIImporttasksIDCancelPostParams(packed middleware.Parameters) (params APIImporttasksIDCancelPostParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "id",
@@ -31,7 +31,7 @@ func unpackAPIImportTasksIDImportRunsPostParams(packed middleware.Parameters) (p
 	return params
 }
 
-func decodeAPIImportTasksIDImportRunsPostParams(args [1]string, argsEscaped bool, r *http.Request) (params APIImportTasksIDImportRunsPostParams, _ error) {
+func decodeAPIImporttasksIDCancelPostParams(args [1]string, argsEscaped bool, r *http.Request) (params APIImporttasksIDCancelPostParams, _ error) {
 	// Decode path: id.
 	if err := func() error {
 		param := args[0]
@@ -80,13 +80,81 @@ func decodeAPIImportTasksIDImportRunsPostParams(args [1]string, argsEscaped bool
 	return params, nil
 }
 
-// APIImportTasksIDImportRunsRunIdStatusGetParams is parameters of GET /api/ImportTasks/{id}/importRuns/{runId}/status operation.
-type APIImportTasksIDImportRunsRunIdStatusGetParams struct {
-	ID    string
+// APIImporttasksIDImportrunsPostParams is parameters of POST /api/importtasks/{id}/importruns operation.
+type APIImporttasksIDImportrunsPostParams struct {
+	// ImportTask identifier.
+	ID string
+}
+
+func unpackAPIImporttasksIDImportrunsPostParams(packed middleware.Parameters) (params APIImporttasksIDImportrunsPostParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeAPIImporttasksIDImportrunsPostParams(args [1]string, argsEscaped bool, r *http.Request) (params APIImporttasksIDImportrunsPostParams, _ error) {
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// APIImporttasksIDImportrunsRunIdStatusGetParams is parameters of GET /api/importtasks/{id}/importruns/{runId}/status operation.
+type APIImporttasksIDImportrunsRunIdStatusGetParams struct {
+	// The import task identifier.
+	ID string
+	// The import run identifier.
 	RunId string
 }
 
-func unpackAPIImportTasksIDImportRunsRunIdStatusGetParams(packed middleware.Parameters) (params APIImportTasksIDImportRunsRunIdStatusGetParams) {
+func unpackAPIImporttasksIDImportrunsRunIdStatusGetParams(packed middleware.Parameters) (params APIImporttasksIDImportrunsRunIdStatusGetParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "id",
@@ -104,7 +172,7 @@ func unpackAPIImportTasksIDImportRunsRunIdStatusGetParams(packed middleware.Para
 	return params
 }
 
-func decodeAPIImportTasksIDImportRunsRunIdStatusGetParams(args [2]string, argsEscaped bool, r *http.Request) (params APIImportTasksIDImportRunsRunIdStatusGetParams, _ error) {
+func decodeAPIImporttasksIDImportrunsRunIdStatusGetParams(args [2]string, argsEscaped bool, r *http.Request) (params APIImporttasksIDImportrunsRunIdStatusGetParams, _ error) {
 	// Decode path: id.
 	if err := func() error {
 		param := args[0]
@@ -198,79 +266,13 @@ func decodeAPIImportTasksIDImportRunsRunIdStatusGetParams(args [2]string, argsEs
 	return params, nil
 }
 
-// APIImportTasksIDPatchParams is parameters of PATCH /api/ImportTasks/{id} operation.
-type APIImportTasksIDPatchParams struct {
-	// The unique identifier of the import task to be updated.
-	ID string
-}
-
-func unpackAPIImportTasksIDPatchParams(packed middleware.Parameters) (params APIImportTasksIDPatchParams) {
-	{
-		key := middleware.ParameterKey{
-			Name: "id",
-			In:   "path",
-		}
-		params.ID = packed[key].(string)
-	}
-	return params
-}
-
-func decodeAPIImportTasksIDPatchParams(args [1]string, argsEscaped bool, r *http.Request) (params APIImportTasksIDPatchParams, _ error) {
-	// Decode path: id.
-	if err := func() error {
-		param := args[0]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[0])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
-		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "id",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
-
-			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
-				}
-
-				c, err := conv.ToString(val)
-				if err != nil {
-					return err
-				}
-
-				params.ID = c
-				return nil
-			}(); err != nil {
-				return err
-			}
-		} else {
-			return validate.ErrFieldRequired
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "id",
-			In:   "path",
-			Err:  err,
-		}
-	}
-	return params, nil
-}
-
-// APIImportTasksIDStatusGetParams is parameters of GET /api/ImportTasks/{id}/status operation.
-type APIImportTasksIDStatusGetParams struct {
+// APIImporttasksIDStatusGetParams is parameters of GET /api/importtasks/{id}/status operation.
+type APIImporttasksIDStatusGetParams struct {
 	// The id of the import task to query.
 	ID string
 }
 
-func unpackAPIImportTasksIDStatusGetParams(packed middleware.Parameters) (params APIImportTasksIDStatusGetParams) {
+func unpackAPIImporttasksIDStatusGetParams(packed middleware.Parameters) (params APIImporttasksIDStatusGetParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "id",
@@ -281,7 +283,7 @@ func unpackAPIImportTasksIDStatusGetParams(packed middleware.Parameters) (params
 	return params
 }
 
-func decodeAPIImportTasksIDStatusGetParams(args [1]string, argsEscaped bool, r *http.Request) (params APIImportTasksIDStatusGetParams, _ error) {
+func decodeAPIImporttasksIDStatusGetParams(args [1]string, argsEscaped bool, r *http.Request) (params APIImporttasksIDStatusGetParams, _ error) {
 	// Decode path: id.
 	if err := func() error {
 		param := args[0]

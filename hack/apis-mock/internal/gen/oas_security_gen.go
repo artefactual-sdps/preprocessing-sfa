@@ -36,11 +36,11 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 // operationRolesSmart is a private map storing roles per operation.
 var operationRolesSmart = map[string][]string{
 	APIHealthzGetOperation:                            []string{},
-	APIImportTasksIDImportRunsPostOperation:           []string{},
-	APIImportTasksIDImportRunsRunIdStatusGetOperation: []string{},
-	APIImportTasksIDPatchOperation:                    []string{},
-	APIImportTasksIDStatusGetOperation:                []string{},
-	APIImportTasksPostOperation:                       []string{},
+	APIImporttasksIDCancelPostOperation:               []string{},
+	APIImporttasksIDImportrunsPostOperation:           []string{},
+	APIImporttasksIDImportrunsRunIdStatusGetOperation: []string{},
+	APIImporttasksIDStatusGetOperation:                []string{},
+	APIImporttasksPostOperation:                       []string{},
 }
 
 // GetRolesForSmart returns the required roles for the given operation.

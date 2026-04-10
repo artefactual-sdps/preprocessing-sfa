@@ -15,53 +15,12 @@ import (
 	"github.com/ogen-go/ogen/uri"
 )
 
-func encodeAPIImportTasksIDImportRunsPostRequest(
-	req OptAPIImportTasksIDImportRunsPostReq,
-	r *http.Request,
-) error {
-	const contentType = "multipart/form-data"
-	if !req.Set {
-		// Keep request with empty body if value is not set.
-		return nil
-	}
-	request := req.Value
-
-	q := uri.NewFormEncoder(map[string]string{})
-	{
-		// Encode "importBehaviour" form field.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "importBehaviour",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := request.ImportBehaviour.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return errors.Wrap(err, "encode query")
-		}
-	}
-	body, boundary := ht.CreateMultipartBody(func(w *multipart.Writer) error {
-		if err := request.File.WriteMultipart("file", w); err != nil {
-			return errors.Wrap(err, "write \"file\"")
-		}
-		if err := q.WriteMultipart(w); err != nil {
-			return errors.Wrap(err, "write multipart")
-		}
-		return nil
-	})
-	ht.SetCloserBody(r, body, mime.FormatMediaType(contentType, map[string]string{"boundary": boundary}))
-	return nil
-}
-
-func encodeAPIImportTasksIDPatchRequest(
-	req APIImportTasksIDPatchReq,
+func encodeAPIImporttasksIDCancelPostRequest(
+	req APIImporttasksIDCancelPostReq,
 	r *http.Request,
 ) error {
 	switch req := req.(type) {
-	case *APIImportTasksIDPatchReqEmptyBody:
+	case *APIImporttasksIDCancelPostReqEmptyBody:
 		// Empty body case.
 		return nil
 	case *CancelImportTaskRequestWithContentType:
@@ -93,8 +52,62 @@ func encodeAPIImportTasksIDPatchRequest(
 	}
 }
 
-func encodeAPIImportTasksPostRequest(
-	req OptAPIImportTasksPostReq,
+func encodeAPIImporttasksIDImportrunsPostRequest(
+	req OptAPIImporttasksIDImportrunsPostReq,
+	r *http.Request,
+) error {
+	const contentType = "multipart/form-data"
+	if !req.Set {
+		// Keep request with empty body if value is not set.
+		return nil
+	}
+	request := req.Value
+
+	q := uri.NewFormEncoder(map[string]string{})
+	{
+		// Encode "importBehaviour" form field.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "importBehaviour",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := request.ImportBehaviour.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "username" form field.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "username",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.StringToString(request.Username))
+		}); err != nil {
+			return errors.Wrap(err, "encode query")
+		}
+	}
+	body, boundary := ht.CreateMultipartBody(func(w *multipart.Writer) error {
+		if err := request.File.WriteMultipart("file", w); err != nil {
+			return errors.Wrap(err, "write \"file\"")
+		}
+		if err := q.WriteMultipart(w); err != nil {
+			return errors.Wrap(err, "write multipart")
+		}
+		return nil
+	})
+	ht.SetCloserBody(r, body, mime.FormatMediaType(contentType, map[string]string{"boundary": boundary}))
+	return nil
+}
+
+func encodeAPIImporttasksPostRequest(
+	req OptAPIImporttasksPostReq,
 	r *http.Request,
 ) error {
 	const contentType = "multipart/form-data"

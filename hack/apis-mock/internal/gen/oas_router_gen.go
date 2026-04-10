@@ -14,19 +14,19 @@ var (
 	rn1AllowedHeaders = map[string]string{
 		"GET": "Authorization",
 	}
-	rn11AllowedHeaders = map[string]string{
+	rn12AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
-	}
-	rn4AllowedHeaders = map[string]string{
-		"PATCH": "Authorization,Content-Type",
 	}
 	rn5AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
 	}
-	rn8AllowedHeaders = map[string]string{
-		"GET": "Authorization",
+	rn7AllowedHeaders = map[string]string{
+		"POST": "Authorization,Content-Type",
 	}
 	rn10AllowedHeaders = map[string]string{
+		"GET": "Authorization",
+	}
+	rn11AllowedHeaders = map[string]string{
 		"GET": "Authorization",
 	}
 )
@@ -82,9 +82,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
-			case 'H': // Prefix: "Healthz"
+			case 'h': // Prefix: "healthz"
 
-				if l := len("Healthz"); len(elem) >= l && elem[0:l] == "Healthz" {
+				if l := len("healthz"); len(elem) >= l && elem[0:l] == "healthz" {
 					elem = elem[l:]
 				} else {
 					break
@@ -107,9 +107,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-			case 'I': // Prefix: "ImportTasks"
+			case 'i': // Prefix: "importtasks"
 
-				if l := len("ImportTasks"); len(elem) >= l && elem[0:l] == "ImportTasks" {
+				if l := len("importtasks"); len(elem) >= l && elem[0:l] == "importtasks" {
 					elem = elem[l:]
 				} else {
 					break
@@ -118,11 +118,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if len(elem) == 0 {
 					switch r.Method {
 					case "POST":
-						s.handleAPIImportTasksPostRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleAPIImporttasksPostRequest([0]string{}, elemIsEscaped, w, r)
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "POST",
-							allowedHeaders: rn11AllowedHeaders,
+							allowedHeaders: rn12AllowedHeaders,
 							acceptPost:     "multipart/form-data",
 							acceptPatch:    "",
 						})
@@ -149,21 +149,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					elem = elem[idx:]
 
 					if len(elem) == 0 {
-						switch r.Method {
-						case "PATCH":
-							s.handleAPIImportTasksIDPatchRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, notAllowedParams{
-								allowedMethods: "PATCH",
-								allowedHeaders: rn4AllowedHeaders,
-								acceptPost:     "",
-								acceptPatch:    "application/*+json,application/json",
-							})
-						}
-
-						return
+						break
 					}
 					switch elem[0] {
 					case '/': // Prefix: "/"
@@ -178,9 +164,36 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							break
 						}
 						switch elem[0] {
-						case 'i': // Prefix: "importRuns"
+						case 'c': // Prefix: "cancel"
 
-							if l := len("importRuns"); len(elem) >= l && elem[0:l] == "importRuns" {
+							if l := len("cancel"); len(elem) >= l && elem[0:l] == "cancel" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleAPIImporttasksIDCancelPostRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, notAllowedParams{
+										allowedMethods: "POST",
+										allowedHeaders: rn5AllowedHeaders,
+										acceptPost:     "application/*+json,application/json",
+										acceptPatch:    "",
+									})
+								}
+
+								return
+							}
+
+						case 'i': // Prefix: "importruns"
+
+							if l := len("importruns"); len(elem) >= l && elem[0:l] == "importruns" {
 								elem = elem[l:]
 							} else {
 								break
@@ -189,13 +202,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							if len(elem) == 0 {
 								switch r.Method {
 								case "POST":
-									s.handleAPIImportTasksIDImportRunsPostRequest([1]string{
+									s.handleAPIImporttasksIDImportrunsPostRequest([1]string{
 										args[0],
 									}, elemIsEscaped, w, r)
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "POST",
-										allowedHeaders: rn5AllowedHeaders,
+										allowedHeaders: rn7AllowedHeaders,
 										acceptPost:     "multipart/form-data",
 										acceptPatch:    "",
 									})
@@ -237,14 +250,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										// Leaf node.
 										switch r.Method {
 										case "GET":
-											s.handleAPIImportTasksIDImportRunsRunIdStatusGetRequest([2]string{
+											s.handleAPIImporttasksIDImportrunsRunIdStatusGetRequest([2]string{
 												args[0],
 												args[1],
 											}, elemIsEscaped, w, r)
 										default:
 											s.notAllowed(w, r, notAllowedParams{
 												allowedMethods: "GET",
-												allowedHeaders: rn8AllowedHeaders,
+												allowedHeaders: rn10AllowedHeaders,
 												acceptPost:     "",
 												acceptPatch:    "",
 											})
@@ -269,13 +282,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								// Leaf node.
 								switch r.Method {
 								case "GET":
-									s.handleAPIImportTasksIDStatusGetRequest([1]string{
+									s.handleAPIImporttasksIDStatusGetRequest([1]string{
 										args[0],
 									}, elemIsEscaped, w, r)
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "GET",
-										allowedHeaders: rn10AllowedHeaders,
+										allowedHeaders: rn11AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -390,9 +403,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
-			case 'H': // Prefix: "Healthz"
+			case 'h': // Prefix: "healthz"
 
-				if l := len("Healthz"); len(elem) >= l && elem[0:l] == "Healthz" {
+				if l := len("healthz"); len(elem) >= l && elem[0:l] == "healthz" {
 					elem = elem[l:]
 				} else {
 					break
@@ -406,7 +419,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						r.summary = "Get health status information"
 						r.operationID = ""
 						r.operationGroup = ""
-						r.pathPattern = "/api/Healthz"
+						r.pathPattern = "/api/healthz"
 						r.args = args
 						r.count = 0
 						return r, true
@@ -415,9 +428,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					}
 				}
 
-			case 'I': // Prefix: "ImportTasks"
+			case 'i': // Prefix: "importtasks"
 
-				if l := len("ImportTasks"); len(elem) >= l && elem[0:l] == "ImportTasks" {
+				if l := len("importtasks"); len(elem) >= l && elem[0:l] == "importtasks" {
 					elem = elem[l:]
 				} else {
 					break
@@ -426,11 +439,11 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				if len(elem) == 0 {
 					switch method {
 					case "POST":
-						r.name = APIImportTasksPostOperation
+						r.name = APIImporttasksPostOperation
 						r.summary = "Creates a new import task."
 						r.operationID = ""
 						r.operationGroup = ""
-						r.pathPattern = "/api/ImportTasks"
+						r.pathPattern = "/api/importtasks"
 						r.args = args
 						r.count = 0
 						return r, true
@@ -457,19 +470,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					elem = elem[idx:]
 
 					if len(elem) == 0 {
-						switch method {
-						case "PATCH":
-							r.name = APIImportTasksIDPatchOperation
-							r.summary = "Updates the status of an existing import task."
-							r.operationID = ""
-							r.operationGroup = ""
-							r.pathPattern = "/api/ImportTasks/{id}"
-							r.args = args
-							r.count = 1
-							return r, true
-						default:
-							return
-						}
+						break
 					}
 					switch elem[0] {
 					case '/': // Prefix: "/"
@@ -484,9 +485,34 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							break
 						}
 						switch elem[0] {
-						case 'i': // Prefix: "importRuns"
+						case 'c': // Prefix: "cancel"
 
-							if l := len("importRuns"); len(elem) >= l && elem[0:l] == "importRuns" {
+							if l := len("cancel"); len(elem) >= l && elem[0:l] == "cancel" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = APIImporttasksIDCancelPostOperation
+									r.summary = "Cancels an existing import task."
+									r.operationID = ""
+									r.operationGroup = ""
+									r.pathPattern = "/api/importtasks/{id}/cancel"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						case 'i': // Prefix: "importruns"
+
+							if l := len("importruns"); len(elem) >= l && elem[0:l] == "importruns" {
 								elem = elem[l:]
 							} else {
 								break
@@ -495,11 +521,11 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							if len(elem) == 0 {
 								switch method {
 								case "POST":
-									r.name = APIImportTasksIDImportRunsPostOperation
+									r.name = APIImporttasksIDImportrunsPostOperation
 									r.summary = "Starts a new import run for the given import task.\r\nCreates a new import execution (\"run\") resource."
 									r.operationID = ""
 									r.operationGroup = ""
-									r.pathPattern = "/api/ImportTasks/{id}/importRuns"
+									r.pathPattern = "/api/importtasks/{id}/importruns"
 									r.args = args
 									r.count = 1
 									return r, true
@@ -541,11 +567,11 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 										// Leaf node.
 										switch method {
 										case "GET":
-											r.name = APIImportTasksIDImportRunsRunIdStatusGetOperation
+											r.name = APIImporttasksIDImportrunsRunIdStatusGetOperation
 											r.summary = "Gets the status of a specific import run."
 											r.operationID = ""
 											r.operationGroup = ""
-											r.pathPattern = "/api/ImportTasks/{id}/importRuns/{runId}/status"
+											r.pathPattern = "/api/importtasks/{id}/importruns/{runId}/status"
 											r.args = args
 											r.count = 2
 											return r, true
@@ -570,11 +596,11 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								// Leaf node.
 								switch method {
 								case "GET":
-									r.name = APIImportTasksIDStatusGetOperation
-									r.summary = "Query the status of an ongoing analysis or import"
+									r.name = APIImporttasksIDStatusGetOperation
+									r.summary = "Query the status of an ongoing analysis (import task)."
 									r.operationID = ""
 									r.operationGroup = ""
-									r.pathPattern = "/api/ImportTasks/{id}/status"
+									r.pathPattern = "/api/importtasks/{id}/status"
 									r.args = args
 									r.count = 1
 									return r, true

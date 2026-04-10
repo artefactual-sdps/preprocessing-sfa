@@ -44,7 +44,72 @@ func encodeAPIHealthzGetResponse(response APIHealthzGetRes, w http.ResponseWrite
 	}
 }
 
-func encodeAPIImportTasksIDImportRunsPostResponse(response APIImportTasksIDImportRunsPostRes, w http.ResponseWriter, span trace.Span) error {
+func encodeAPIImporttasksIDCancelPostResponse(response APIImporttasksIDCancelPostRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *APIImporttasksIDCancelPostNoContent:
+		w.WriteHeader(204)
+		span.SetStatus(codes.Ok, http.StatusText(204))
+
+		return nil
+
+	case *APIImporttasksIDCancelPostUnauthorized:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(401)
+		span.SetStatus(codes.Error, http.StatusText(401))
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *APIImporttasksIDCancelPostNotFound:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(404)
+		span.SetStatus(codes.Error, http.StatusText(404))
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *APIImporttasksIDCancelPostConflict:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(409)
+		span.SetStatus(codes.Error, http.StatusText(409))
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *APIImporttasksIDCancelPostInternalServerError:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(500)
+		span.SetStatus(codes.Error, http.StatusText(500))
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
+func encodeAPIImporttasksIDImportrunsPostResponse(response APIImporttasksIDImportrunsPostRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *CreateImportRunResponse:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -59,7 +124,7 @@ func encodeAPIImportTasksIDImportRunsPostResponse(response APIImportTasksIDImpor
 
 		return nil
 
-	case *ValidationProblemDetails:
+	case *APIImporttasksIDImportrunsPostBadRequest:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(400)
 		span.SetStatus(codes.Error, http.StatusText(400))
@@ -72,7 +137,7 @@ func encodeAPIImportTasksIDImportRunsPostResponse(response APIImportTasksIDImpor
 
 		return nil
 
-	case *APIImportTasksIDImportRunsPostUnauthorized:
+	case *APIImporttasksIDImportrunsPostUnauthorized:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(401)
 		span.SetStatus(codes.Error, http.StatusText(401))
@@ -85,7 +150,7 @@ func encodeAPIImportTasksIDImportRunsPostResponse(response APIImportTasksIDImpor
 
 		return nil
 
-	case *APIImportTasksIDImportRunsPostNotFound:
+	case *APIImporttasksIDImportrunsPostNotFound:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(404)
 		span.SetStatus(codes.Error, http.StatusText(404))
@@ -98,7 +163,7 @@ func encodeAPIImportTasksIDImportRunsPostResponse(response APIImportTasksIDImpor
 
 		return nil
 
-	case *APIImportTasksIDImportRunsPostUnsupportedMediaType:
+	case *APIImporttasksIDImportrunsPostUnsupportedMediaType:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(415)
 		span.SetStatus(codes.Error, http.StatusText(415))
@@ -116,7 +181,7 @@ func encodeAPIImportTasksIDImportRunsPostResponse(response APIImportTasksIDImpor
 	}
 }
 
-func encodeAPIImportTasksIDImportRunsRunIdStatusGetResponse(response APIImportTasksIDImportRunsRunIdStatusGetRes, w http.ResponseWriter, span trace.Span) error {
+func encodeAPIImporttasksIDImportrunsRunIdStatusGetResponse(response APIImporttasksIDImportrunsRunIdStatusGetRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *ImportRunStatusResponse:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -131,7 +196,7 @@ func encodeAPIImportTasksIDImportRunsRunIdStatusGetResponse(response APIImportTa
 
 		return nil
 
-	case *APIImportTasksIDImportRunsRunIdStatusGetUnauthorized:
+	case *APIImporttasksIDImportrunsRunIdStatusGetUnauthorized:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(401)
 		span.SetStatus(codes.Error, http.StatusText(401))
@@ -144,10 +209,23 @@ func encodeAPIImportTasksIDImportRunsRunIdStatusGetResponse(response APIImportTa
 
 		return nil
 
-	case *APIImportTasksIDImportRunsRunIdStatusGetNotFound:
+	case *APIImporttasksIDImportrunsRunIdStatusGetNotFound:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(404)
 		span.SetStatus(codes.Error, http.StatusText(404))
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *APIImporttasksIDImportrunsRunIdStatusGetInternalServerError:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(500)
+		span.SetStatus(codes.Error, http.StatusText(500))
 
 		e := new(jx.Encoder)
 		response.Encode(e)
@@ -162,9 +240,9 @@ func encodeAPIImportTasksIDImportRunsRunIdStatusGetResponse(response APIImportTa
 	}
 }
 
-func encodeAPIImportTasksIDPatchResponse(response APIImportTasksIDPatchRes, w http.ResponseWriter, span trace.Span) error {
+func encodeAPIImporttasksIDStatusGetResponse(response APIImporttasksIDStatusGetRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *ImportTaskDto:
+	case *ImportTaskStatusResponse:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(200)
 		span.SetStatus(codes.Ok, http.StatusText(200))
@@ -177,7 +255,20 @@ func encodeAPIImportTasksIDPatchResponse(response APIImportTasksIDPatchRes, w ht
 
 		return nil
 
-	case *APIImportTasksIDPatchNotFound:
+	case *APIImporttasksIDStatusGetUnauthorized:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(401)
+		span.SetStatus(codes.Error, http.StatusText(401))
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *APIImporttasksIDStatusGetNotFound:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(404)
 		span.SetStatus(codes.Error, http.StatusText(404))
@@ -190,10 +281,10 @@ func encodeAPIImportTasksIDPatchResponse(response APIImportTasksIDPatchRes, w ht
 
 		return nil
 
-	case *APIImportTasksIDPatchConflict:
+	case *APIImporttasksIDStatusGetInternalServerError:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(409)
-		span.SetStatus(codes.Error, http.StatusText(409))
+		w.WriteHeader(500)
+		span.SetStatus(codes.Error, http.StatusText(500))
 
 		e := new(jx.Encoder)
 		response.Encode(e)
@@ -208,23 +299,9 @@ func encodeAPIImportTasksIDPatchResponse(response APIImportTasksIDPatchRes, w ht
 	}
 }
 
-func encodeAPIImportTasksIDStatusGetResponse(response *ImportTaskStatusResponse, w http.ResponseWriter, span trace.Span) error {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(200)
-	span.SetStatus(codes.Ok, http.StatusText(200))
-
-	e := new(jx.Encoder)
-	response.Encode(e)
-	if _, err := e.WriteTo(w); err != nil {
-		return errors.Wrap(err, "write")
-	}
-
-	return nil
-}
-
-func encodeAPIImportTasksPostResponse(response APIImportTasksPostRes, w http.ResponseWriter, span trace.Span) error {
+func encodeAPIImporttasksPostResponse(response APIImporttasksPostRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *APIImportTasksPostCreated:
+	case *CreateImportTaskResponse:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(201)
 		span.SetStatus(codes.Ok, http.StatusText(201))
@@ -237,7 +314,7 @@ func encodeAPIImportTasksPostResponse(response APIImportTasksPostRes, w http.Res
 
 		return nil
 
-	case *APIImportTasksPostBadRequest:
+	case *APIImporttasksPostBadRequest:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(400)
 		span.SetStatus(codes.Error, http.StatusText(400))
@@ -250,7 +327,7 @@ func encodeAPIImportTasksPostResponse(response APIImportTasksPostRes, w http.Res
 
 		return nil
 
-	case *ProblemDetails:
+	case *APIImporttasksPostUnauthorized:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(401)
 		span.SetStatus(codes.Error, http.StatusText(401))
@@ -263,7 +340,7 @@ func encodeAPIImportTasksPostResponse(response APIImportTasksPostRes, w http.Res
 
 		return nil
 
-	case *APIImportTasksPostUnsupportedMediaType:
+	case *APIImporttasksPostUnsupportedMediaType:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(415)
 		span.SetStatus(codes.Error, http.StatusText(415))
@@ -276,7 +353,7 @@ func encodeAPIImportTasksPostResponse(response APIImportTasksPostRes, w http.Res
 
 		return nil
 
-	case *APIImportTasksPostInternalServerError:
+	case *APIImporttasksPostInternalServerError:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(500)
 		span.SetStatus(codes.Error, http.StatusText(500))
