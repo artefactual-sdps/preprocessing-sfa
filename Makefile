@@ -86,6 +86,11 @@ gosec: tool-gosec
 	go tool bine upgrade gosec
 	gosec $(GOSEC_VERBOSITY) -exclude-dir=hack ./...
 
+govulncheck: # @HELP Run govulncheck security scanner.
+govulncheck: tool-govulncheck
+	go tool bine upgrade govulncheck
+	govulncheck $(GOVULNCHECK_FLAGS) ./...
+
 help: # @HELP Print this message.
 	echo "TARGETS:"
 	grep -hE '^.*:.*?# *@HELP' $(MAKEFILE_LIST) | sort | \
