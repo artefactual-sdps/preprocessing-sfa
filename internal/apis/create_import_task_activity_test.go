@@ -50,8 +50,8 @@ func TestCreateImportTaskActivity(t *testing.T) {
 				Username: "archivist@example.com",
 			},
 			expect: func(m *fake_apis.MockClientMockRecorder) {
-				m.APIImportTasksPost(gomock.Any(), gomock.Any()).DoAndReturn(
-					func(_ context.Context, req apisgen.OptAPIImportTasksPostReq) (apisgen.APIImportTasksPostRes, error) {
+				m.APIImporttasksPost(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(_ context.Context, req apisgen.OptAPIImporttasksPostReq) (apisgen.APIImporttasksPostRes, error) {
 						payload, ok := req.Get()
 						assert.Assert(t, ok)
 						assert.Equal(t, payload.Username, "archivist@example.com")
@@ -62,9 +62,8 @@ func TestCreateImportTaskActivity(t *testing.T) {
 						assert.NilError(t, err)
 						assert.Equal(t, string(body), "metadata-body")
 
-						res := apisgen.APIImportTasksPostCreated{
-							Success: apisgen.NewOptBool(true),
-							ID:      apisgen.NewOptNilString("task-000001"),
+						res := apisgen.CreateImportTaskResponse{
+							ImportTaskId: "task-000001",
 						}
 						return &res, nil
 					},
@@ -78,15 +77,14 @@ func TestCreateImportTaskActivity(t *testing.T) {
 				SIP: sipValue,
 			},
 			expect: func(m *fake_apis.MockClientMockRecorder) {
-				m.APIImportTasksPost(gomock.Any(), gomock.Any()).DoAndReturn(
-					func(_ context.Context, req apisgen.OptAPIImportTasksPostReq) (apisgen.APIImportTasksPostRes, error) {
+				m.APIImporttasksPost(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(_ context.Context, req apisgen.OptAPIImporttasksPostReq) (apisgen.APIImporttasksPostRes, error) {
 						payload, ok := req.Get()
 						assert.Assert(t, ok)
 						assert.Equal(t, payload.Username, "")
 
-						res := apisgen.APIImportTasksPostCreated{
-							Success: apisgen.NewOptBool(true),
-							ID:      apisgen.NewOptNilString("task-000002"),
+						res := apisgen.CreateImportTaskResponse{
+							ImportTaskId: "task-000002",
 						}
 						return &res, nil
 					},
@@ -100,10 +98,9 @@ func TestCreateImportTaskActivity(t *testing.T) {
 				SIP: sipValue,
 			},
 			expect: func(m *fake_apis.MockClientMockRecorder) {
-				m.APIImportTasksPost(gomock.Any(), gomock.Any()).Return(
-					&apisgen.APIImportTasksPostBadRequest{
-						Success: apisgen.NewOptBool(false),
-						Error:   apisgen.NewOptNilString("invalid payload"),
+				m.APIImporttasksPost(gomock.Any(), gomock.Any()).Return(
+					&apisgen.APIImporttasksPostBadRequest{
+						Detail: apisgen.NewOptNilString("invalid payload"),
 					},
 					nil,
 				)
@@ -116,8 +113,8 @@ func TestCreateImportTaskActivity(t *testing.T) {
 				SIP: sipValue,
 			},
 			expect: func(m *fake_apis.MockClientMockRecorder) {
-				m.APIImportTasksPost(gomock.Any(), gomock.Any()).Return(
-					&apisgen.ProblemDetails{Detail: apisgen.NewOptNilString("unauthorized")},
+				m.APIImporttasksPost(gomock.Any(), gomock.Any()).Return(
+					&apisgen.APIImporttasksPostUnauthorized{Detail: apisgen.NewOptNilString("unauthorized")},
 					nil,
 				)
 			},
@@ -129,7 +126,7 @@ func TestCreateImportTaskActivity(t *testing.T) {
 				SIP: sipValue,
 			},
 			expect: func(m *fake_apis.MockClientMockRecorder) {
-				m.APIImportTasksPost(gomock.Any(), gomock.Any()).Return(nil, errors.New("error from client"))
+				m.APIImporttasksPost(gomock.Any(), gomock.Any()).Return(nil, errors.New("error from client"))
 			},
 			wantErr: "create APIS import task: error from client",
 		},

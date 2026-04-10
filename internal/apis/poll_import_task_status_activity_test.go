@@ -29,23 +29,23 @@ func TestPollImportTaskStatusActivity(t *testing.T) {
 			name:   "polls until analysis is complete",
 			params: apis.PollImportTaskStatusParams{TaskID: "task-000001"},
 			expect: func(m *fake_apis.MockClientMockRecorder) {
-				m.APIImportTasksIDStatusGet(
+				m.APIImporttasksIDStatusGet(
 					gomock.Any(),
-					apisgen.APIImportTasksIDStatusGetParams{ID: "task-000001"},
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000001"},
 				).Return(
 					&apisgen.ImportTaskStatusResponse{Status: apisgen.ImportTaskStatusNeu},
 					nil,
 				)
-				m.APIImportTasksIDStatusGet(
+				m.APIImporttasksIDStatusGet(
 					gomock.Any(),
-					apisgen.APIImportTasksIDStatusGetParams{ID: "task-000001"},
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000001"},
 				).Return(
 					&apisgen.ImportTaskStatusResponse{Status: apisgen.ImportTaskStatusInAnalyse},
 					nil,
 				)
-				m.APIImportTasksIDStatusGet(
+				m.APIImporttasksIDStatusGet(
 					gomock.Any(),
-					apisgen.APIImportTasksIDStatusGetParams{ID: "task-000001"},
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000001"},
 				).Return(
 					&apisgen.ImportTaskStatusResponse{
 						Status:         apisgen.ImportTaskStatusAnalysiert,
@@ -60,9 +60,9 @@ func TestPollImportTaskStatusActivity(t *testing.T) {
 			name:   "returns conflict analysis result",
 			params: apis.PollImportTaskStatusParams{TaskID: "task-000002"},
 			expect: func(m *fake_apis.MockClientMockRecorder) {
-				m.APIImportTasksIDStatusGet(
+				m.APIImporttasksIDStatusGet(
 					gomock.Any(),
-					apisgen.APIImportTasksIDStatusGetParams{ID: "task-000002"},
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000002"},
 				).Return(
 					&apisgen.ImportTaskStatusResponse{
 						Status:         apisgen.ImportTaskStatusAnalysiert,
@@ -77,9 +77,9 @@ func TestPollImportTaskStatusActivity(t *testing.T) {
 			name:   "returns analysis error result",
 			params: apis.PollImportTaskStatusParams{TaskID: "task-000003"},
 			expect: func(m *fake_apis.MockClientMockRecorder) {
-				m.APIImportTasksIDStatusGet(
+				m.APIImporttasksIDStatusGet(
 					gomock.Any(),
-					apisgen.APIImportTasksIDStatusGetParams{ID: "task-000003"},
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000003"},
 				).Return(
 					&apisgen.ImportTaskStatusResponse{
 						Status:         apisgen.ImportTaskStatusAnalysiert,
@@ -94,20 +94,68 @@ func TestPollImportTaskStatusActivity(t *testing.T) {
 			name:   "returns polling error",
 			params: apis.PollImportTaskStatusParams{TaskID: "task-000004"},
 			expect: func(m *fake_apis.MockClientMockRecorder) {
-				m.APIImportTasksIDStatusGet(
+				m.APIImporttasksIDStatusGet(
 					gomock.Any(),
-					apisgen.APIImportTasksIDStatusGetParams{ID: "task-000004"},
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000004"},
 				).Return(nil, errors.New("status boom"))
 			},
 			wantErr: "status boom",
 		},
 		{
-			name:   "returns error on unexpected analysis status",
+			name:   "returns unauthorized error response",
 			params: apis.PollImportTaskStatusParams{TaskID: "task-000005"},
 			expect: func(m *fake_apis.MockClientMockRecorder) {
-				m.APIImportTasksIDStatusGet(
+				m.APIImporttasksIDStatusGet(
 					gomock.Any(),
-					apisgen.APIImportTasksIDStatusGetParams{ID: "task-000005"},
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000005"},
+				).Return(
+					&apisgen.APIImporttasksIDStatusGetUnauthorized{
+						Detail: apisgen.NewOptNilString("unauthorized"),
+					},
+					nil,
+				)
+			},
+			wantErr: "poll APIS import task status: unauthorized",
+		},
+		{
+			name:   "returns not found error response",
+			params: apis.PollImportTaskStatusParams{TaskID: "task-000006"},
+			expect: func(m *fake_apis.MockClientMockRecorder) {
+				m.APIImporttasksIDStatusGet(
+					gomock.Any(),
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000006"},
+				).Return(
+					&apisgen.APIImporttasksIDStatusGetNotFound{
+						Detail: apisgen.NewOptNilString("import task does not exist"),
+					},
+					nil,
+				)
+			},
+			wantErr: "poll APIS import task status: task not found: import task does not exist",
+		},
+		{
+			name:   "returns internal server error response",
+			params: apis.PollImportTaskStatusParams{TaskID: "task-000007"},
+			expect: func(m *fake_apis.MockClientMockRecorder) {
+				m.APIImporttasksIDStatusGet(
+					gomock.Any(),
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000007"},
+				).Return(
+					&apisgen.APIImporttasksIDStatusGetInternalServerError{
+						Detail: apisgen.NewOptNilString("status backend failed"),
+					},
+					nil,
+				)
+			},
+			wantErr: "poll APIS import task status: server error: status backend failed",
+		},
+		{
+			name:   "returns error on unexpected analysis status",
+			params: apis.PollImportTaskStatusParams{TaskID: "task-000008"},
+			expect: func(m *fake_apis.MockClientMockRecorder) {
+				m.APIImporttasksIDStatusGet(
+					gomock.Any(),
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000008"},
 				).Return(
 					&apisgen.ImportTaskStatusResponse{Status: apisgen.ImportTaskStatusImportiert},
 					nil,
@@ -117,11 +165,11 @@ func TestPollImportTaskStatusActivity(t *testing.T) {
 		},
 		{
 			name:   "returns error when analysis result is missing",
-			params: apis.PollImportTaskStatusParams{TaskID: "task-000006"},
+			params: apis.PollImportTaskStatusParams{TaskID: "task-000009"},
 			expect: func(m *fake_apis.MockClientMockRecorder) {
-				m.APIImportTasksIDStatusGet(
+				m.APIImporttasksIDStatusGet(
 					gomock.Any(),
-					apisgen.APIImportTasksIDStatusGetParams{ID: "task-000006"},
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000009"},
 				).Return(
 					&apisgen.ImportTaskStatusResponse{Status: apisgen.ImportTaskStatusAnalysiert},
 					nil,
