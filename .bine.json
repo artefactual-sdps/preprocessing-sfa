@@ -37,6 +37,11 @@
       "asset_pattern": "{name}_{version}_{goos}_{goarch}.tar.gz"
     },
     {
+      "name": "govulncheck",
+      "go_package": "golang.org/x/vuln/cmd/govulncheck",
+      "version": "latest"
+    },
+    {
       "name": "mockgen",
       "go_package": "go.uber.org/mock/mockgen",
       "version": "0.6.0"
