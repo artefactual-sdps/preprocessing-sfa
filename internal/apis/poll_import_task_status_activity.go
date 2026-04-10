@@ -54,30 +54,51 @@ func (a *PollImportTaskStatusActivity) Execute(
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		case <-ticker.C:
-			status, err := a.client.APIImportTasksIDStatusGet(ctx, gen.APIImportTasksIDStatusGetParams{
+			res, err := a.client.APIImporttasksIDStatusGet(ctx, gen.APIImporttasksIDStatusGetParams{
 				ID: params.TaskID,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("poll APIS import task status: %w", err)
 			}
 
-			done, err := analysisComplete(status)
-			if err != nil {
-				return nil, err
-			}
-			if !done {
-				continue
-			}
+			switch status := res.(type) {
+			case *gen.ImportTaskStatusResponse:
+				done, err := analysisComplete(status)
+				if err != nil {
+					return nil, err
+				}
+				if !done {
+					continue
+				}
 
-			analysisResult, ok := status.AnalysisResult.Get()
-			if !ok {
+				analysisResult, ok := status.AnalysisResult.Get()
+				if !ok {
+					return nil, temporal.NewNonRetryableError(fmt.Errorf(
+						"poll APIS import task status: missing analysis result for completed task %q",
+						params.TaskID,
+					))
+				}
+
+				return &PollImportTaskStatusResult{AnalysisResult: analysisResult}, nil
+			case *gen.APIImporttasksIDStatusGetUnauthorized:
+				return nil, temporal.NewNonRetryableError(
+					fmt.Errorf("poll APIS import task status: unauthorized"),
+				)
+			case *gen.APIImporttasksIDStatusGetNotFound:
 				return nil, temporal.NewNonRetryableError(fmt.Errorf(
-					"poll APIS import task status: missing analysis result for completed task %q",
-					params.TaskID,
+					"poll APIS import task status: task not found: %s",
+					problemDetail(status.Detail),
 				))
+			case *gen.APIImporttasksIDStatusGetInternalServerError:
+				return nil, fmt.Errorf(
+					"poll APIS import task status: server error: %s",
+					problemDetail(status.Detail),
+				)
+			default:
+				return nil, temporal.NewNonRetryableError(
+					fmt.Errorf("poll APIS import task status: unexpected response"),
+				)
 			}
-
-			return &PollImportTaskStatusResult{AnalysisResult: analysisResult}, nil
 		}
 	}
 }

@@ -53,7 +53,7 @@ func (a *CreateImportTaskActivity) Execute(
 		return nil, temporal.NewNonRetryableError(fmt.Errorf("invalid SIP type %q: %v", params.SIP.Type, err))
 	}
 
-	req := gen.APIImportTasksPostReq{
+	req := gen.APIImporttasksPostReq{
 		File: ogenhttp.MultipartFile{
 			Name: filepath.Base(params.SIP.MetadataPath),
 			File: metadata,
@@ -61,45 +61,37 @@ func (a *CreateImportTaskActivity) Execute(
 		SipType:  sipType,
 		Username: params.Username,
 	}
-	res, err := a.client.APIImportTasksPost(ctx, gen.NewOptAPIImportTasksPostReq(req))
+	res, err := a.client.APIImporttasksPost(ctx, gen.NewOptAPIImporttasksPostReq(req))
 	if err != nil {
 		return nil, fmt.Errorf("create APIS import task: %v", err)
 	}
 
 	switch t := res.(type) {
-	case *gen.APIImportTasksPostCreated:
-		taskID, ok := t.ID.Get()
-		if !ok || taskID == "" {
+	case *gen.CreateImportTaskResponse:
+		if t.ImportTaskId == "" {
 			return nil, temporal.NewNonRetryableError(fmt.Errorf(
 				"create APIS import task: missing task ID in created response",
 			))
 		}
-		return &CreateImportTaskResult{TaskID: taskID}, nil
-	case *gen.APIImportTasksPostBadRequest:
+		return &CreateImportTaskResult{TaskID: t.ImportTaskId}, nil
+	case *gen.APIImporttasksPostBadRequest:
 		return nil, temporal.NewNonRetryableError(fmt.Errorf(
 			"create APIS import task: bad request: %s",
-			createImportTaskResponseError((*gen.CreateImportTaskResponse)(t)),
+			problemDetail(t.Detail),
 		))
-	case *gen.APIImportTasksPostUnsupportedMediaType:
+	case *gen.APIImporttasksPostUnsupportedMediaType:
 		return nil, temporal.NewNonRetryableError(fmt.Errorf(
 			"create APIS import task: unsupported media type: %s",
-			createImportTaskResponseError((*gen.CreateImportTaskResponse)(t)),
+			problemDetail(t.Detail),
 		))
-	case *gen.APIImportTasksPostInternalServerError:
+	case *gen.APIImporttasksPostInternalServerError:
 		return nil, fmt.Errorf(
 			"create APIS import task: server error: %s",
-			createImportTaskResponseError((*gen.CreateImportTaskResponse)(t)),
+			problemDetail(t.Detail),
 		)
-	case *gen.ProblemDetails:
+	case *gen.APIImporttasksPostUnauthorized:
 		return nil, temporal.NewNonRetryableError(fmt.Errorf("create APIS import task: unauthorized"))
 	default:
 		return nil, temporal.NewNonRetryableError(fmt.Errorf("create APIS import task: unexpected response"))
 	}
-}
-
-func createImportTaskResponseError(res *gen.CreateImportTaskResponse) string {
-	if errMsg, ok := res.Error.Get(); ok && errMsg != "" {
-		return errMsg
-	}
-	return "no additional details"
 }
