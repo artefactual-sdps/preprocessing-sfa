@@ -80,197 +80,197 @@ func (c *MockClientAPIHealthzGetCall) DoAndReturn(f func(context.Context) (gen.A
 	return c
 }
 
-// APIImportTasksIDImportRunsPost mocks base method.
-func (m *MockClient) APIImportTasksIDImportRunsPost(ctx context.Context, request gen.OptAPIImportTasksIDImportRunsPostReq, params gen.APIImportTasksIDImportRunsPostParams) (gen.APIImportTasksIDImportRunsPostRes, error) {
+// APIImporttasksIDCancelPost mocks base method.
+func (m *MockClient) APIImporttasksIDCancelPost(ctx context.Context, request gen.APIImporttasksIDCancelPostReq, params gen.APIImporttasksIDCancelPostParams) (gen.APIImporttasksIDCancelPostRes, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "APIImportTasksIDImportRunsPost", ctx, request, params)
-	ret0, _ := ret[0].(gen.APIImportTasksIDImportRunsPostRes)
+	ret := m.ctrl.Call(m, "APIImporttasksIDCancelPost", ctx, request, params)
+	ret0, _ := ret[0].(gen.APIImporttasksIDCancelPostRes)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// APIImportTasksIDImportRunsPost indicates an expected call of APIImportTasksIDImportRunsPost.
-func (mr *MockClientMockRecorder) APIImportTasksIDImportRunsPost(ctx, request, params any) *MockClientAPIImportTasksIDImportRunsPostCall {
+// APIImporttasksIDCancelPost indicates an expected call of APIImporttasksIDCancelPost.
+func (mr *MockClientMockRecorder) APIImporttasksIDCancelPost(ctx, request, params any) *MockClientAPIImporttasksIDCancelPostCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIImportTasksIDImportRunsPost", reflect.TypeOf((*MockClient)(nil).APIImportTasksIDImportRunsPost), ctx, request, params)
-	return &MockClientAPIImportTasksIDImportRunsPostCall{Call: call}
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIImporttasksIDCancelPost", reflect.TypeOf((*MockClient)(nil).APIImporttasksIDCancelPost), ctx, request, params)
+	return &MockClientAPIImporttasksIDCancelPostCall{Call: call}
 }
 
-// MockClientAPIImportTasksIDImportRunsPostCall wrap *gomock.Call
-type MockClientAPIImportTasksIDImportRunsPostCall struct {
+// MockClientAPIImporttasksIDCancelPostCall wrap *gomock.Call
+type MockClientAPIImporttasksIDCancelPostCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockClientAPIImportTasksIDImportRunsPostCall) Return(arg0 gen.APIImportTasksIDImportRunsPostRes, arg1 error) *MockClientAPIImportTasksIDImportRunsPostCall {
+func (c *MockClientAPIImporttasksIDCancelPostCall) Return(arg0 gen.APIImporttasksIDCancelPostRes, arg1 error) *MockClientAPIImporttasksIDCancelPostCall {
 	c.Call = c.Call.Return(arg0, arg1)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockClientAPIImportTasksIDImportRunsPostCall) Do(f func(context.Context, gen.OptAPIImportTasksIDImportRunsPostReq, gen.APIImportTasksIDImportRunsPostParams) (gen.APIImportTasksIDImportRunsPostRes, error)) *MockClientAPIImportTasksIDImportRunsPostCall {
+func (c *MockClientAPIImporttasksIDCancelPostCall) Do(f func(context.Context, gen.APIImporttasksIDCancelPostReq, gen.APIImporttasksIDCancelPostParams) (gen.APIImporttasksIDCancelPostRes, error)) *MockClientAPIImporttasksIDCancelPostCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockClientAPIImportTasksIDImportRunsPostCall) DoAndReturn(f func(context.Context, gen.OptAPIImportTasksIDImportRunsPostReq, gen.APIImportTasksIDImportRunsPostParams) (gen.APIImportTasksIDImportRunsPostRes, error)) *MockClientAPIImportTasksIDImportRunsPostCall {
+func (c *MockClientAPIImporttasksIDCancelPostCall) DoAndReturn(f func(context.Context, gen.APIImporttasksIDCancelPostReq, gen.APIImporttasksIDCancelPostParams) (gen.APIImporttasksIDCancelPostRes, error)) *MockClientAPIImporttasksIDCancelPostCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
 
-// APIImportTasksIDImportRunsRunIdStatusGet mocks base method.
-func (m *MockClient) APIImportTasksIDImportRunsRunIdStatusGet(ctx context.Context, params gen.APIImportTasksIDImportRunsRunIdStatusGetParams) (gen.APIImportTasksIDImportRunsRunIdStatusGetRes, error) {
+// APIImporttasksIDImportrunsPost mocks base method.
+func (m *MockClient) APIImporttasksIDImportrunsPost(ctx context.Context, request gen.OptAPIImporttasksIDImportrunsPostReq, params gen.APIImporttasksIDImportrunsPostParams) (gen.APIImporttasksIDImportrunsPostRes, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "APIImportTasksIDImportRunsRunIdStatusGet", ctx, params)
-	ret0, _ := ret[0].(gen.APIImportTasksIDImportRunsRunIdStatusGetRes)
+	ret := m.ctrl.Call(m, "APIImporttasksIDImportrunsPost", ctx, request, params)
+	ret0, _ := ret[0].(gen.APIImporttasksIDImportrunsPostRes)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// APIImportTasksIDImportRunsRunIdStatusGet indicates an expected call of APIImportTasksIDImportRunsRunIdStatusGet.
-func (mr *MockClientMockRecorder) APIImportTasksIDImportRunsRunIdStatusGet(ctx, params any) *MockClientAPIImportTasksIDImportRunsRunIdStatusGetCall {
+// APIImporttasksIDImportrunsPost indicates an expected call of APIImporttasksIDImportrunsPost.
+func (mr *MockClientMockRecorder) APIImporttasksIDImportrunsPost(ctx, request, params any) *MockClientAPIImporttasksIDImportrunsPostCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIImportTasksIDImportRunsRunIdStatusGet", reflect.TypeOf((*MockClient)(nil).APIImportTasksIDImportRunsRunIdStatusGet), ctx, params)
-	return &MockClientAPIImportTasksIDImportRunsRunIdStatusGetCall{Call: call}
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIImporttasksIDImportrunsPost", reflect.TypeOf((*MockClient)(nil).APIImporttasksIDImportrunsPost), ctx, request, params)
+	return &MockClientAPIImporttasksIDImportrunsPostCall{Call: call}
 }
 
-// MockClientAPIImportTasksIDImportRunsRunIdStatusGetCall wrap *gomock.Call
-type MockClientAPIImportTasksIDImportRunsRunIdStatusGetCall struct {
+// MockClientAPIImporttasksIDImportrunsPostCall wrap *gomock.Call
+type MockClientAPIImporttasksIDImportrunsPostCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockClientAPIImportTasksIDImportRunsRunIdStatusGetCall) Return(arg0 gen.APIImportTasksIDImportRunsRunIdStatusGetRes, arg1 error) *MockClientAPIImportTasksIDImportRunsRunIdStatusGetCall {
+func (c *MockClientAPIImporttasksIDImportrunsPostCall) Return(arg0 gen.APIImporttasksIDImportrunsPostRes, arg1 error) *MockClientAPIImporttasksIDImportrunsPostCall {
 	c.Call = c.Call.Return(arg0, arg1)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockClientAPIImportTasksIDImportRunsRunIdStatusGetCall) Do(f func(context.Context, gen.APIImportTasksIDImportRunsRunIdStatusGetParams) (gen.APIImportTasksIDImportRunsRunIdStatusGetRes, error)) *MockClientAPIImportTasksIDImportRunsRunIdStatusGetCall {
+func (c *MockClientAPIImporttasksIDImportrunsPostCall) Do(f func(context.Context, gen.OptAPIImporttasksIDImportrunsPostReq, gen.APIImporttasksIDImportrunsPostParams) (gen.APIImporttasksIDImportrunsPostRes, error)) *MockClientAPIImporttasksIDImportrunsPostCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockClientAPIImportTasksIDImportRunsRunIdStatusGetCall) DoAndReturn(f func(context.Context, gen.APIImportTasksIDImportRunsRunIdStatusGetParams) (gen.APIImportTasksIDImportRunsRunIdStatusGetRes, error)) *MockClientAPIImportTasksIDImportRunsRunIdStatusGetCall {
+func (c *MockClientAPIImporttasksIDImportrunsPostCall) DoAndReturn(f func(context.Context, gen.OptAPIImporttasksIDImportrunsPostReq, gen.APIImporttasksIDImportrunsPostParams) (gen.APIImporttasksIDImportrunsPostRes, error)) *MockClientAPIImporttasksIDImportrunsPostCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
 
-// APIImportTasksIDPatch mocks base method.
-func (m *MockClient) APIImportTasksIDPatch(ctx context.Context, request gen.APIImportTasksIDPatchReq, params gen.APIImportTasksIDPatchParams) (gen.APIImportTasksIDPatchRes, error) {
+// APIImporttasksIDImportrunsRunIdStatusGet mocks base method.
+func (m *MockClient) APIImporttasksIDImportrunsRunIdStatusGet(ctx context.Context, params gen.APIImporttasksIDImportrunsRunIdStatusGetParams) (gen.APIImporttasksIDImportrunsRunIdStatusGetRes, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "APIImportTasksIDPatch", ctx, request, params)
-	ret0, _ := ret[0].(gen.APIImportTasksIDPatchRes)
+	ret := m.ctrl.Call(m, "APIImporttasksIDImportrunsRunIdStatusGet", ctx, params)
+	ret0, _ := ret[0].(gen.APIImporttasksIDImportrunsRunIdStatusGetRes)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// APIImportTasksIDPatch indicates an expected call of APIImportTasksIDPatch.
-func (mr *MockClientMockRecorder) APIImportTasksIDPatch(ctx, request, params any) *MockClientAPIImportTasksIDPatchCall {
+// APIImporttasksIDImportrunsRunIdStatusGet indicates an expected call of APIImporttasksIDImportrunsRunIdStatusGet.
+func (mr *MockClientMockRecorder) APIImporttasksIDImportrunsRunIdStatusGet(ctx, params any) *MockClientAPIImporttasksIDImportrunsRunIdStatusGetCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIImportTasksIDPatch", reflect.TypeOf((*MockClient)(nil).APIImportTasksIDPatch), ctx, request, params)
-	return &MockClientAPIImportTasksIDPatchCall{Call: call}
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIImporttasksIDImportrunsRunIdStatusGet", reflect.TypeOf((*MockClient)(nil).APIImporttasksIDImportrunsRunIdStatusGet), ctx, params)
+	return &MockClientAPIImporttasksIDImportrunsRunIdStatusGetCall{Call: call}
 }
 
-// MockClientAPIImportTasksIDPatchCall wrap *gomock.Call
-type MockClientAPIImportTasksIDPatchCall struct {
+// MockClientAPIImporttasksIDImportrunsRunIdStatusGetCall wrap *gomock.Call
+type MockClientAPIImporttasksIDImportrunsRunIdStatusGetCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockClientAPIImportTasksIDPatchCall) Return(arg0 gen.APIImportTasksIDPatchRes, arg1 error) *MockClientAPIImportTasksIDPatchCall {
+func (c *MockClientAPIImporttasksIDImportrunsRunIdStatusGetCall) Return(arg0 gen.APIImporttasksIDImportrunsRunIdStatusGetRes, arg1 error) *MockClientAPIImporttasksIDImportrunsRunIdStatusGetCall {
 	c.Call = c.Call.Return(arg0, arg1)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockClientAPIImportTasksIDPatchCall) Do(f func(context.Context, gen.APIImportTasksIDPatchReq, gen.APIImportTasksIDPatchParams) (gen.APIImportTasksIDPatchRes, error)) *MockClientAPIImportTasksIDPatchCall {
+func (c *MockClientAPIImporttasksIDImportrunsRunIdStatusGetCall) Do(f func(context.Context, gen.APIImporttasksIDImportrunsRunIdStatusGetParams) (gen.APIImporttasksIDImportrunsRunIdStatusGetRes, error)) *MockClientAPIImporttasksIDImportrunsRunIdStatusGetCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockClientAPIImportTasksIDPatchCall) DoAndReturn(f func(context.Context, gen.APIImportTasksIDPatchReq, gen.APIImportTasksIDPatchParams) (gen.APIImportTasksIDPatchRes, error)) *MockClientAPIImportTasksIDPatchCall {
+func (c *MockClientAPIImporttasksIDImportrunsRunIdStatusGetCall) DoAndReturn(f func(context.Context, gen.APIImporttasksIDImportrunsRunIdStatusGetParams) (gen.APIImporttasksIDImportrunsRunIdStatusGetRes, error)) *MockClientAPIImporttasksIDImportrunsRunIdStatusGetCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
 
-// APIImportTasksIDStatusGet mocks base method.
-func (m *MockClient) APIImportTasksIDStatusGet(ctx context.Context, params gen.APIImportTasksIDStatusGetParams) (*gen.ImportTaskStatusResponse, error) {
+// APIImporttasksIDStatusGet mocks base method.
+func (m *MockClient) APIImporttasksIDStatusGet(ctx context.Context, params gen.APIImporttasksIDStatusGetParams) (gen.APIImporttasksIDStatusGetRes, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "APIImportTasksIDStatusGet", ctx, params)
-	ret0, _ := ret[0].(*gen.ImportTaskStatusResponse)
+	ret := m.ctrl.Call(m, "APIImporttasksIDStatusGet", ctx, params)
+	ret0, _ := ret[0].(gen.APIImporttasksIDStatusGetRes)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// APIImportTasksIDStatusGet indicates an expected call of APIImportTasksIDStatusGet.
-func (mr *MockClientMockRecorder) APIImportTasksIDStatusGet(ctx, params any) *MockClientAPIImportTasksIDStatusGetCall {
+// APIImporttasksIDStatusGet indicates an expected call of APIImporttasksIDStatusGet.
+func (mr *MockClientMockRecorder) APIImporttasksIDStatusGet(ctx, params any) *MockClientAPIImporttasksIDStatusGetCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIImportTasksIDStatusGet", reflect.TypeOf((*MockClient)(nil).APIImportTasksIDStatusGet), ctx, params)
-	return &MockClientAPIImportTasksIDStatusGetCall{Call: call}
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIImporttasksIDStatusGet", reflect.TypeOf((*MockClient)(nil).APIImporttasksIDStatusGet), ctx, params)
+	return &MockClientAPIImporttasksIDStatusGetCall{Call: call}
 }
 
-// MockClientAPIImportTasksIDStatusGetCall wrap *gomock.Call
-type MockClientAPIImportTasksIDStatusGetCall struct {
+// MockClientAPIImporttasksIDStatusGetCall wrap *gomock.Call
+type MockClientAPIImporttasksIDStatusGetCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockClientAPIImportTasksIDStatusGetCall) Return(arg0 *gen.ImportTaskStatusResponse, arg1 error) *MockClientAPIImportTasksIDStatusGetCall {
+func (c *MockClientAPIImporttasksIDStatusGetCall) Return(arg0 gen.APIImporttasksIDStatusGetRes, arg1 error) *MockClientAPIImporttasksIDStatusGetCall {
 	c.Call = c.Call.Return(arg0, arg1)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockClientAPIImportTasksIDStatusGetCall) Do(f func(context.Context, gen.APIImportTasksIDStatusGetParams) (*gen.ImportTaskStatusResponse, error)) *MockClientAPIImportTasksIDStatusGetCall {
+func (c *MockClientAPIImporttasksIDStatusGetCall) Do(f func(context.Context, gen.APIImporttasksIDStatusGetParams) (gen.APIImporttasksIDStatusGetRes, error)) *MockClientAPIImporttasksIDStatusGetCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockClientAPIImportTasksIDStatusGetCall) DoAndReturn(f func(context.Context, gen.APIImportTasksIDStatusGetParams) (*gen.ImportTaskStatusResponse, error)) *MockClientAPIImportTasksIDStatusGetCall {
+func (c *MockClientAPIImporttasksIDStatusGetCall) DoAndReturn(f func(context.Context, gen.APIImporttasksIDStatusGetParams) (gen.APIImporttasksIDStatusGetRes, error)) *MockClientAPIImporttasksIDStatusGetCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
 
-// APIImportTasksPost mocks base method.
-func (m *MockClient) APIImportTasksPost(ctx context.Context, request gen.OptAPIImportTasksPostReq) (gen.APIImportTasksPostRes, error) {
+// APIImporttasksPost mocks base method.
+func (m *MockClient) APIImporttasksPost(ctx context.Context, request gen.OptAPIImporttasksPostReq) (gen.APIImporttasksPostRes, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "APIImportTasksPost", ctx, request)
-	ret0, _ := ret[0].(gen.APIImportTasksPostRes)
+	ret := m.ctrl.Call(m, "APIImporttasksPost", ctx, request)
+	ret0, _ := ret[0].(gen.APIImporttasksPostRes)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// APIImportTasksPost indicates an expected call of APIImportTasksPost.
-func (mr *MockClientMockRecorder) APIImportTasksPost(ctx, request any) *MockClientAPIImportTasksPostCall {
+// APIImporttasksPost indicates an expected call of APIImporttasksPost.
+func (mr *MockClientMockRecorder) APIImporttasksPost(ctx, request any) *MockClientAPIImporttasksPostCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIImportTasksPost", reflect.TypeOf((*MockClient)(nil).APIImportTasksPost), ctx, request)
-	return &MockClientAPIImportTasksPostCall{Call: call}
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIImporttasksPost", reflect.TypeOf((*MockClient)(nil).APIImporttasksPost), ctx, request)
+	return &MockClientAPIImporttasksPostCall{Call: call}
 }
 
-// MockClientAPIImportTasksPostCall wrap *gomock.Call
-type MockClientAPIImportTasksPostCall struct {
+// MockClientAPIImporttasksPostCall wrap *gomock.Call
+type MockClientAPIImporttasksPostCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockClientAPIImportTasksPostCall) Return(arg0 gen.APIImportTasksPostRes, arg1 error) *MockClientAPIImportTasksPostCall {
+func (c *MockClientAPIImporttasksPostCall) Return(arg0 gen.APIImporttasksPostRes, arg1 error) *MockClientAPIImporttasksPostCall {
 	c.Call = c.Call.Return(arg0, arg1)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockClientAPIImportTasksPostCall) Do(f func(context.Context, gen.OptAPIImportTasksPostReq) (gen.APIImportTasksPostRes, error)) *MockClientAPIImportTasksPostCall {
+func (c *MockClientAPIImporttasksPostCall) Do(f func(context.Context, gen.OptAPIImporttasksPostReq) (gen.APIImporttasksPostRes, error)) *MockClientAPIImporttasksPostCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockClientAPIImportTasksPostCall) DoAndReturn(f func(context.Context, gen.OptAPIImportTasksPostReq) (gen.APIImportTasksPostRes, error)) *MockClientAPIImportTasksPostCall {
+func (c *MockClientAPIImporttasksPostCall) DoAndReturn(f func(context.Context, gen.OptAPIImporttasksPostReq) (gen.APIImporttasksPostRes, error)) *MockClientAPIImporttasksPostCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
