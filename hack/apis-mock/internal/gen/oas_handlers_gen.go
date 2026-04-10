@@ -32,17 +32,17 @@ func (c *codeRecorder) Unwrap() http.ResponseWriter {
 	return c.ResponseWriter
 }
 
-// handleAPIHealthzGetRequest handles GET /api/Healthz operation.
+// handleAPIHealthzGetRequest handles GET /api/healthz operation.
 //
 // Get health status information.
 //
-// GET /api/Healthz
+// GET /api/healthz
 func (s *Server) handleAPIHealthzGetRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/api/Healthz"),
+		semconv.HTTPRouteKey.String("/api/healthz"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -203,24 +203,23 @@ func (s *Server) handleAPIHealthzGetRequest(args [0]string, argsEscaped bool, w 
 	}
 }
 
-// handleAPIImportTasksIDImportRunsPostRequest handles POST /api/ImportTasks/{id}/importRuns operation.
+// handleAPIImporttasksIDCancelPostRequest handles POST /api/importtasks/{id}/cancel operation.
 //
-// Starts a new import run for the given import task.
-// Creates a new import execution ("run") resource.
+// Cancels an existing import task.
 //
-// POST /api/ImportTasks/{id}/importRuns
-func (s *Server) handleAPIImportTasksIDImportRunsPostRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /api/importtasks/{id}/cancel
+func (s *Server) handleAPIImporttasksIDCancelPostRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/api/ImportTasks/{id}/importRuns"),
+		semconv.HTTPRouteKey.String("/api/importtasks/{id}/cancel"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), APIImportTasksIDImportRunsPostOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), APIImporttasksIDCancelPostOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -275,7 +274,7 @@ func (s *Server) handleAPIImportTasksIDImportRunsPostRequest(args [1]string, arg
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: APIImportTasksIDImportRunsPostOperation,
+			Name: APIImporttasksIDCancelPostOperation,
 			ID:   "",
 		}
 	)
@@ -283,7 +282,7 @@ func (s *Server) handleAPIImportTasksIDImportRunsPostRequest(args [1]string, arg
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securitySmart(ctx, APIImportTasksIDImportRunsPostOperation, r)
+			sctx, ok, err := s.securitySmart(ctx, APIImporttasksIDCancelPostOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
@@ -323,7 +322,7 @@ func (s *Server) handleAPIImportTasksIDImportRunsPostRequest(args [1]string, arg
 			return
 		}
 	}
-	params, err := decodeAPIImportTasksIDImportRunsPostParams(args, argsEscaped, r)
+	params, err := decodeAPIImporttasksIDCancelPostParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -335,7 +334,7 @@ func (s *Server) handleAPIImportTasksIDImportRunsPostRequest(args [1]string, arg
 	}
 
 	var rawBody []byte
-	request, rawBody, close, err := s.decodeAPIImportTasksIDImportRunsPostRequest(r)
+	request, rawBody, close, err := s.decodeAPIImporttasksIDCancelPostRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -351,12 +350,12 @@ func (s *Server) handleAPIImportTasksIDImportRunsPostRequest(args [1]string, arg
 		}
 	}()
 
-	var response APIImportTasksIDImportRunsPostRes
+	var response APIImporttasksIDCancelPostRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    APIImportTasksIDImportRunsPostOperation,
-			OperationSummary: "Starts a new import run for the given import task.\r\nCreates a new import execution (\"run\") resource.",
+			OperationName:    APIImporttasksIDCancelPostOperation,
+			OperationSummary: "Cancels an existing import task.",
 			OperationID:      "",
 			Body:             request,
 			RawBody:          rawBody,
@@ -370,9 +369,9 @@ func (s *Server) handleAPIImportTasksIDImportRunsPostRequest(args [1]string, arg
 		}
 
 		type (
-			Request  = OptAPIImportTasksIDImportRunsPostReq
-			Params   = APIImportTasksIDImportRunsPostParams
-			Response = APIImportTasksIDImportRunsPostRes
+			Request  = APIImporttasksIDCancelPostReq
+			Params   = APIImporttasksIDCancelPostParams
+			Response = APIImporttasksIDCancelPostRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -381,14 +380,14 @@ func (s *Server) handleAPIImportTasksIDImportRunsPostRequest(args [1]string, arg
 		](
 			m,
 			mreq,
-			unpackAPIImportTasksIDImportRunsPostParams,
+			unpackAPIImporttasksIDCancelPostParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.APIImportTasksIDImportRunsPost(ctx, request, params)
+				response, err = s.h.APIImporttasksIDCancelPost(ctx, request, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.APIImportTasksIDImportRunsPost(ctx, request, params)
+		response, err = s.h.APIImporttasksIDCancelPost(ctx, request, params)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -396,7 +395,7 @@ func (s *Server) handleAPIImportTasksIDImportRunsPostRequest(args [1]string, arg
 		return
 	}
 
-	if err := encodeAPIImportTasksIDImportRunsPostResponse(response, w, span); err != nil {
+	if err := encodeAPIImporttasksIDCancelPostResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -405,23 +404,24 @@ func (s *Server) handleAPIImportTasksIDImportRunsPostRequest(args [1]string, arg
 	}
 }
 
-// handleAPIImportTasksIDImportRunsRunIdStatusGetRequest handles GET /api/ImportTasks/{id}/importRuns/{runId}/status operation.
+// handleAPIImporttasksIDImportrunsPostRequest handles POST /api/importtasks/{id}/importruns operation.
 //
-// Gets the status of a specific import run.
+// Starts a new import run for the given import task.
+// Creates a new import execution ("run") resource.
 //
-// GET /api/ImportTasks/{id}/importRuns/{runId}/status
-func (s *Server) handleAPIImportTasksIDImportRunsRunIdStatusGetRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /api/importtasks/{id}/importruns
+func (s *Server) handleAPIImporttasksIDImportrunsPostRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/api/ImportTasks/{id}/importRuns/{runId}/status"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/api/importtasks/{id}/importruns"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), APIImportTasksIDImportRunsRunIdStatusGetOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), APIImporttasksIDImportrunsPostOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -476,7 +476,7 @@ func (s *Server) handleAPIImportTasksIDImportRunsRunIdStatusGetRequest(args [2]s
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: APIImportTasksIDImportRunsRunIdStatusGetOperation,
+			Name: APIImporttasksIDImportrunsPostOperation,
 			ID:   "",
 		}
 	)
@@ -484,7 +484,7 @@ func (s *Server) handleAPIImportTasksIDImportRunsRunIdStatusGetRequest(args [2]s
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securitySmart(ctx, APIImportTasksIDImportRunsRunIdStatusGetOperation, r)
+			sctx, ok, err := s.securitySmart(ctx, APIImporttasksIDImportrunsPostOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
@@ -524,7 +524,209 @@ func (s *Server) handleAPIImportTasksIDImportRunsRunIdStatusGetRequest(args [2]s
 			return
 		}
 	}
-	params, err := decodeAPIImportTasksIDImportRunsRunIdStatusGetParams(args, argsEscaped, r)
+	params, err := decodeAPIImporttasksIDImportrunsPostParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeAPIImporttasksIDImportrunsPostRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response APIImporttasksIDImportrunsPostRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    APIImporttasksIDImportrunsPostOperation,
+			OperationSummary: "Starts a new import run for the given import task.\r\nCreates a new import execution (\"run\") resource.",
+			OperationID:      "",
+			Body:             request,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "id",
+					In:   "path",
+				}: params.ID,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = OptAPIImporttasksIDImportrunsPostReq
+			Params   = APIImporttasksIDImportrunsPostParams
+			Response = APIImporttasksIDImportrunsPostRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackAPIImporttasksIDImportrunsPostParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.APIImporttasksIDImportrunsPost(ctx, request, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.APIImporttasksIDImportrunsPost(ctx, request, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeAPIImporttasksIDImportrunsPostResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleAPIImporttasksIDImportrunsRunIdStatusGetRequest handles GET /api/importtasks/{id}/importruns/{runId}/status operation.
+//
+// If the import has started in ACTApro (TaskId is present), the status is fetched from ACTApro.
+// Otherwise, the local status from the database is returned.
+//
+// GET /api/importtasks/{id}/importruns/{runId}/status
+func (s *Server) handleAPIImporttasksIDImportrunsRunIdStatusGetRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/api/importtasks/{id}/importruns/{runId}/status"),
+	}
+	// Add attributes from config.
+	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), APIImporttasksIDImportrunsRunIdStatusGetOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: APIImporttasksIDImportrunsRunIdStatusGetOperation,
+			ID:   "",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securitySmart(ctx, APIImporttasksIDImportrunsRunIdStatusGetOperation, r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "Smart",
+					Err:              err,
+				}
+				defer recordError("Security:Smart", err)
+				s.cfg.ErrorHandler(ctx, w, r, err)
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			defer recordError("Security", err)
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+	}
+	params, err := decodeAPIImporttasksIDImportrunsRunIdStatusGetParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -537,11 +739,11 @@ func (s *Server) handleAPIImportTasksIDImportRunsRunIdStatusGetRequest(args [2]s
 
 	var rawBody []byte
 
-	var response APIImportTasksIDImportRunsRunIdStatusGetRes
+	var response APIImporttasksIDImportrunsRunIdStatusGetRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    APIImportTasksIDImportRunsRunIdStatusGetOperation,
+			OperationName:    APIImporttasksIDImportrunsRunIdStatusGetOperation,
 			OperationSummary: "Gets the status of a specific import run.",
 			OperationID:      "",
 			Body:             nil,
@@ -561,8 +763,8 @@ func (s *Server) handleAPIImportTasksIDImportRunsRunIdStatusGetRequest(args [2]s
 
 		type (
 			Request  = struct{}
-			Params   = APIImportTasksIDImportRunsRunIdStatusGetParams
-			Response = APIImportTasksIDImportRunsRunIdStatusGetRes
+			Params   = APIImporttasksIDImportrunsRunIdStatusGetParams
+			Response = APIImporttasksIDImportrunsRunIdStatusGetRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -571,14 +773,14 @@ func (s *Server) handleAPIImportTasksIDImportRunsRunIdStatusGetRequest(args [2]s
 		](
 			m,
 			mreq,
-			unpackAPIImportTasksIDImportRunsRunIdStatusGetParams,
+			unpackAPIImporttasksIDImportrunsRunIdStatusGetParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.APIImportTasksIDImportRunsRunIdStatusGet(ctx, params)
+				response, err = s.h.APIImporttasksIDImportrunsRunIdStatusGet(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.APIImportTasksIDImportRunsRunIdStatusGet(ctx, params)
+		response, err = s.h.APIImporttasksIDImportrunsRunIdStatusGet(ctx, params)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -586,7 +788,7 @@ func (s *Server) handleAPIImportTasksIDImportRunsRunIdStatusGetRequest(args [2]s
 		return
 	}
 
-	if err := encodeAPIImportTasksIDImportRunsRunIdStatusGetResponse(response, w, span); err != nil {
+	if err := encodeAPIImporttasksIDImportrunsRunIdStatusGetResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -595,224 +797,24 @@ func (s *Server) handleAPIImportTasksIDImportRunsRunIdStatusGetRequest(args [2]s
 	}
 }
 
-// handleAPIImportTasksIDPatchRequest handles PATCH /api/ImportTasks/{id} operation.
+// handleAPIImporttasksIDStatusGetRequest handles GET /api/importtasks/{id}/status operation.
 //
-// Updates the status of an existing import task.
+// This endpoint returns the status of the import task analysis phase only.
+// For import run progress and results, use the import run status endpoint.
 //
-// PATCH /api/ImportTasks/{id}
-func (s *Server) handleAPIImportTasksIDPatchRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
-	statusWriter := &codeRecorder{ResponseWriter: w}
-	w = statusWriter
-	otelAttrs := []attribute.KeyValue{
-		semconv.HTTPRequestMethodKey.String("PATCH"),
-		semconv.HTTPRouteKey.String("/api/ImportTasks/{id}"),
-	}
-	// Add attributes from config.
-	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
-
-	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), APIImportTasksIDPatchOperation,
-		trace.WithAttributes(otelAttrs...),
-		serverSpanKind,
-	)
-	defer span.End()
-
-	// Add Labeler to context.
-	labeler := &Labeler{attrs: otelAttrs}
-	ctx = contextWithLabeler(ctx, labeler)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		elapsedDuration := time.Since(startTime)
-
-		attrSet := labeler.AttributeSet()
-		attrs := attrSet.ToSlice()
-		code := statusWriter.status
-		if code != 0 {
-			codeAttr := semconv.HTTPResponseStatusCode(code)
-			attrs = append(attrs, codeAttr)
-			span.SetAttributes(codeAttr)
-		}
-		attrOpt := metric.WithAttributes(attrs...)
-
-		// Increment request counter.
-		s.requests.Add(ctx, 1, attrOpt)
-
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
-	}()
-
-	var (
-		recordError = func(stage string, err error) {
-			span.RecordError(err)
-
-			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
-			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
-			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
-			// max redirects exceeded), in which case status MUST be set to Error.
-			code := statusWriter.status
-			if code < 100 || code >= 500 {
-				span.SetStatus(codes.Error, stage)
-			}
-
-			attrSet := labeler.AttributeSet()
-			attrs := attrSet.ToSlice()
-			if code != 0 {
-				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
-			}
-
-			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
-		}
-		err          error
-		opErrContext = ogenerrors.OperationContext{
-			Name: APIImportTasksIDPatchOperation,
-			ID:   "",
-		}
-	)
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			sctx, ok, err := s.securitySmart(ctx, APIImportTasksIDPatchOperation, r)
-			if err != nil {
-				err = &ogenerrors.SecurityError{
-					OperationContext: opErrContext,
-					Security:         "Smart",
-					Err:              err,
-				}
-				defer recordError("Security:Smart", err)
-				s.cfg.ErrorHandler(ctx, w, r, err)
-				return
-			}
-			if ok {
-				satisfied[0] |= 1 << 0
-				ctx = sctx
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			err = &ogenerrors.SecurityError{
-				OperationContext: opErrContext,
-				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
-			}
-			defer recordError("Security", err)
-			s.cfg.ErrorHandler(ctx, w, r, err)
-			return
-		}
-	}
-	params, err := decodeAPIImportTasksIDPatchParams(args, argsEscaped, r)
-	if err != nil {
-		err = &ogenerrors.DecodeParamsError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeParams", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	var rawBody []byte
-	request, rawBody, close, err := s.decodeAPIImportTasksIDPatchRequest(r)
-	if err != nil {
-		err = &ogenerrors.DecodeRequestError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		defer recordError("DecodeRequest", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-	defer func() {
-		if err := close(); err != nil {
-			recordError("CloseRequest", err)
-		}
-	}()
-
-	var response APIImportTasksIDPatchRes
-	if m := s.cfg.Middleware; m != nil {
-		mreq := middleware.Request{
-			Context:          ctx,
-			OperationName:    APIImportTasksIDPatchOperation,
-			OperationSummary: "Updates the status of an existing import task.",
-			OperationID:      "",
-			Body:             request,
-			RawBody:          rawBody,
-			Params: middleware.Parameters{
-				{
-					Name: "id",
-					In:   "path",
-				}: params.ID,
-			},
-			Raw: r,
-		}
-
-		type (
-			Request  = APIImportTasksIDPatchReq
-			Params   = APIImportTasksIDPatchParams
-			Response = APIImportTasksIDPatchRes
-		)
-		response, err = middleware.HookMiddleware[
-			Request,
-			Params,
-			Response,
-		](
-			m,
-			mreq,
-			unpackAPIImportTasksIDPatchParams,
-			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.APIImportTasksIDPatch(ctx, request, params)
-				return response, err
-			},
-		)
-	} else {
-		response, err = s.h.APIImportTasksIDPatch(ctx, request, params)
-	}
-	if err != nil {
-		defer recordError("Internal", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
-
-	if err := encodeAPIImportTasksIDPatchResponse(response, w, span); err != nil {
-		defer recordError("EncodeResponse", err)
-		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
-			s.cfg.ErrorHandler(ctx, w, r, err)
-		}
-		return
-	}
-}
-
-// handleAPIImportTasksIDStatusGetRequest handles GET /api/ImportTasks/{id}/status operation.
-//
-// Query the status of an ongoing analysis or import.
-//
-// GET /api/ImportTasks/{id}/status
-func (s *Server) handleAPIImportTasksIDStatusGetRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// GET /api/importtasks/{id}/status
+func (s *Server) handleAPIImporttasksIDStatusGetRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/api/ImportTasks/{id}/status"),
+		semconv.HTTPRouteKey.String("/api/importtasks/{id}/status"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), APIImportTasksIDStatusGetOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), APIImporttasksIDStatusGetOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -867,7 +869,7 @@ func (s *Server) handleAPIImportTasksIDStatusGetRequest(args [1]string, argsEsca
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: APIImportTasksIDStatusGetOperation,
+			Name: APIImporttasksIDStatusGetOperation,
 			ID:   "",
 		}
 	)
@@ -875,7 +877,7 @@ func (s *Server) handleAPIImportTasksIDStatusGetRequest(args [1]string, argsEsca
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securitySmart(ctx, APIImportTasksIDStatusGetOperation, r)
+			sctx, ok, err := s.securitySmart(ctx, APIImporttasksIDStatusGetOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
@@ -915,7 +917,7 @@ func (s *Server) handleAPIImportTasksIDStatusGetRequest(args [1]string, argsEsca
 			return
 		}
 	}
-	params, err := decodeAPIImportTasksIDStatusGetParams(args, argsEscaped, r)
+	params, err := decodeAPIImporttasksIDStatusGetParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
 			OperationContext: opErrContext,
@@ -928,12 +930,12 @@ func (s *Server) handleAPIImportTasksIDStatusGetRequest(args [1]string, argsEsca
 
 	var rawBody []byte
 
-	var response *ImportTaskStatusResponse
+	var response APIImporttasksIDStatusGetRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    APIImportTasksIDStatusGetOperation,
-			OperationSummary: "Query the status of an ongoing analysis or import",
+			OperationName:    APIImporttasksIDStatusGetOperation,
+			OperationSummary: "Query the status of an ongoing analysis (import task).",
 			OperationID:      "",
 			Body:             nil,
 			RawBody:          rawBody,
@@ -948,8 +950,8 @@ func (s *Server) handleAPIImportTasksIDStatusGetRequest(args [1]string, argsEsca
 
 		type (
 			Request  = struct{}
-			Params   = APIImportTasksIDStatusGetParams
-			Response = *ImportTaskStatusResponse
+			Params   = APIImporttasksIDStatusGetParams
+			Response = APIImporttasksIDStatusGetRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -958,14 +960,14 @@ func (s *Server) handleAPIImportTasksIDStatusGetRequest(args [1]string, argsEsca
 		](
 			m,
 			mreq,
-			unpackAPIImportTasksIDStatusGetParams,
+			unpackAPIImporttasksIDStatusGetParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.APIImportTasksIDStatusGet(ctx, params)
+				response, err = s.h.APIImporttasksIDStatusGet(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.APIImportTasksIDStatusGet(ctx, params)
+		response, err = s.h.APIImporttasksIDStatusGet(ctx, params)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -973,7 +975,7 @@ func (s *Server) handleAPIImportTasksIDStatusGetRequest(args [1]string, argsEsca
 		return
 	}
 
-	if err := encodeAPIImportTasksIDStatusGetResponse(response, w, span); err != nil {
+	if err := encodeAPIImporttasksIDStatusGetResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)
@@ -982,23 +984,23 @@ func (s *Server) handleAPIImportTasksIDStatusGetRequest(args [1]string, argsEsca
 	}
 }
 
-// handleAPIImportTasksPostRequest handles POST /api/ImportTasks operation.
+// handleAPIImporttasksPostRequest handles POST /api/importtasks operation.
 //
 // Creates a new import task.
 //
-// POST /api/ImportTasks
-func (s *Server) handleAPIImportTasksPostRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /api/importtasks
+func (s *Server) handleAPIImporttasksPostRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/api/ImportTasks"),
+		semconv.HTTPRouteKey.String("/api/importtasks"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
 
 	// Start a span for this request.
-	ctx, span := s.cfg.Tracer.Start(r.Context(), APIImportTasksPostOperation,
+	ctx, span := s.cfg.Tracer.Start(r.Context(), APIImporttasksPostOperation,
 		trace.WithAttributes(otelAttrs...),
 		serverSpanKind,
 	)
@@ -1053,7 +1055,7 @@ func (s *Server) handleAPIImportTasksPostRequest(args [0]string, argsEscaped boo
 		}
 		err          error
 		opErrContext = ogenerrors.OperationContext{
-			Name: APIImportTasksPostOperation,
+			Name: APIImporttasksPostOperation,
 			ID:   "",
 		}
 	)
@@ -1061,7 +1063,7 @@ func (s *Server) handleAPIImportTasksPostRequest(args [0]string, argsEscaped boo
 		type bitset = [1]uint8
 		var satisfied bitset
 		{
-			sctx, ok, err := s.securitySmart(ctx, APIImportTasksPostOperation, r)
+			sctx, ok, err := s.securitySmart(ctx, APIImporttasksPostOperation, r)
 			if err != nil {
 				err = &ogenerrors.SecurityError{
 					OperationContext: opErrContext,
@@ -1103,7 +1105,7 @@ func (s *Server) handleAPIImportTasksPostRequest(args [0]string, argsEscaped boo
 	}
 
 	var rawBody []byte
-	request, rawBody, close, err := s.decodeAPIImportTasksPostRequest(r)
+	request, rawBody, close, err := s.decodeAPIImporttasksPostRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
 			OperationContext: opErrContext,
@@ -1119,11 +1121,11 @@ func (s *Server) handleAPIImportTasksPostRequest(args [0]string, argsEscaped boo
 		}
 	}()
 
-	var response APIImportTasksPostRes
+	var response APIImporttasksPostRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
-			OperationName:    APIImportTasksPostOperation,
+			OperationName:    APIImporttasksPostOperation,
 			OperationSummary: "Creates a new import task.",
 			OperationID:      "",
 			Body:             request,
@@ -1133,9 +1135,9 @@ func (s *Server) handleAPIImportTasksPostRequest(args [0]string, argsEscaped boo
 		}
 
 		type (
-			Request  = OptAPIImportTasksPostReq
+			Request  = OptAPIImporttasksPostReq
 			Params   = struct{}
-			Response = APIImportTasksPostRes
+			Response = APIImporttasksPostRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -1146,12 +1148,12 @@ func (s *Server) handleAPIImportTasksPostRequest(args [0]string, argsEscaped boo
 			mreq,
 			nil,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.APIImportTasksPost(ctx, request)
+				response, err = s.h.APIImporttasksPost(ctx, request)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.APIImportTasksPost(ctx, request)
+		response, err = s.h.APIImporttasksPost(ctx, request)
 	}
 	if err != nil {
 		defer recordError("Internal", err)
@@ -1159,7 +1161,7 @@ func (s *Server) handleAPIImportTasksPostRequest(args [0]string, argsEscaped boo
 		return
 	}
 
-	if err := encodeAPIImportTasksPostResponse(response, w, span); err != nil {
+	if err := encodeAPIImporttasksPostResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)

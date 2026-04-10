@@ -18,8 +18,127 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-func (s *Server) decodeAPIImportTasksIDImportRunsPostRequest(r *http.Request) (
-	req OptAPIImportTasksIDImportRunsPostReq,
+func (s *Server) decodeAPIImporttasksIDCancelPostRequest(r *http.Request) (
+	req APIImporttasksIDCancelPostReq,
+	rawBody []byte,
+	close func() error,
+	rerr error,
+) {
+	var closers []func() error
+	close = func() error {
+		var merr error
+		// Close in reverse order, to match defer behavior.
+		for i := len(closers) - 1; i >= 0; i-- {
+			c := closers[i]
+			merr = errors.Join(merr, c())
+		}
+		return merr
+	}
+	defer func() {
+		if rerr != nil {
+			rerr = errors.Join(rerr, close())
+		}
+	}()
+	req = &APIImporttasksIDCancelPostReqEmptyBody{}
+	if _, ok := r.Header["Content-Type"]; !ok && r.ContentLength == 0 {
+		return req, rawBody, close, nil
+	}
+	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil {
+		return req, rawBody, close, errors.Wrap(err, "parse media type")
+	}
+	switch {
+	case ht.MatchContentType("application/*+json", ct):
+		if r.ContentLength == 0 {
+			return req, rawBody, close, nil
+		}
+		buf, err := io.ReadAll(r.Body)
+		defer func() {
+			_ = r.Body.Close()
+		}()
+		if err != nil {
+			return req, rawBody, close, err
+		}
+
+		// Reset the body to allow for downstream reading.
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
+
+		if len(buf) == 0 {
+			return req, rawBody, close, nil
+		}
+
+		rawBody = append(rawBody, buf...)
+		d := jx.DecodeBytes(buf)
+
+		var request CancelImportTaskRequest
+		if err := func() error {
+			if err := request.Decode(d); err != nil {
+				return err
+			}
+			if err := d.Skip(); err != io.EOF {
+				return errors.New("unexpected trailing data")
+			}
+			return nil
+		}(); err != nil {
+			err = &ogenerrors.DecodeBodyError{
+				ContentType: ct,
+				Body:        buf,
+				Err:         err,
+			}
+			return req, rawBody, close, err
+		}
+		wrapped := CancelImportTaskRequestWithContentType{
+			ContentType: ct,
+			Content:     request,
+		}
+		return &wrapped, rawBody, close, nil
+	case ct == "application/json":
+		if r.ContentLength == 0 {
+			return req, rawBody, close, nil
+		}
+		buf, err := io.ReadAll(r.Body)
+		defer func() {
+			_ = r.Body.Close()
+		}()
+		if err != nil {
+			return req, rawBody, close, err
+		}
+
+		// Reset the body to allow for downstream reading.
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
+
+		if len(buf) == 0 {
+			return req, rawBody, close, nil
+		}
+
+		rawBody = append(rawBody, buf...)
+		d := jx.DecodeBytes(buf)
+
+		var request CancelImportTaskRequest
+		if err := func() error {
+			if err := request.Decode(d); err != nil {
+				return err
+			}
+			if err := d.Skip(); err != io.EOF {
+				return errors.New("unexpected trailing data")
+			}
+			return nil
+		}(); err != nil {
+			err = &ogenerrors.DecodeBodyError{
+				ContentType: ct,
+				Body:        buf,
+				Err:         err,
+			}
+			return req, rawBody, close, err
+		}
+		return &request, rawBody, close, nil
+	default:
+		return req, rawBody, close, validate.InvalidContentType(ct)
+	}
+}
+
+func (s *Server) decodeAPIImporttasksIDImportrunsPostRequest(r *http.Request) (
+	req OptAPIImporttasksIDImportrunsPostReq,
 	rawBody []byte,
 	close func() error,
 	rerr error,
@@ -63,9 +182,9 @@ func (s *Server) decodeAPIImportTasksIDImportRunsPostRequest(r *http.Request) (
 		form := url.Values(r.MultipartForm.Value)
 		_ = form
 
-		var request OptAPIImportTasksIDImportRunsPostReq
+		var request OptAPIImporttasksIDImportrunsPostReq
 		{
-			var optForm APIImportTasksIDImportRunsPostReq
+			var optForm APIImporttasksIDImportrunsPostReq
 			q := uri.NewQueryDecoder(form)
 			{
 				cfg := uri.QueryParameterDecodingConfig{
@@ -115,6 +234,33 @@ func (s *Server) decodeAPIImportTasksIDImportRunsPostRequest(r *http.Request) (
 				}
 			}
 			{
+				cfg := uri.QueryParameterDecodingConfig{
+					Name:    "username",
+					Style:   uri.QueryStyleForm,
+					Explode: true,
+				}
+				if err := q.HasParam(cfg); err == nil {
+					if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						optForm.Username = c
+						return nil
+					}); err != nil {
+						return req, rawBody, close, errors.Wrap(err, "decode \"username\"")
+					}
+				} else {
+					return req, rawBody, close, errors.Wrap(err, "query")
+				}
+			}
+			{
 				if err := func() error {
 					files, ok := r.MultipartForm.File["file"]
 					if !ok || len(files) < 1 {
@@ -138,7 +284,7 @@ func (s *Server) decodeAPIImportTasksIDImportRunsPostRequest(r *http.Request) (
 					return req, rawBody, close, errors.Wrap(err, "decode \"file\"")
 				}
 			}
-			request = OptAPIImportTasksIDImportRunsPostReq{
+			request = OptAPIImporttasksIDImportrunsPostReq{
 				Value: optForm,
 				Set:   true,
 			}
@@ -149,143 +295,8 @@ func (s *Server) decodeAPIImportTasksIDImportRunsPostRequest(r *http.Request) (
 	}
 }
 
-func (s *Server) decodeAPIImportTasksIDPatchRequest(r *http.Request) (
-	req APIImportTasksIDPatchReq,
-	rawBody []byte,
-	close func() error,
-	rerr error,
-) {
-	var closers []func() error
-	close = func() error {
-		var merr error
-		// Close in reverse order, to match defer behavior.
-		for i := len(closers) - 1; i >= 0; i-- {
-			c := closers[i]
-			merr = errors.Join(merr, c())
-		}
-		return merr
-	}
-	defer func() {
-		if rerr != nil {
-			rerr = errors.Join(rerr, close())
-		}
-	}()
-	req = &APIImportTasksIDPatchReqEmptyBody{}
-	if _, ok := r.Header["Content-Type"]; !ok && r.ContentLength == 0 {
-		return req, rawBody, close, nil
-	}
-	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
-	if err != nil {
-		return req, rawBody, close, errors.Wrap(err, "parse media type")
-	}
-	switch {
-	case ht.MatchContentType("application/*+json", ct):
-		if r.ContentLength == 0 {
-			return req, rawBody, close, nil
-		}
-		buf, err := io.ReadAll(r.Body)
-		defer func() {
-			_ = r.Body.Close()
-		}()
-		if err != nil {
-			return req, rawBody, close, err
-		}
-
-		// Reset the body to allow for downstream reading.
-		r.Body = io.NopCloser(bytes.NewBuffer(buf))
-
-		if len(buf) == 0 {
-			return req, rawBody, close, nil
-		}
-
-		rawBody = append(rawBody, buf...)
-		d := jx.DecodeBytes(buf)
-
-		var request CancelImportTaskRequest
-		if err := func() error {
-			if err := request.Decode(d); err != nil {
-				return err
-			}
-			if err := d.Skip(); err != io.EOF {
-				return errors.New("unexpected trailing data")
-			}
-			return nil
-		}(); err != nil {
-			err = &ogenerrors.DecodeBodyError{
-				ContentType: ct,
-				Body:        buf,
-				Err:         err,
-			}
-			return req, rawBody, close, err
-		}
-		if err := func() error {
-			if err := request.Validate(); err != nil {
-				return err
-			}
-			return nil
-		}(); err != nil {
-			return req, rawBody, close, errors.Wrap(err, "validate")
-		}
-		wrapped := CancelImportTaskRequestWithContentType{
-			ContentType: ct,
-			Content:     request,
-		}
-		return &wrapped, rawBody, close, nil
-	case ct == "application/json":
-		if r.ContentLength == 0 {
-			return req, rawBody, close, nil
-		}
-		buf, err := io.ReadAll(r.Body)
-		defer func() {
-			_ = r.Body.Close()
-		}()
-		if err != nil {
-			return req, rawBody, close, err
-		}
-
-		// Reset the body to allow for downstream reading.
-		r.Body = io.NopCloser(bytes.NewBuffer(buf))
-
-		if len(buf) == 0 {
-			return req, rawBody, close, nil
-		}
-
-		rawBody = append(rawBody, buf...)
-		d := jx.DecodeBytes(buf)
-
-		var request CancelImportTaskRequest
-		if err := func() error {
-			if err := request.Decode(d); err != nil {
-				return err
-			}
-			if err := d.Skip(); err != io.EOF {
-				return errors.New("unexpected trailing data")
-			}
-			return nil
-		}(); err != nil {
-			err = &ogenerrors.DecodeBodyError{
-				ContentType: ct,
-				Body:        buf,
-				Err:         err,
-			}
-			return req, rawBody, close, err
-		}
-		if err := func() error {
-			if err := request.Validate(); err != nil {
-				return err
-			}
-			return nil
-		}(); err != nil {
-			return req, rawBody, close, errors.Wrap(err, "validate")
-		}
-		return &request, rawBody, close, nil
-	default:
-		return req, rawBody, close, validate.InvalidContentType(ct)
-	}
-}
-
-func (s *Server) decodeAPIImportTasksPostRequest(r *http.Request) (
-	req OptAPIImportTasksPostReq,
+func (s *Server) decodeAPIImporttasksPostRequest(r *http.Request) (
+	req OptAPIImporttasksPostReq,
 	rawBody []byte,
 	close func() error,
 	rerr error,
@@ -329,9 +340,9 @@ func (s *Server) decodeAPIImportTasksPostRequest(r *http.Request) (
 		form := url.Values(r.MultipartForm.Value)
 		_ = form
 
-		var request OptAPIImportTasksPostReq
+		var request OptAPIImporttasksPostReq
 		{
-			var optForm APIImportTasksPostReq
+			var optForm APIImporttasksPostReq
 			q := uri.NewQueryDecoder(form)
 			{
 				cfg := uri.QueryParameterDecodingConfig{
@@ -419,7 +430,7 @@ func (s *Server) decodeAPIImportTasksPostRequest(r *http.Request) (
 					return req, rawBody, close, errors.Wrap(err, "decode \"file\"")
 				}
 			}
-			request = OptAPIImportTasksPostReq{
+			request = OptAPIImporttasksPostReq{
 				Value: optForm,
 				Set:   true,
 			}

@@ -8,43 +8,45 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// APIHealthzGet implements GET /api/Healthz operation.
+	// APIHealthzGet implements GET /api/healthz operation.
 	//
 	// Get health status information.
 	//
-	// GET /api/Healthz
+	// GET /api/healthz
 	APIHealthzGet(ctx context.Context) (APIHealthzGetRes, error)
-	// APIImportTasksIDImportRunsPost implements POST /api/ImportTasks/{id}/importRuns operation.
+	// APIImporttasksIDCancelPost implements POST /api/importtasks/{id}/cancel operation.
+	//
+	// Cancels an existing import task.
+	//
+	// POST /api/importtasks/{id}/cancel
+	APIImporttasksIDCancelPost(ctx context.Context, req APIImporttasksIDCancelPostReq, params APIImporttasksIDCancelPostParams) (APIImporttasksIDCancelPostRes, error)
+	// APIImporttasksIDImportrunsPost implements POST /api/importtasks/{id}/importruns operation.
 	//
 	// Starts a new import run for the given import task.
 	// Creates a new import execution ("run") resource.
 	//
-	// POST /api/ImportTasks/{id}/importRuns
-	APIImportTasksIDImportRunsPost(ctx context.Context, req OptAPIImportTasksIDImportRunsPostReq, params APIImportTasksIDImportRunsPostParams) (APIImportTasksIDImportRunsPostRes, error)
-	// APIImportTasksIDImportRunsRunIdStatusGet implements GET /api/ImportTasks/{id}/importRuns/{runId}/status operation.
+	// POST /api/importtasks/{id}/importruns
+	APIImporttasksIDImportrunsPost(ctx context.Context, req OptAPIImporttasksIDImportrunsPostReq, params APIImporttasksIDImportrunsPostParams) (APIImporttasksIDImportrunsPostRes, error)
+	// APIImporttasksIDImportrunsRunIdStatusGet implements GET /api/importtasks/{id}/importruns/{runId}/status operation.
 	//
-	// Gets the status of a specific import run.
+	// If the import has started in ACTApro (TaskId is present), the status is fetched from ACTApro.
+	// Otherwise, the local status from the database is returned.
 	//
-	// GET /api/ImportTasks/{id}/importRuns/{runId}/status
-	APIImportTasksIDImportRunsRunIdStatusGet(ctx context.Context, params APIImportTasksIDImportRunsRunIdStatusGetParams) (APIImportTasksIDImportRunsRunIdStatusGetRes, error)
-	// APIImportTasksIDPatch implements PATCH /api/ImportTasks/{id} operation.
+	// GET /api/importtasks/{id}/importruns/{runId}/status
+	APIImporttasksIDImportrunsRunIdStatusGet(ctx context.Context, params APIImporttasksIDImportrunsRunIdStatusGetParams) (APIImporttasksIDImportrunsRunIdStatusGetRes, error)
+	// APIImporttasksIDStatusGet implements GET /api/importtasks/{id}/status operation.
 	//
-	// Updates the status of an existing import task.
+	// This endpoint returns the status of the import task analysis phase only.
+	// For import run progress and results, use the import run status endpoint.
 	//
-	// PATCH /api/ImportTasks/{id}
-	APIImportTasksIDPatch(ctx context.Context, req APIImportTasksIDPatchReq, params APIImportTasksIDPatchParams) (APIImportTasksIDPatchRes, error)
-	// APIImportTasksIDStatusGet implements GET /api/ImportTasks/{id}/status operation.
-	//
-	// Query the status of an ongoing analysis or import.
-	//
-	// GET /api/ImportTasks/{id}/status
-	APIImportTasksIDStatusGet(ctx context.Context, params APIImportTasksIDStatusGetParams) (*ImportTaskStatusResponse, error)
-	// APIImportTasksPost implements POST /api/ImportTasks operation.
+	// GET /api/importtasks/{id}/status
+	APIImporttasksIDStatusGet(ctx context.Context, params APIImporttasksIDStatusGetParams) (APIImporttasksIDStatusGetRes, error)
+	// APIImporttasksPost implements POST /api/importtasks operation.
 	//
 	// Creates a new import task.
 	//
-	// POST /api/ImportTasks
-	APIImportTasksPost(ctx context.Context, req OptAPIImportTasksPostReq) (APIImportTasksPostRes, error)
+	// POST /api/importtasks
+	APIImporttasksPost(ctx context.Context, req OptAPIImporttasksPostReq) (APIImporttasksPostRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

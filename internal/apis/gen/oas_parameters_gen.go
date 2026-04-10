@@ -2,26 +2,28 @@
 
 package gen
 
-// APIImportTasksIDImportRunsPostParams is parameters of POST /api/ImportTasks/{id}/importRuns operation.
-type APIImportTasksIDImportRunsPostParams struct {
+// APIImporttasksIDCancelPostParams is parameters of POST /api/importtasks/{id}/cancel operation.
+type APIImporttasksIDCancelPostParams struct {
+	// The unique identifier of the import task to cancel.
+	ID string
+}
+
+// APIImporttasksIDImportrunsPostParams is parameters of POST /api/importtasks/{id}/importruns operation.
+type APIImporttasksIDImportrunsPostParams struct {
 	// ImportTask identifier.
 	ID string
 }
 
-// APIImportTasksIDImportRunsRunIdStatusGetParams is parameters of GET /api/ImportTasks/{id}/importRuns/{runId}/status operation.
-type APIImportTasksIDImportRunsRunIdStatusGetParams struct {
-	ID    string
+// APIImporttasksIDImportrunsRunIdStatusGetParams is parameters of GET /api/importtasks/{id}/importruns/{runId}/status operation.
+type APIImporttasksIDImportrunsRunIdStatusGetParams struct {
+	// The import task identifier.
+	ID string
+	// The import run identifier.
 	RunId string
 }
 
-// APIImportTasksIDPatchParams is parameters of PATCH /api/ImportTasks/{id} operation.
-type APIImportTasksIDPatchParams struct {
-	// The unique identifier of the import task to be updated.
-	ID string
-}
-
-// APIImportTasksIDStatusGetParams is parameters of GET /api/ImportTasks/{id}/status operation.
-type APIImportTasksIDStatusGetParams struct {
+// APIImporttasksIDStatusGetParams is parameters of GET /api/importtasks/{id}/status operation.
+type APIImporttasksIDStatusGetParams struct {
 	// The id of the import task to query.
 	ID string
 }

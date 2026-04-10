@@ -7,9 +7,9 @@ type OperationName = string
 
 const (
 	APIHealthzGetOperation                            OperationName = "APIHealthzGet"
-	APIImportTasksIDImportRunsPostOperation           OperationName = "APIImportTasksIDImportRunsPost"
-	APIImportTasksIDImportRunsRunIdStatusGetOperation OperationName = "APIImportTasksIDImportRunsRunIdStatusGet"
-	APIImportTasksIDPatchOperation                    OperationName = "APIImportTasksIDPatch"
-	APIImportTasksIDStatusGetOperation                OperationName = "APIImportTasksIDStatusGet"
-	APIImportTasksPostOperation                       OperationName = "APIImportTasksPost"
+	APIImporttasksIDCancelPostOperation               OperationName = "APIImporttasksIDCancelPost"
+	APIImporttasksIDImportrunsPostOperation           OperationName = "APIImporttasksIDImportrunsPost"
+	APIImporttasksIDImportrunsRunIdStatusGetOperation OperationName = "APIImporttasksIDImportrunsRunIdStatusGet"
+	APIImporttasksIDStatusGetOperation                OperationName = "APIImporttasksIDStatusGet"
+	APIImporttasksPostOperation                       OperationName = "APIImporttasksPost"
 )

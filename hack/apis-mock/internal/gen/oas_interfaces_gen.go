@@ -5,22 +5,26 @@ type APIHealthzGetRes interface {
 	aPIHealthzGetRes()
 }
 
-type APIImportTasksIDImportRunsPostRes interface {
-	aPIImportTasksIDImportRunsPostRes()
+type APIImporttasksIDCancelPostReq interface {
+	aPIImporttasksIDCancelPostReq()
 }
 
-type APIImportTasksIDImportRunsRunIdStatusGetRes interface {
-	aPIImportTasksIDImportRunsRunIdStatusGetRes()
+type APIImporttasksIDCancelPostRes interface {
+	aPIImporttasksIDCancelPostRes()
 }
 
-type APIImportTasksIDPatchReq interface {
-	aPIImportTasksIDPatchReq()
+type APIImporttasksIDImportrunsPostRes interface {
+	aPIImporttasksIDImportrunsPostRes()
 }
 
-type APIImportTasksIDPatchRes interface {
-	aPIImportTasksIDPatchRes()
+type APIImporttasksIDImportrunsRunIdStatusGetRes interface {
+	aPIImporttasksIDImportrunsRunIdStatusGetRes()
 }
 
-type APIImportTasksPostRes interface {
-	aPIImportTasksPostRes()
+type APIImporttasksIDStatusGetRes interface {
+	aPIImporttasksIDStatusGetRes()
+}
+
+type APIImporttasksPostRes interface {
+	aPIImporttasksPostRes()
 }

@@ -3,11 +3,8 @@
 package gen
 
 import (
-	"time"
-
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
-	"github.com/google/uuid"
 	ht "github.com/ogen-go/ogen/http"
 )
 
@@ -19,80 +16,121 @@ type APIHealthzGetServiceUnavailable HealthStatusResult
 
 func (*APIHealthzGetServiceUnavailable) aPIHealthzGetRes() {}
 
-type APIImportTasksIDImportRunsPostNotFound ProblemDetails
+type APIImporttasksIDCancelPostConflict ProblemDetails
 
-func (*APIImportTasksIDImportRunsPostNotFound) aPIImportTasksIDImportRunsPostRes() {}
+func (*APIImporttasksIDCancelPostConflict) aPIImporttasksIDCancelPostRes() {}
 
-type APIImportTasksIDImportRunsPostReq struct {
+type APIImporttasksIDCancelPostInternalServerError ProblemDetails
+
+func (*APIImporttasksIDCancelPostInternalServerError) aPIImporttasksIDCancelPostRes() {}
+
+// APIImporttasksIDCancelPostNoContent is response for APIImporttasksIDCancelPost operation.
+type APIImporttasksIDCancelPostNoContent struct{}
+
+func (*APIImporttasksIDCancelPostNoContent) aPIImporttasksIDCancelPostRes() {}
+
+type APIImporttasksIDCancelPostNotFound ProblemDetails
+
+func (*APIImporttasksIDCancelPostNotFound) aPIImporttasksIDCancelPostRes() {}
+
+type APIImporttasksIDCancelPostReqEmptyBody struct{}
+
+func (*APIImporttasksIDCancelPostReqEmptyBody) aPIImporttasksIDCancelPostReq() {}
+
+type APIImporttasksIDCancelPostUnauthorized ProblemDetails
+
+func (*APIImporttasksIDCancelPostUnauthorized) aPIImporttasksIDCancelPostRes() {}
+
+type APIImporttasksIDImportrunsPostBadRequest ProblemDetails
+
+func (*APIImporttasksIDImportrunsPostBadRequest) aPIImporttasksIDImportrunsPostRes() {}
+
+type APIImporttasksIDImportrunsPostNotFound ProblemDetails
+
+func (*APIImporttasksIDImportrunsPostNotFound) aPIImporttasksIDImportrunsPostRes() {}
+
+type APIImporttasksIDImportrunsPostReq struct {
 	// The METS file required for the import.
-	// (To be decided: Or a zip file containing the METS and the metadata.xml file?)).
 	File            ht.MultipartFile       `json:"file"`
 	ImportBehaviour OptImportBehaviourType `json:"importBehaviour"`
+	// The username that is logged as the creator of the import task. Can be the email for example.
+	Username string `json:"username"`
 }
 
 // GetFile returns the value of File.
-func (s *APIImportTasksIDImportRunsPostReq) GetFile() ht.MultipartFile {
+func (s *APIImporttasksIDImportrunsPostReq) GetFile() ht.MultipartFile {
 	return s.File
 }
 
 // GetImportBehaviour returns the value of ImportBehaviour.
-func (s *APIImportTasksIDImportRunsPostReq) GetImportBehaviour() OptImportBehaviourType {
+func (s *APIImporttasksIDImportrunsPostReq) GetImportBehaviour() OptImportBehaviourType {
 	return s.ImportBehaviour
 }
 
+// GetUsername returns the value of Username.
+func (s *APIImporttasksIDImportrunsPostReq) GetUsername() string {
+	return s.Username
+}
+
 // SetFile sets the value of File.
-func (s *APIImportTasksIDImportRunsPostReq) SetFile(val ht.MultipartFile) {
+func (s *APIImporttasksIDImportrunsPostReq) SetFile(val ht.MultipartFile) {
 	s.File = val
 }
 
 // SetImportBehaviour sets the value of ImportBehaviour.
-func (s *APIImportTasksIDImportRunsPostReq) SetImportBehaviour(val OptImportBehaviourType) {
+func (s *APIImporttasksIDImportrunsPostReq) SetImportBehaviour(val OptImportBehaviourType) {
 	s.ImportBehaviour = val
 }
 
-type APIImportTasksIDImportRunsPostUnauthorized ProblemDetails
-
-func (*APIImportTasksIDImportRunsPostUnauthorized) aPIImportTasksIDImportRunsPostRes() {}
-
-type APIImportTasksIDImportRunsPostUnsupportedMediaType ProblemDetails
-
-func (*APIImportTasksIDImportRunsPostUnsupportedMediaType) aPIImportTasksIDImportRunsPostRes() {}
-
-type APIImportTasksIDImportRunsRunIdStatusGetNotFound ProblemDetails
-
-func (*APIImportTasksIDImportRunsRunIdStatusGetNotFound) aPIImportTasksIDImportRunsRunIdStatusGetRes() {
+// SetUsername sets the value of Username.
+func (s *APIImporttasksIDImportrunsPostReq) SetUsername(val string) {
+	s.Username = val
 }
 
-type APIImportTasksIDImportRunsRunIdStatusGetUnauthorized ProblemDetails
+type APIImporttasksIDImportrunsPostUnauthorized ProblemDetails
 
-func (*APIImportTasksIDImportRunsRunIdStatusGetUnauthorized) aPIImportTasksIDImportRunsRunIdStatusGetRes() {
+func (*APIImporttasksIDImportrunsPostUnauthorized) aPIImporttasksIDImportrunsPostRes() {}
+
+type APIImporttasksIDImportrunsPostUnsupportedMediaType ProblemDetails
+
+func (*APIImporttasksIDImportrunsPostUnsupportedMediaType) aPIImporttasksIDImportrunsPostRes() {}
+
+type APIImporttasksIDImportrunsRunIdStatusGetInternalServerError ProblemDetails
+
+func (*APIImporttasksIDImportrunsRunIdStatusGetInternalServerError) aPIImporttasksIDImportrunsRunIdStatusGetRes() {
 }
 
-type APIImportTasksIDPatchConflict ProblemDetails
+type APIImporttasksIDImportrunsRunIdStatusGetNotFound ProblemDetails
 
-func (*APIImportTasksIDPatchConflict) aPIImportTasksIDPatchRes() {}
+func (*APIImporttasksIDImportrunsRunIdStatusGetNotFound) aPIImporttasksIDImportrunsRunIdStatusGetRes() {
+}
 
-type APIImportTasksIDPatchNotFound ProblemDetails
+type APIImporttasksIDImportrunsRunIdStatusGetUnauthorized ProblemDetails
 
-func (*APIImportTasksIDPatchNotFound) aPIImportTasksIDPatchRes() {}
+func (*APIImporttasksIDImportrunsRunIdStatusGetUnauthorized) aPIImporttasksIDImportrunsRunIdStatusGetRes() {
+}
 
-type APIImportTasksIDPatchReqEmptyBody struct{}
+type APIImporttasksIDStatusGetInternalServerError ProblemDetails
 
-func (*APIImportTasksIDPatchReqEmptyBody) aPIImportTasksIDPatchReq() {}
+func (*APIImporttasksIDStatusGetInternalServerError) aPIImporttasksIDStatusGetRes() {}
 
-type APIImportTasksPostBadRequest CreateImportTaskResponse
+type APIImporttasksIDStatusGetNotFound ProblemDetails
 
-func (*APIImportTasksPostBadRequest) aPIImportTasksPostRes() {}
+func (*APIImporttasksIDStatusGetNotFound) aPIImporttasksIDStatusGetRes() {}
 
-type APIImportTasksPostCreated CreateImportTaskResponse
+type APIImporttasksIDStatusGetUnauthorized ProblemDetails
 
-func (*APIImportTasksPostCreated) aPIImportTasksPostRes() {}
+func (*APIImporttasksIDStatusGetUnauthorized) aPIImporttasksIDStatusGetRes() {}
 
-type APIImportTasksPostInternalServerError CreateImportTaskResponse
+type APIImporttasksPostBadRequest ProblemDetails
 
-func (*APIImportTasksPostInternalServerError) aPIImportTasksPostRes() {}
+func (*APIImporttasksPostBadRequest) aPIImporttasksPostRes() {}
 
-type APIImportTasksPostReq struct {
+type APIImporttasksPostInternalServerError ProblemDetails
+
+func (*APIImporttasksPostInternalServerError) aPIImporttasksPostRes() {}
+
+type APIImporttasksPostReq struct {
 	// The metadata.xml file according to eCH-0160.
 	File    ht.MultipartFile `json:"file"`
 	SipType SipType          `json:"sipType"`
@@ -101,438 +139,42 @@ type APIImportTasksPostReq struct {
 }
 
 // GetFile returns the value of File.
-func (s *APIImportTasksPostReq) GetFile() ht.MultipartFile {
+func (s *APIImporttasksPostReq) GetFile() ht.MultipartFile {
 	return s.File
 }
 
 // GetSipType returns the value of SipType.
-func (s *APIImportTasksPostReq) GetSipType() SipType {
+func (s *APIImporttasksPostReq) GetSipType() SipType {
 	return s.SipType
 }
 
 // GetUsername returns the value of Username.
-func (s *APIImportTasksPostReq) GetUsername() string {
+func (s *APIImporttasksPostReq) GetUsername() string {
 	return s.Username
 }
 
 // SetFile sets the value of File.
-func (s *APIImportTasksPostReq) SetFile(val ht.MultipartFile) {
+func (s *APIImporttasksPostReq) SetFile(val ht.MultipartFile) {
 	s.File = val
 }
 
 // SetSipType sets the value of SipType.
-func (s *APIImportTasksPostReq) SetSipType(val SipType) {
+func (s *APIImporttasksPostReq) SetSipType(val SipType) {
 	s.SipType = val
 }
 
 // SetUsername sets the value of Username.
-func (s *APIImportTasksPostReq) SetUsername(val string) {
+func (s *APIImporttasksPostReq) SetUsername(val string) {
 	s.Username = val
 }
 
-type APIImportTasksPostUnsupportedMediaType CreateImportTaskResponse
+type APIImporttasksPostUnauthorized ProblemDetails
 
-func (*APIImportTasksPostUnsupportedMediaType) aPIImportTasksPostRes() {}
+func (*APIImporttasksPostUnauthorized) aPIImporttasksPostRes() {}
 
-// Ref: #/components/schemas/AnalysisRecordDto
-type AnalysisRecordDto struct {
-	AnalysisRecordId  OptInt32         `json:"analysisRecordId"`
-	RowVersion        []byte           `json:"rowVersion"`
-	ImportTaskId      OptInt32         `json:"importTaskId"`
-	ComparisonDate    OptDateTime      `json:"comparisonDate"`
-	TargetPrimaryKey  OptUUID          `json:"targetPrimaryKey"`
-	DocKey            OptNilString     `json:"docKey"`
-	ReferenceCode     OptNilString     `json:"referenceCode"`
-	Level             OptNilString     `json:"level"`
-	SourcePrimaryKey  OptNilString     `json:"sourcePrimaryKey"`
-	PositionNumber    OptString        `json:"positionNumber"`
-	SourceTitle       OptString        `json:"sourceTitle"`
-	DestinationTitle  OptNilString     `json:"destinationTitle"`
-	SourceField1      OptNilString     `json:"sourceField1"`
-	DestinationField1 OptNilString     `json:"destinationField1"`
-	SourceField2      OptNilString     `json:"sourceField2"`
-	DestinationField2 OptNilString     `json:"destinationField2"`
-	SourceField3      OptNilString     `json:"sourceField3"`
-	DestinationField3 OptNilString     `json:"destinationField3"`
-	SourceField4      OptNilString     `json:"sourceField4"`
-	DestinationField4 OptNilString     `json:"destinationField4"`
-	SourceField5      OptNilString     `json:"sourceField5"`
-	DestinationField5 OptNilString     `json:"destinationField5"`
-	TitleIsDifferent  OptBool          `json:"titleIsDifferent"`
-	Field1IsDifferent OptBool          `json:"field1IsDifferent"`
-	Field2IsDifferent OptBool          `json:"field2IsDifferent"`
-	Field3IsDifferent OptBool          `json:"field3IsDifferent"`
-	Field4IsDifferent OptBool          `json:"field4IsDifferent"`
-	Field5IsDifferent OptBool          `json:"field5IsDifferent"`
-	Status            OptNilString     `json:"status"`
-	ErrorMessage      OptNilString     `json:"errorMessage"`
-	ContainerDocKey   OptNilString     `json:"containerDocKey"`
-	CreatedBy         OptString        `json:"createdBy"`
-	CreatedOn         OptDateTime      `json:"createdOn"`
-	ModifiedBy        OptNilString     `json:"modifiedBy"`
-	ModifiedOn        OptNilDateTime   `json:"modifiedOn"`
-	ImportTask        OptImportTaskDto `json:"importTask"`
-}
+type APIImporttasksPostUnsupportedMediaType ProblemDetails
 
-// GetAnalysisRecordId returns the value of AnalysisRecordId.
-func (s *AnalysisRecordDto) GetAnalysisRecordId() OptInt32 {
-	return s.AnalysisRecordId
-}
-
-// GetRowVersion returns the value of RowVersion.
-func (s *AnalysisRecordDto) GetRowVersion() []byte {
-	return s.RowVersion
-}
-
-// GetImportTaskId returns the value of ImportTaskId.
-func (s *AnalysisRecordDto) GetImportTaskId() OptInt32 {
-	return s.ImportTaskId
-}
-
-// GetComparisonDate returns the value of ComparisonDate.
-func (s *AnalysisRecordDto) GetComparisonDate() OptDateTime {
-	return s.ComparisonDate
-}
-
-// GetTargetPrimaryKey returns the value of TargetPrimaryKey.
-func (s *AnalysisRecordDto) GetTargetPrimaryKey() OptUUID {
-	return s.TargetPrimaryKey
-}
-
-// GetDocKey returns the value of DocKey.
-func (s *AnalysisRecordDto) GetDocKey() OptNilString {
-	return s.DocKey
-}
-
-// GetReferenceCode returns the value of ReferenceCode.
-func (s *AnalysisRecordDto) GetReferenceCode() OptNilString {
-	return s.ReferenceCode
-}
-
-// GetLevel returns the value of Level.
-func (s *AnalysisRecordDto) GetLevel() OptNilString {
-	return s.Level
-}
-
-// GetSourcePrimaryKey returns the value of SourcePrimaryKey.
-func (s *AnalysisRecordDto) GetSourcePrimaryKey() OptNilString {
-	return s.SourcePrimaryKey
-}
-
-// GetPositionNumber returns the value of PositionNumber.
-func (s *AnalysisRecordDto) GetPositionNumber() OptString {
-	return s.PositionNumber
-}
-
-// GetSourceTitle returns the value of SourceTitle.
-func (s *AnalysisRecordDto) GetSourceTitle() OptString {
-	return s.SourceTitle
-}
-
-// GetDestinationTitle returns the value of DestinationTitle.
-func (s *AnalysisRecordDto) GetDestinationTitle() OptNilString {
-	return s.DestinationTitle
-}
-
-// GetSourceField1 returns the value of SourceField1.
-func (s *AnalysisRecordDto) GetSourceField1() OptNilString {
-	return s.SourceField1
-}
-
-// GetDestinationField1 returns the value of DestinationField1.
-func (s *AnalysisRecordDto) GetDestinationField1() OptNilString {
-	return s.DestinationField1
-}
-
-// GetSourceField2 returns the value of SourceField2.
-func (s *AnalysisRecordDto) GetSourceField2() OptNilString {
-	return s.SourceField2
-}
-
-// GetDestinationField2 returns the value of DestinationField2.
-func (s *AnalysisRecordDto) GetDestinationField2() OptNilString {
-	return s.DestinationField2
-}
-
-// GetSourceField3 returns the value of SourceField3.
-func (s *AnalysisRecordDto) GetSourceField3() OptNilString {
-	return s.SourceField3
-}
-
-// GetDestinationField3 returns the value of DestinationField3.
-func (s *AnalysisRecordDto) GetDestinationField3() OptNilString {
-	return s.DestinationField3
-}
-
-// GetSourceField4 returns the value of SourceField4.
-func (s *AnalysisRecordDto) GetSourceField4() OptNilString {
-	return s.SourceField4
-}
-
-// GetDestinationField4 returns the value of DestinationField4.
-func (s *AnalysisRecordDto) GetDestinationField4() OptNilString {
-	return s.DestinationField4
-}
-
-// GetSourceField5 returns the value of SourceField5.
-func (s *AnalysisRecordDto) GetSourceField5() OptNilString {
-	return s.SourceField5
-}
-
-// GetDestinationField5 returns the value of DestinationField5.
-func (s *AnalysisRecordDto) GetDestinationField5() OptNilString {
-	return s.DestinationField5
-}
-
-// GetTitleIsDifferent returns the value of TitleIsDifferent.
-func (s *AnalysisRecordDto) GetTitleIsDifferent() OptBool {
-	return s.TitleIsDifferent
-}
-
-// GetField1IsDifferent returns the value of Field1IsDifferent.
-func (s *AnalysisRecordDto) GetField1IsDifferent() OptBool {
-	return s.Field1IsDifferent
-}
-
-// GetField2IsDifferent returns the value of Field2IsDifferent.
-func (s *AnalysisRecordDto) GetField2IsDifferent() OptBool {
-	return s.Field2IsDifferent
-}
-
-// GetField3IsDifferent returns the value of Field3IsDifferent.
-func (s *AnalysisRecordDto) GetField3IsDifferent() OptBool {
-	return s.Field3IsDifferent
-}
-
-// GetField4IsDifferent returns the value of Field4IsDifferent.
-func (s *AnalysisRecordDto) GetField4IsDifferent() OptBool {
-	return s.Field4IsDifferent
-}
-
-// GetField5IsDifferent returns the value of Field5IsDifferent.
-func (s *AnalysisRecordDto) GetField5IsDifferent() OptBool {
-	return s.Field5IsDifferent
-}
-
-// GetStatus returns the value of Status.
-func (s *AnalysisRecordDto) GetStatus() OptNilString {
-	return s.Status
-}
-
-// GetErrorMessage returns the value of ErrorMessage.
-func (s *AnalysisRecordDto) GetErrorMessage() OptNilString {
-	return s.ErrorMessage
-}
-
-// GetContainerDocKey returns the value of ContainerDocKey.
-func (s *AnalysisRecordDto) GetContainerDocKey() OptNilString {
-	return s.ContainerDocKey
-}
-
-// GetCreatedBy returns the value of CreatedBy.
-func (s *AnalysisRecordDto) GetCreatedBy() OptString {
-	return s.CreatedBy
-}
-
-// GetCreatedOn returns the value of CreatedOn.
-func (s *AnalysisRecordDto) GetCreatedOn() OptDateTime {
-	return s.CreatedOn
-}
-
-// GetModifiedBy returns the value of ModifiedBy.
-func (s *AnalysisRecordDto) GetModifiedBy() OptNilString {
-	return s.ModifiedBy
-}
-
-// GetModifiedOn returns the value of ModifiedOn.
-func (s *AnalysisRecordDto) GetModifiedOn() OptNilDateTime {
-	return s.ModifiedOn
-}
-
-// GetImportTask returns the value of ImportTask.
-func (s *AnalysisRecordDto) GetImportTask() OptImportTaskDto {
-	return s.ImportTask
-}
-
-// SetAnalysisRecordId sets the value of AnalysisRecordId.
-func (s *AnalysisRecordDto) SetAnalysisRecordId(val OptInt32) {
-	s.AnalysisRecordId = val
-}
-
-// SetRowVersion sets the value of RowVersion.
-func (s *AnalysisRecordDto) SetRowVersion(val []byte) {
-	s.RowVersion = val
-}
-
-// SetImportTaskId sets the value of ImportTaskId.
-func (s *AnalysisRecordDto) SetImportTaskId(val OptInt32) {
-	s.ImportTaskId = val
-}
-
-// SetComparisonDate sets the value of ComparisonDate.
-func (s *AnalysisRecordDto) SetComparisonDate(val OptDateTime) {
-	s.ComparisonDate = val
-}
-
-// SetTargetPrimaryKey sets the value of TargetPrimaryKey.
-func (s *AnalysisRecordDto) SetTargetPrimaryKey(val OptUUID) {
-	s.TargetPrimaryKey = val
-}
-
-// SetDocKey sets the value of DocKey.
-func (s *AnalysisRecordDto) SetDocKey(val OptNilString) {
-	s.DocKey = val
-}
-
-// SetReferenceCode sets the value of ReferenceCode.
-func (s *AnalysisRecordDto) SetReferenceCode(val OptNilString) {
-	s.ReferenceCode = val
-}
-
-// SetLevel sets the value of Level.
-func (s *AnalysisRecordDto) SetLevel(val OptNilString) {
-	s.Level = val
-}
-
-// SetSourcePrimaryKey sets the value of SourcePrimaryKey.
-func (s *AnalysisRecordDto) SetSourcePrimaryKey(val OptNilString) {
-	s.SourcePrimaryKey = val
-}
-
-// SetPositionNumber sets the value of PositionNumber.
-func (s *AnalysisRecordDto) SetPositionNumber(val OptString) {
-	s.PositionNumber = val
-}
-
-// SetSourceTitle sets the value of SourceTitle.
-func (s *AnalysisRecordDto) SetSourceTitle(val OptString) {
-	s.SourceTitle = val
-}
-
-// SetDestinationTitle sets the value of DestinationTitle.
-func (s *AnalysisRecordDto) SetDestinationTitle(val OptNilString) {
-	s.DestinationTitle = val
-}
-
-// SetSourceField1 sets the value of SourceField1.
-func (s *AnalysisRecordDto) SetSourceField1(val OptNilString) {
-	s.SourceField1 = val
-}
-
-// SetDestinationField1 sets the value of DestinationField1.
-func (s *AnalysisRecordDto) SetDestinationField1(val OptNilString) {
-	s.DestinationField1 = val
-}
-
-// SetSourceField2 sets the value of SourceField2.
-func (s *AnalysisRecordDto) SetSourceField2(val OptNilString) {
-	s.SourceField2 = val
-}
-
-// SetDestinationField2 sets the value of DestinationField2.
-func (s *AnalysisRecordDto) SetDestinationField2(val OptNilString) {
-	s.DestinationField2 = val
-}
-
-// SetSourceField3 sets the value of SourceField3.
-func (s *AnalysisRecordDto) SetSourceField3(val OptNilString) {
-	s.SourceField3 = val
-}
-
-// SetDestinationField3 sets the value of DestinationField3.
-func (s *AnalysisRecordDto) SetDestinationField3(val OptNilString) {
-	s.DestinationField3 = val
-}
-
-// SetSourceField4 sets the value of SourceField4.
-func (s *AnalysisRecordDto) SetSourceField4(val OptNilString) {
-	s.SourceField4 = val
-}
-
-// SetDestinationField4 sets the value of DestinationField4.
-func (s *AnalysisRecordDto) SetDestinationField4(val OptNilString) {
-	s.DestinationField4 = val
-}
-
-// SetSourceField5 sets the value of SourceField5.
-func (s *AnalysisRecordDto) SetSourceField5(val OptNilString) {
-	s.SourceField5 = val
-}
-
-// SetDestinationField5 sets the value of DestinationField5.
-func (s *AnalysisRecordDto) SetDestinationField5(val OptNilString) {
-	s.DestinationField5 = val
-}
-
-// SetTitleIsDifferent sets the value of TitleIsDifferent.
-func (s *AnalysisRecordDto) SetTitleIsDifferent(val OptBool) {
-	s.TitleIsDifferent = val
-}
-
-// SetField1IsDifferent sets the value of Field1IsDifferent.
-func (s *AnalysisRecordDto) SetField1IsDifferent(val OptBool) {
-	s.Field1IsDifferent = val
-}
-
-// SetField2IsDifferent sets the value of Field2IsDifferent.
-func (s *AnalysisRecordDto) SetField2IsDifferent(val OptBool) {
-	s.Field2IsDifferent = val
-}
-
-// SetField3IsDifferent sets the value of Field3IsDifferent.
-func (s *AnalysisRecordDto) SetField3IsDifferent(val OptBool) {
-	s.Field3IsDifferent = val
-}
-
-// SetField4IsDifferent sets the value of Field4IsDifferent.
-func (s *AnalysisRecordDto) SetField4IsDifferent(val OptBool) {
-	s.Field4IsDifferent = val
-}
-
-// SetField5IsDifferent sets the value of Field5IsDifferent.
-func (s *AnalysisRecordDto) SetField5IsDifferent(val OptBool) {
-	s.Field5IsDifferent = val
-}
-
-// SetStatus sets the value of Status.
-func (s *AnalysisRecordDto) SetStatus(val OptNilString) {
-	s.Status = val
-}
-
-// SetErrorMessage sets the value of ErrorMessage.
-func (s *AnalysisRecordDto) SetErrorMessage(val OptNilString) {
-	s.ErrorMessage = val
-}
-
-// SetContainerDocKey sets the value of ContainerDocKey.
-func (s *AnalysisRecordDto) SetContainerDocKey(val OptNilString) {
-	s.ContainerDocKey = val
-}
-
-// SetCreatedBy sets the value of CreatedBy.
-func (s *AnalysisRecordDto) SetCreatedBy(val OptString) {
-	s.CreatedBy = val
-}
-
-// SetCreatedOn sets the value of CreatedOn.
-func (s *AnalysisRecordDto) SetCreatedOn(val OptDateTime) {
-	s.CreatedOn = val
-}
-
-// SetModifiedBy sets the value of ModifiedBy.
-func (s *AnalysisRecordDto) SetModifiedBy(val OptNilString) {
-	s.ModifiedBy = val
-}
-
-// SetModifiedOn sets the value of ModifiedOn.
-func (s *AnalysisRecordDto) SetModifiedOn(val OptNilDateTime) {
-	s.ModifiedOn = val
-}
-
-// SetImportTask sets the value of ImportTask.
-func (s *AnalysisRecordDto) SetImportTask(val OptImportTaskDto) {
-	s.ImportTask = val
-}
+func (*APIImporttasksPostUnsupportedMediaType) aPIImporttasksPostRes() {}
 
 // Enum values:
 // - `AlleGleich`: The title of all series are the same
@@ -595,22 +237,36 @@ func (s *AnalysisResult) UnmarshalText(data []byte) error {
 	}
 }
 
+// Request to cancel an import task.
 // Ref: #/components/schemas/CancelImportTaskRequest
 type CancelImportTaskRequest struct {
-	Status ImportTaskStatus `json:"status"`
+	// Optional reason for canceling the import task.
+	Reason OptNilString `json:"reason"`
+	// The user who initiated the cancellation.
+	CancelledBy OptNilString `json:"cancelledBy"`
 }
 
-// GetStatus returns the value of Status.
-func (s *CancelImportTaskRequest) GetStatus() ImportTaskStatus {
-	return s.Status
+// GetReason returns the value of Reason.
+func (s *CancelImportTaskRequest) GetReason() OptNilString {
+	return s.Reason
 }
 
-// SetStatus sets the value of Status.
-func (s *CancelImportTaskRequest) SetStatus(val ImportTaskStatus) {
-	s.Status = val
+// GetCancelledBy returns the value of CancelledBy.
+func (s *CancelImportTaskRequest) GetCancelledBy() OptNilString {
+	return s.CancelledBy
 }
 
-func (*CancelImportTaskRequest) aPIImportTasksIDPatchReq() {}
+// SetReason sets the value of Reason.
+func (s *CancelImportTaskRequest) SetReason(val OptNilString) {
+	s.Reason = val
+}
+
+// SetCancelledBy sets the value of CancelledBy.
+func (s *CancelImportTaskRequest) SetCancelledBy(val OptNilString) {
+	s.CancelledBy = val
+}
+
+func (*CancelImportTaskRequest) aPIImporttasksIDCancelPostReq() {}
 
 // CancelImportTaskRequestWithContentType wraps CancelImportTaskRequest with Content-Type.
 type CancelImportTaskRequestWithContentType struct {
@@ -638,482 +294,60 @@ func (s *CancelImportTaskRequestWithContentType) SetContent(val CancelImportTask
 	s.Content = val
 }
 
-func (*CancelImportTaskRequestWithContentType) aPIImportTasksIDPatchReq() {}
+func (*CancelImportTaskRequestWithContentType) aPIImporttasksIDCancelPostReq() {}
 
+// Response returned when an import run is successfully created.
 // Ref: #/components/schemas/CreateImportRunResponse
 type CreateImportRunResponse struct {
-	// Gets a value indicating whether the creation of the import run was successful.
-	Success OptBool `json:"success"`
-	// Gets the identifier of the import task associated with the response.
-	ImportTaskId OptString `json:"importTaskId"`
 	// Gets the unique identifier for the created import run.
-	ImportRunId OptNilString `json:"importRunId"`
-	// Gets or initializes the error message associated with the result of the import run creation.
-	Error OptNilString `json:"error"`
-}
-
-// GetSuccess returns the value of Success.
-func (s *CreateImportRunResponse) GetSuccess() OptBool {
-	return s.Success
-}
-
-// GetImportTaskId returns the value of ImportTaskId.
-func (s *CreateImportRunResponse) GetImportTaskId() OptString {
-	return s.ImportTaskId
+	ImportRunId string `json:"importRunId"`
 }
 
 // GetImportRunId returns the value of ImportRunId.
-func (s *CreateImportRunResponse) GetImportRunId() OptNilString {
+func (s *CreateImportRunResponse) GetImportRunId() string {
 	return s.ImportRunId
 }
 
-// GetError returns the value of Error.
-func (s *CreateImportRunResponse) GetError() OptNilString {
-	return s.Error
-}
-
-// SetSuccess sets the value of Success.
-func (s *CreateImportRunResponse) SetSuccess(val OptBool) {
-	s.Success = val
-}
-
-// SetImportTaskId sets the value of ImportTaskId.
-func (s *CreateImportRunResponse) SetImportTaskId(val OptString) {
-	s.ImportTaskId = val
-}
-
 // SetImportRunId sets the value of ImportRunId.
-func (s *CreateImportRunResponse) SetImportRunId(val OptNilString) {
+func (s *CreateImportRunResponse) SetImportRunId(val string) {
 	s.ImportRunId = val
 }
 
-// SetError sets the value of Error.
-func (s *CreateImportRunResponse) SetError(val OptNilString) {
-	s.Error = val
-}
+func (*CreateImportRunResponse) aPIImporttasksIDImportrunsPostRes() {}
 
-func (*CreateImportRunResponse) aPIImportTasksIDImportRunsPostRes() {}
-
+// Response returned when an import task is successfully created.
 // Ref: #/components/schemas/CreateImportTaskResponse
 type CreateImportTaskResponse struct {
-	// Gets a value indicating whether the creation of the import task was successful.
-	Success OptBool `json:"success"`
-	// Gets or initializes the error message associated with the result of the import task creation.
-	Error OptNilString `json:"error"`
 	// Gets the unique identifier for the created import task.
-	ID OptNilString `json:"id"`
-}
-
-// GetSuccess returns the value of Success.
-func (s *CreateImportTaskResponse) GetSuccess() OptBool {
-	return s.Success
-}
-
-// GetError returns the value of Error.
-func (s *CreateImportTaskResponse) GetError() OptNilString {
-	return s.Error
-}
-
-// GetID returns the value of ID.
-func (s *CreateImportTaskResponse) GetID() OptNilString {
-	return s.ID
-}
-
-// SetSuccess sets the value of Success.
-func (s *CreateImportTaskResponse) SetSuccess(val OptBool) {
-	s.Success = val
-}
-
-// SetError sets the value of Error.
-func (s *CreateImportTaskResponse) SetError(val OptNilString) {
-	s.Error = val
-}
-
-// SetID sets the value of ID.
-func (s *CreateImportTaskResponse) SetID(val OptNilString) {
-	s.ID = val
-}
-
-// Ref: #/components/schemas/DefaultValueDto
-type DefaultValueDto struct {
-	DefaultValueId         OptInt32         `json:"defaultValueId"`
-	RowVersion             []byte           `json:"rowVersion"`
-	ImportTaskId           OptInt32         `json:"importTaskId"`
-	AccessionDocKey        OptString        `json:"accessionDocKey"`
-	AccessionIdName        OptString        `json:"accessionIdName"`
-	InsertNodeDocKey       OptString        `json:"insertNodeDocKey"`
-	InsertNodeIdName       OptString        `json:"insertNodeIdName"`
-	Status                 OptNilString     `json:"status"`
-	ProtectionBaseDate     OptNilString     `json:"protectionBaseDate"`
-	ProtectionCategory     OptNilString     `json:"protectionCategory"`
-	ProtectionDuration     OptNilInt32      `json:"protectionDuration"`
-	MetadataCanBePublished OptNilBool       `json:"metadataCanBePublished"`
-	Accessibility          OptNilString     `json:"accessibility"`
-	Usability              OptNilString     `json:"usability"`
-	PermissionType         OptNilString     `json:"permissionType"`
-	CreatedBy              OptString        `json:"createdBy"`
-	CreatedOn              OptDateTime      `json:"createdOn"`
-	ModifiedBy             OptNilString     `json:"modifiedBy"`
-	ModifiedOn             OptNilDateTime   `json:"modifiedOn"`
-	ImportTask             OptImportTaskDto `json:"importTask"`
-}
-
-// GetDefaultValueId returns the value of DefaultValueId.
-func (s *DefaultValueDto) GetDefaultValueId() OptInt32 {
-	return s.DefaultValueId
-}
-
-// GetRowVersion returns the value of RowVersion.
-func (s *DefaultValueDto) GetRowVersion() []byte {
-	return s.RowVersion
+	ImportTaskId string `json:"importTaskId"`
 }
 
 // GetImportTaskId returns the value of ImportTaskId.
-func (s *DefaultValueDto) GetImportTaskId() OptInt32 {
+func (s *CreateImportTaskResponse) GetImportTaskId() string {
 	return s.ImportTaskId
 }
 
-// GetAccessionDocKey returns the value of AccessionDocKey.
-func (s *DefaultValueDto) GetAccessionDocKey() OptString {
-	return s.AccessionDocKey
-}
-
-// GetAccessionIdName returns the value of AccessionIdName.
-func (s *DefaultValueDto) GetAccessionIdName() OptString {
-	return s.AccessionIdName
-}
-
-// GetInsertNodeDocKey returns the value of InsertNodeDocKey.
-func (s *DefaultValueDto) GetInsertNodeDocKey() OptString {
-	return s.InsertNodeDocKey
-}
-
-// GetInsertNodeIdName returns the value of InsertNodeIdName.
-func (s *DefaultValueDto) GetInsertNodeIdName() OptString {
-	return s.InsertNodeIdName
-}
-
-// GetStatus returns the value of Status.
-func (s *DefaultValueDto) GetStatus() OptNilString {
-	return s.Status
-}
-
-// GetProtectionBaseDate returns the value of ProtectionBaseDate.
-func (s *DefaultValueDto) GetProtectionBaseDate() OptNilString {
-	return s.ProtectionBaseDate
-}
-
-// GetProtectionCategory returns the value of ProtectionCategory.
-func (s *DefaultValueDto) GetProtectionCategory() OptNilString {
-	return s.ProtectionCategory
-}
-
-// GetProtectionDuration returns the value of ProtectionDuration.
-func (s *DefaultValueDto) GetProtectionDuration() OptNilInt32 {
-	return s.ProtectionDuration
-}
-
-// GetMetadataCanBePublished returns the value of MetadataCanBePublished.
-func (s *DefaultValueDto) GetMetadataCanBePublished() OptNilBool {
-	return s.MetadataCanBePublished
-}
-
-// GetAccessibility returns the value of Accessibility.
-func (s *DefaultValueDto) GetAccessibility() OptNilString {
-	return s.Accessibility
-}
-
-// GetUsability returns the value of Usability.
-func (s *DefaultValueDto) GetUsability() OptNilString {
-	return s.Usability
-}
-
-// GetPermissionType returns the value of PermissionType.
-func (s *DefaultValueDto) GetPermissionType() OptNilString {
-	return s.PermissionType
-}
-
-// GetCreatedBy returns the value of CreatedBy.
-func (s *DefaultValueDto) GetCreatedBy() OptString {
-	return s.CreatedBy
-}
-
-// GetCreatedOn returns the value of CreatedOn.
-func (s *DefaultValueDto) GetCreatedOn() OptDateTime {
-	return s.CreatedOn
-}
-
-// GetModifiedBy returns the value of ModifiedBy.
-func (s *DefaultValueDto) GetModifiedBy() OptNilString {
-	return s.ModifiedBy
-}
-
-// GetModifiedOn returns the value of ModifiedOn.
-func (s *DefaultValueDto) GetModifiedOn() OptNilDateTime {
-	return s.ModifiedOn
-}
-
-// GetImportTask returns the value of ImportTask.
-func (s *DefaultValueDto) GetImportTask() OptImportTaskDto {
-	return s.ImportTask
-}
-
-// SetDefaultValueId sets the value of DefaultValueId.
-func (s *DefaultValueDto) SetDefaultValueId(val OptInt32) {
-	s.DefaultValueId = val
-}
-
-// SetRowVersion sets the value of RowVersion.
-func (s *DefaultValueDto) SetRowVersion(val []byte) {
-	s.RowVersion = val
-}
-
 // SetImportTaskId sets the value of ImportTaskId.
-func (s *DefaultValueDto) SetImportTaskId(val OptInt32) {
+func (s *CreateImportTaskResponse) SetImportTaskId(val string) {
 	s.ImportTaskId = val
 }
 
-// SetAccessionDocKey sets the value of AccessionDocKey.
-func (s *DefaultValueDto) SetAccessionDocKey(val OptString) {
-	s.AccessionDocKey = val
-}
-
-// SetAccessionIdName sets the value of AccessionIdName.
-func (s *DefaultValueDto) SetAccessionIdName(val OptString) {
-	s.AccessionIdName = val
-}
-
-// SetInsertNodeDocKey sets the value of InsertNodeDocKey.
-func (s *DefaultValueDto) SetInsertNodeDocKey(val OptString) {
-	s.InsertNodeDocKey = val
-}
-
-// SetInsertNodeIdName sets the value of InsertNodeIdName.
-func (s *DefaultValueDto) SetInsertNodeIdName(val OptString) {
-	s.InsertNodeIdName = val
-}
-
-// SetStatus sets the value of Status.
-func (s *DefaultValueDto) SetStatus(val OptNilString) {
-	s.Status = val
-}
-
-// SetProtectionBaseDate sets the value of ProtectionBaseDate.
-func (s *DefaultValueDto) SetProtectionBaseDate(val OptNilString) {
-	s.ProtectionBaseDate = val
-}
-
-// SetProtectionCategory sets the value of ProtectionCategory.
-func (s *DefaultValueDto) SetProtectionCategory(val OptNilString) {
-	s.ProtectionCategory = val
-}
-
-// SetProtectionDuration sets the value of ProtectionDuration.
-func (s *DefaultValueDto) SetProtectionDuration(val OptNilInt32) {
-	s.ProtectionDuration = val
-}
-
-// SetMetadataCanBePublished sets the value of MetadataCanBePublished.
-func (s *DefaultValueDto) SetMetadataCanBePublished(val OptNilBool) {
-	s.MetadataCanBePublished = val
-}
-
-// SetAccessibility sets the value of Accessibility.
-func (s *DefaultValueDto) SetAccessibility(val OptNilString) {
-	s.Accessibility = val
-}
-
-// SetUsability sets the value of Usability.
-func (s *DefaultValueDto) SetUsability(val OptNilString) {
-	s.Usability = val
-}
-
-// SetPermissionType sets the value of PermissionType.
-func (s *DefaultValueDto) SetPermissionType(val OptNilString) {
-	s.PermissionType = val
-}
-
-// SetCreatedBy sets the value of CreatedBy.
-func (s *DefaultValueDto) SetCreatedBy(val OptString) {
-	s.CreatedBy = val
-}
-
-// SetCreatedOn sets the value of CreatedOn.
-func (s *DefaultValueDto) SetCreatedOn(val OptDateTime) {
-	s.CreatedOn = val
-}
-
-// SetModifiedBy sets the value of ModifiedBy.
-func (s *DefaultValueDto) SetModifiedBy(val OptNilString) {
-	s.ModifiedBy = val
-}
-
-// SetModifiedOn sets the value of ModifiedOn.
-func (s *DefaultValueDto) SetModifiedOn(val OptNilDateTime) {
-	s.ModifiedOn = val
-}
-
-// SetImportTask sets the value of ImportTask.
-func (s *DefaultValueDto) SetImportTask(val OptImportTaskDto) {
-	s.ImportTask = val
-}
-
-// Ref: #/components/schemas/DocumentDto
-type DocumentDto struct {
-	DocumentId    OptInt32         `json:"documentId"`
-	RowVersion    []byte           `json:"rowVersion"`
-	ImportTaskId  OptInt32         `json:"importTaskId"`
-	FileName      OptString        `json:"fileName"`
-	DataBlob      []byte           `json:"dataBlob"`
-	UploadDate    OptDateTime      `json:"uploadDate"`
-	XmlSourceType OptNilString     `json:"xmlSourceType"`
-	FileSize      OptInt64         `json:"fileSize"`
-	CreatedBy     OptString        `json:"createdBy"`
-	CreatedOn     OptDateTime      `json:"createdOn"`
-	ModifiedBy    OptNilString     `json:"modifiedBy"`
-	ModifiedOn    OptNilDateTime   `json:"modifiedOn"`
-	ImportTask    OptImportTaskDto `json:"importTask"`
-}
-
-// GetDocumentId returns the value of DocumentId.
-func (s *DocumentDto) GetDocumentId() OptInt32 {
-	return s.DocumentId
-}
-
-// GetRowVersion returns the value of RowVersion.
-func (s *DocumentDto) GetRowVersion() []byte {
-	return s.RowVersion
-}
-
-// GetImportTaskId returns the value of ImportTaskId.
-func (s *DocumentDto) GetImportTaskId() OptInt32 {
-	return s.ImportTaskId
-}
-
-// GetFileName returns the value of FileName.
-func (s *DocumentDto) GetFileName() OptString {
-	return s.FileName
-}
-
-// GetDataBlob returns the value of DataBlob.
-func (s *DocumentDto) GetDataBlob() []byte {
-	return s.DataBlob
-}
-
-// GetUploadDate returns the value of UploadDate.
-func (s *DocumentDto) GetUploadDate() OptDateTime {
-	return s.UploadDate
-}
-
-// GetXmlSourceType returns the value of XmlSourceType.
-func (s *DocumentDto) GetXmlSourceType() OptNilString {
-	return s.XmlSourceType
-}
-
-// GetFileSize returns the value of FileSize.
-func (s *DocumentDto) GetFileSize() OptInt64 {
-	return s.FileSize
-}
-
-// GetCreatedBy returns the value of CreatedBy.
-func (s *DocumentDto) GetCreatedBy() OptString {
-	return s.CreatedBy
-}
-
-// GetCreatedOn returns the value of CreatedOn.
-func (s *DocumentDto) GetCreatedOn() OptDateTime {
-	return s.CreatedOn
-}
-
-// GetModifiedBy returns the value of ModifiedBy.
-func (s *DocumentDto) GetModifiedBy() OptNilString {
-	return s.ModifiedBy
-}
-
-// GetModifiedOn returns the value of ModifiedOn.
-func (s *DocumentDto) GetModifiedOn() OptNilDateTime {
-	return s.ModifiedOn
-}
-
-// GetImportTask returns the value of ImportTask.
-func (s *DocumentDto) GetImportTask() OptImportTaskDto {
-	return s.ImportTask
-}
-
-// SetDocumentId sets the value of DocumentId.
-func (s *DocumentDto) SetDocumentId(val OptInt32) {
-	s.DocumentId = val
-}
-
-// SetRowVersion sets the value of RowVersion.
-func (s *DocumentDto) SetRowVersion(val []byte) {
-	s.RowVersion = val
-}
-
-// SetImportTaskId sets the value of ImportTaskId.
-func (s *DocumentDto) SetImportTaskId(val OptInt32) {
-	s.ImportTaskId = val
-}
-
-// SetFileName sets the value of FileName.
-func (s *DocumentDto) SetFileName(val OptString) {
-	s.FileName = val
-}
-
-// SetDataBlob sets the value of DataBlob.
-func (s *DocumentDto) SetDataBlob(val []byte) {
-	s.DataBlob = val
-}
-
-// SetUploadDate sets the value of UploadDate.
-func (s *DocumentDto) SetUploadDate(val OptDateTime) {
-	s.UploadDate = val
-}
-
-// SetXmlSourceType sets the value of XmlSourceType.
-func (s *DocumentDto) SetXmlSourceType(val OptNilString) {
-	s.XmlSourceType = val
-}
-
-// SetFileSize sets the value of FileSize.
-func (s *DocumentDto) SetFileSize(val OptInt64) {
-	s.FileSize = val
-}
-
-// SetCreatedBy sets the value of CreatedBy.
-func (s *DocumentDto) SetCreatedBy(val OptString) {
-	s.CreatedBy = val
-}
-
-// SetCreatedOn sets the value of CreatedOn.
-func (s *DocumentDto) SetCreatedOn(val OptDateTime) {
-	s.CreatedOn = val
-}
-
-// SetModifiedBy sets the value of ModifiedBy.
-func (s *DocumentDto) SetModifiedBy(val OptNilString) {
-	s.ModifiedBy = val
-}
-
-// SetModifiedOn sets the value of ModifiedOn.
-func (s *DocumentDto) SetModifiedOn(val OptNilDateTime) {
-	s.ModifiedOn = val
-}
-
-// SetImportTask sets the value of ImportTask.
-func (s *DocumentDto) SetImportTask(val OptImportTaskDto) {
-	s.ImportTask = val
-}
+func (*CreateImportTaskResponse) aPIImporttasksPostRes() {}
 
 // The detailed status of an internal service used by the API.
 // Ref: #/components/schemas/HealthCheckResult
 type HealthCheckResult struct {
+	// How much time passed in querying the service status.
+	DurationMs OptFloat64 `json:"durationMs"`
 	// The name of the service.
 	Name string `json:"name"`
 	// The current status of the service.
 	Status string `json:"status"`
-	// How much time passed in querying the service status.
-	DurationMs OptFloat64 `json:"durationMs"`
+}
+
+// GetDurationMs returns the value of DurationMs.
+func (s *HealthCheckResult) GetDurationMs() OptFloat64 {
+	return s.DurationMs
 }
 
 // GetName returns the value of Name.
@@ -1126,9 +360,9 @@ func (s *HealthCheckResult) GetStatus() string {
 	return s.Status
 }
 
-// GetDurationMs returns the value of DurationMs.
-func (s *HealthCheckResult) GetDurationMs() OptFloat64 {
-	return s.DurationMs
+// SetDurationMs sets the value of DurationMs.
+func (s *HealthCheckResult) SetDurationMs(val OptFloat64) {
+	s.DurationMs = val
 }
 
 // SetName sets the value of Name.
@@ -1141,23 +375,13 @@ func (s *HealthCheckResult) SetStatus(val string) {
 	s.Status = val
 }
 
-// SetDurationMs sets the value of DurationMs.
-func (s *HealthCheckResult) SetDurationMs(val OptFloat64) {
-	s.DurationMs = val
-}
-
 // The resulting status with health details on different services.
 // Ref: #/components/schemas/HealthStatusResult
 type HealthStatusResult struct {
-	// The overall status.
-	Status string `json:"status"`
 	// A list with services and it's health statuses.
 	Checks OptNilHealthCheckResultArray `json:"checks"`
-}
-
-// GetStatus returns the value of Status.
-func (s *HealthStatusResult) GetStatus() string {
-	return s.Status
+	// The overall status.
+	Status string `json:"status"`
 }
 
 // GetChecks returns the value of Checks.
@@ -1165,14 +389,19 @@ func (s *HealthStatusResult) GetChecks() OptNilHealthCheckResultArray {
 	return s.Checks
 }
 
-// SetStatus sets the value of Status.
-func (s *HealthStatusResult) SetStatus(val string) {
-	s.Status = val
+// GetStatus returns the value of Status.
+func (s *HealthStatusResult) GetStatus() string {
+	return s.Status
 }
 
 // SetChecks sets the value of Checks.
 func (s *HealthStatusResult) SetChecks(val OptNilHealthCheckResultArray) {
 	s.Checks = val
+}
+
+// SetStatus sets the value of Status.
+func (s *HealthStatusResult) SetStatus(val string) {
+	s.Status = val
 }
 
 // Enum values:
@@ -1220,186 +449,6 @@ func (s *ImportBehaviourType) UnmarshalText(data []byte) error {
 	}
 }
 
-// Ref: #/components/schemas/ImportDto
-type ImportDto struct {
-	ImportId               OptInt32         `json:"importId"`
-	RowVersion             []byte           `json:"rowVersion"`
-	TaskId                 OptString        `json:"taskId"`
-	ImportTaskId           OptInt32         `json:"importTaskId"`
-	Status                 OptString        `json:"status"`
-	Description            OptNilString     `json:"description"`
-	ProcessedDocumentCount OptNilInt32      `json:"processedDocumentCount"`
-	TotalDocumentCount     OptNilInt32      `json:"totalDocumentCount"`
-	ImportDate             OptNilDateTime   `json:"importDate"`
-	ImportFileBlob         OptNilByte       `json:"importFileBlob"`
-	IsSuccessful           OptBool          `json:"isSuccessful"`
-	CreatedBy              OptString        `json:"createdBy"`
-	CreatedOn              OptDateTime      `json:"createdOn"`
-	ModifiedBy             OptNilString     `json:"modifiedBy"`
-	ModifiedOn             OptNilDateTime   `json:"modifiedOn"`
-	ImportTask             OptImportTaskDto `json:"importTask"`
-}
-
-// GetImportId returns the value of ImportId.
-func (s *ImportDto) GetImportId() OptInt32 {
-	return s.ImportId
-}
-
-// GetRowVersion returns the value of RowVersion.
-func (s *ImportDto) GetRowVersion() []byte {
-	return s.RowVersion
-}
-
-// GetTaskId returns the value of TaskId.
-func (s *ImportDto) GetTaskId() OptString {
-	return s.TaskId
-}
-
-// GetImportTaskId returns the value of ImportTaskId.
-func (s *ImportDto) GetImportTaskId() OptInt32 {
-	return s.ImportTaskId
-}
-
-// GetStatus returns the value of Status.
-func (s *ImportDto) GetStatus() OptString {
-	return s.Status
-}
-
-// GetDescription returns the value of Description.
-func (s *ImportDto) GetDescription() OptNilString {
-	return s.Description
-}
-
-// GetProcessedDocumentCount returns the value of ProcessedDocumentCount.
-func (s *ImportDto) GetProcessedDocumentCount() OptNilInt32 {
-	return s.ProcessedDocumentCount
-}
-
-// GetTotalDocumentCount returns the value of TotalDocumentCount.
-func (s *ImportDto) GetTotalDocumentCount() OptNilInt32 {
-	return s.TotalDocumentCount
-}
-
-// GetImportDate returns the value of ImportDate.
-func (s *ImportDto) GetImportDate() OptNilDateTime {
-	return s.ImportDate
-}
-
-// GetImportFileBlob returns the value of ImportFileBlob.
-func (s *ImportDto) GetImportFileBlob() OptNilByte {
-	return s.ImportFileBlob
-}
-
-// GetIsSuccessful returns the value of IsSuccessful.
-func (s *ImportDto) GetIsSuccessful() OptBool {
-	return s.IsSuccessful
-}
-
-// GetCreatedBy returns the value of CreatedBy.
-func (s *ImportDto) GetCreatedBy() OptString {
-	return s.CreatedBy
-}
-
-// GetCreatedOn returns the value of CreatedOn.
-func (s *ImportDto) GetCreatedOn() OptDateTime {
-	return s.CreatedOn
-}
-
-// GetModifiedBy returns the value of ModifiedBy.
-func (s *ImportDto) GetModifiedBy() OptNilString {
-	return s.ModifiedBy
-}
-
-// GetModifiedOn returns the value of ModifiedOn.
-func (s *ImportDto) GetModifiedOn() OptNilDateTime {
-	return s.ModifiedOn
-}
-
-// GetImportTask returns the value of ImportTask.
-func (s *ImportDto) GetImportTask() OptImportTaskDto {
-	return s.ImportTask
-}
-
-// SetImportId sets the value of ImportId.
-func (s *ImportDto) SetImportId(val OptInt32) {
-	s.ImportId = val
-}
-
-// SetRowVersion sets the value of RowVersion.
-func (s *ImportDto) SetRowVersion(val []byte) {
-	s.RowVersion = val
-}
-
-// SetTaskId sets the value of TaskId.
-func (s *ImportDto) SetTaskId(val OptString) {
-	s.TaskId = val
-}
-
-// SetImportTaskId sets the value of ImportTaskId.
-func (s *ImportDto) SetImportTaskId(val OptInt32) {
-	s.ImportTaskId = val
-}
-
-// SetStatus sets the value of Status.
-func (s *ImportDto) SetStatus(val OptString) {
-	s.Status = val
-}
-
-// SetDescription sets the value of Description.
-func (s *ImportDto) SetDescription(val OptNilString) {
-	s.Description = val
-}
-
-// SetProcessedDocumentCount sets the value of ProcessedDocumentCount.
-func (s *ImportDto) SetProcessedDocumentCount(val OptNilInt32) {
-	s.ProcessedDocumentCount = val
-}
-
-// SetTotalDocumentCount sets the value of TotalDocumentCount.
-func (s *ImportDto) SetTotalDocumentCount(val OptNilInt32) {
-	s.TotalDocumentCount = val
-}
-
-// SetImportDate sets the value of ImportDate.
-func (s *ImportDto) SetImportDate(val OptNilDateTime) {
-	s.ImportDate = val
-}
-
-// SetImportFileBlob sets the value of ImportFileBlob.
-func (s *ImportDto) SetImportFileBlob(val OptNilByte) {
-	s.ImportFileBlob = val
-}
-
-// SetIsSuccessful sets the value of IsSuccessful.
-func (s *ImportDto) SetIsSuccessful(val OptBool) {
-	s.IsSuccessful = val
-}
-
-// SetCreatedBy sets the value of CreatedBy.
-func (s *ImportDto) SetCreatedBy(val OptString) {
-	s.CreatedBy = val
-}
-
-// SetCreatedOn sets the value of CreatedOn.
-func (s *ImportDto) SetCreatedOn(val OptDateTime) {
-	s.CreatedOn = val
-}
-
-// SetModifiedBy sets the value of ModifiedBy.
-func (s *ImportDto) SetModifiedBy(val OptNilString) {
-	s.ModifiedBy = val
-}
-
-// SetModifiedOn sets the value of ModifiedOn.
-func (s *ImportDto) SetModifiedOn(val OptNilDateTime) {
-	s.ModifiedOn = val
-}
-
-// SetImportTask sets the value of ImportTask.
-func (s *ImportDto) SetImportTask(val OptImportTaskDto) {
-	s.ImportTask = val
-}
-
 // Enum values:
 // - `Erfolgreich`: The import was successfull
 // - `Fehler`: The import failed and has errors.
@@ -1445,27 +494,21 @@ func (s *ImportResult) UnmarshalText(data []byte) error {
 	}
 }
 
+// Response containing the status of an import run.
 // Ref: #/components/schemas/ImportRunStatusResponse
 type ImportRunStatusResponse struct {
-	ImportTaskId    OptInt32     `json:"importTaskId"`
-	ImportRunId     OptString    `json:"importRunId"`
-	Status          OptString    `json:"status"`
-	ProgressPercent OptNilInt32  `json:"progressPercent"`
-	Error           OptNilString `json:"error"`
-}
-
-// GetImportTaskId returns the value of ImportTaskId.
-func (s *ImportRunStatusResponse) GetImportTaskId() OptInt32 {
-	return s.ImportTaskId
-}
-
-// GetImportRunId returns the value of ImportRunId.
-func (s *ImportRunStatusResponse) GetImportRunId() OptString {
-	return s.ImportRunId
+	Status ImportStatus `json:"status"`
+	// The progress of the import run in percent (0-100), if available.
+	ProgressPercent OptNilInt32     `json:"progressPercent"`
+	ImportResult    OptImportResult `json:"importResult"`
+	// How many records were processed during the import.
+	ProcessedDocumentCount OptNilInt32 `json:"processedDocumentCount"`
+	// The total number of records to be processed during the import.
+	TotalDocumentCount OptNilInt32 `json:"totalDocumentCount"`
 }
 
 // GetStatus returns the value of Status.
-func (s *ImportRunStatusResponse) GetStatus() OptString {
+func (s *ImportRunStatusResponse) GetStatus() ImportStatus {
 	return s.Status
 }
 
@@ -1474,23 +517,23 @@ func (s *ImportRunStatusResponse) GetProgressPercent() OptNilInt32 {
 	return s.ProgressPercent
 }
 
-// GetError returns the value of Error.
-func (s *ImportRunStatusResponse) GetError() OptNilString {
-	return s.Error
+// GetImportResult returns the value of ImportResult.
+func (s *ImportRunStatusResponse) GetImportResult() OptImportResult {
+	return s.ImportResult
 }
 
-// SetImportTaskId sets the value of ImportTaskId.
-func (s *ImportRunStatusResponse) SetImportTaskId(val OptInt32) {
-	s.ImportTaskId = val
+// GetProcessedDocumentCount returns the value of ProcessedDocumentCount.
+func (s *ImportRunStatusResponse) GetProcessedDocumentCount() OptNilInt32 {
+	return s.ProcessedDocumentCount
 }
 
-// SetImportRunId sets the value of ImportRunId.
-func (s *ImportRunStatusResponse) SetImportRunId(val OptString) {
-	s.ImportRunId = val
+// GetTotalDocumentCount returns the value of TotalDocumentCount.
+func (s *ImportRunStatusResponse) GetTotalDocumentCount() OptNilInt32 {
+	return s.TotalDocumentCount
 }
 
 // SetStatus sets the value of Status.
-func (s *ImportRunStatusResponse) SetStatus(val OptString) {
+func (s *ImportRunStatusResponse) SetStatus(val ImportStatus) {
 	s.Status = val
 }
 
@@ -1499,227 +542,131 @@ func (s *ImportRunStatusResponse) SetProgressPercent(val OptNilInt32) {
 	s.ProgressPercent = val
 }
 
-// SetError sets the value of Error.
-func (s *ImportRunStatusResponse) SetError(val OptNilString) {
-	s.Error = val
-}
-
-func (*ImportRunStatusResponse) aPIImportTasksIDImportRunsRunIdStatusGetRes() {}
-
-// Ref: #/components/schemas/ImportTaskDto
-type ImportTaskDto struct {
-	ImportTaskId              OptInt32            `json:"importTaskId"`
-	RowVersion                []byte              `json:"rowVersion"`
-	TaskType                  OptString           `json:"taskType"`
-	Name                      OptNilString        `json:"name"`
-	NoAutomaticImport         OptBool             `json:"noAutomaticImport"`
-	RequiresContainers        OptBool             `json:"requiresContainers"`
-	Status                    OptString           `json:"status"`
-	AnalysisErrorMessage      OptNilString        `json:"analysisErrorMessage"`
-	AnalysisResult            OptNilString        `json:"analysisResult"`
-	AnalysisProgressInPercent OptNilInt32         `json:"analysisProgressInPercent"`
-	ImportResult              OptNilString        `json:"importResult"`
-	CreatedBy                 OptString           `json:"createdBy"`
-	CreatedOn                 OptDateTime         `json:"createdOn"`
-	ModifiedBy                OptNilString        `json:"modifiedBy"`
-	ModifiedOn                OptNilDateTime      `json:"modifiedOn"`
-	AnalysisRecords           []AnalysisRecordDto `json:"analysisRecords"`
-	DefaultValues             []DefaultValueDto   `json:"defaultValues"`
-	Documents                 []DocumentDto       `json:"documents"`
-	Imports                   []ImportDto         `json:"imports"`
-}
-
-// GetImportTaskId returns the value of ImportTaskId.
-func (s *ImportTaskDto) GetImportTaskId() OptInt32 {
-	return s.ImportTaskId
-}
-
-// GetRowVersion returns the value of RowVersion.
-func (s *ImportTaskDto) GetRowVersion() []byte {
-	return s.RowVersion
-}
-
-// GetTaskType returns the value of TaskType.
-func (s *ImportTaskDto) GetTaskType() OptString {
-	return s.TaskType
-}
-
-// GetName returns the value of Name.
-func (s *ImportTaskDto) GetName() OptNilString {
-	return s.Name
-}
-
-// GetNoAutomaticImport returns the value of NoAutomaticImport.
-func (s *ImportTaskDto) GetNoAutomaticImport() OptBool {
-	return s.NoAutomaticImport
-}
-
-// GetRequiresContainers returns the value of RequiresContainers.
-func (s *ImportTaskDto) GetRequiresContainers() OptBool {
-	return s.RequiresContainers
-}
-
-// GetStatus returns the value of Status.
-func (s *ImportTaskDto) GetStatus() OptString {
-	return s.Status
-}
-
-// GetAnalysisErrorMessage returns the value of AnalysisErrorMessage.
-func (s *ImportTaskDto) GetAnalysisErrorMessage() OptNilString {
-	return s.AnalysisErrorMessage
-}
-
-// GetAnalysisResult returns the value of AnalysisResult.
-func (s *ImportTaskDto) GetAnalysisResult() OptNilString {
-	return s.AnalysisResult
-}
-
-// GetAnalysisProgressInPercent returns the value of AnalysisProgressInPercent.
-func (s *ImportTaskDto) GetAnalysisProgressInPercent() OptNilInt32 {
-	return s.AnalysisProgressInPercent
-}
-
-// GetImportResult returns the value of ImportResult.
-func (s *ImportTaskDto) GetImportResult() OptNilString {
-	return s.ImportResult
-}
-
-// GetCreatedBy returns the value of CreatedBy.
-func (s *ImportTaskDto) GetCreatedBy() OptString {
-	return s.CreatedBy
-}
-
-// GetCreatedOn returns the value of CreatedOn.
-func (s *ImportTaskDto) GetCreatedOn() OptDateTime {
-	return s.CreatedOn
-}
-
-// GetModifiedBy returns the value of ModifiedBy.
-func (s *ImportTaskDto) GetModifiedBy() OptNilString {
-	return s.ModifiedBy
-}
-
-// GetModifiedOn returns the value of ModifiedOn.
-func (s *ImportTaskDto) GetModifiedOn() OptNilDateTime {
-	return s.ModifiedOn
-}
-
-// GetAnalysisRecords returns the value of AnalysisRecords.
-func (s *ImportTaskDto) GetAnalysisRecords() []AnalysisRecordDto {
-	return s.AnalysisRecords
-}
-
-// GetDefaultValues returns the value of DefaultValues.
-func (s *ImportTaskDto) GetDefaultValues() []DefaultValueDto {
-	return s.DefaultValues
-}
-
-// GetDocuments returns the value of Documents.
-func (s *ImportTaskDto) GetDocuments() []DocumentDto {
-	return s.Documents
-}
-
-// GetImports returns the value of Imports.
-func (s *ImportTaskDto) GetImports() []ImportDto {
-	return s.Imports
-}
-
-// SetImportTaskId sets the value of ImportTaskId.
-func (s *ImportTaskDto) SetImportTaskId(val OptInt32) {
-	s.ImportTaskId = val
-}
-
-// SetRowVersion sets the value of RowVersion.
-func (s *ImportTaskDto) SetRowVersion(val []byte) {
-	s.RowVersion = val
-}
-
-// SetTaskType sets the value of TaskType.
-func (s *ImportTaskDto) SetTaskType(val OptString) {
-	s.TaskType = val
-}
-
-// SetName sets the value of Name.
-func (s *ImportTaskDto) SetName(val OptNilString) {
-	s.Name = val
-}
-
-// SetNoAutomaticImport sets the value of NoAutomaticImport.
-func (s *ImportTaskDto) SetNoAutomaticImport(val OptBool) {
-	s.NoAutomaticImport = val
-}
-
-// SetRequiresContainers sets the value of RequiresContainers.
-func (s *ImportTaskDto) SetRequiresContainers(val OptBool) {
-	s.RequiresContainers = val
-}
-
-// SetStatus sets the value of Status.
-func (s *ImportTaskDto) SetStatus(val OptString) {
-	s.Status = val
-}
-
-// SetAnalysisErrorMessage sets the value of AnalysisErrorMessage.
-func (s *ImportTaskDto) SetAnalysisErrorMessage(val OptNilString) {
-	s.AnalysisErrorMessage = val
-}
-
-// SetAnalysisResult sets the value of AnalysisResult.
-func (s *ImportTaskDto) SetAnalysisResult(val OptNilString) {
-	s.AnalysisResult = val
-}
-
-// SetAnalysisProgressInPercent sets the value of AnalysisProgressInPercent.
-func (s *ImportTaskDto) SetAnalysisProgressInPercent(val OptNilInt32) {
-	s.AnalysisProgressInPercent = val
-}
-
 // SetImportResult sets the value of ImportResult.
-func (s *ImportTaskDto) SetImportResult(val OptNilString) {
+func (s *ImportRunStatusResponse) SetImportResult(val OptImportResult) {
 	s.ImportResult = val
 }
 
-// SetCreatedBy sets the value of CreatedBy.
-func (s *ImportTaskDto) SetCreatedBy(val OptString) {
-	s.CreatedBy = val
+// SetProcessedDocumentCount sets the value of ProcessedDocumentCount.
+func (s *ImportRunStatusResponse) SetProcessedDocumentCount(val OptNilInt32) {
+	s.ProcessedDocumentCount = val
 }
 
-// SetCreatedOn sets the value of CreatedOn.
-func (s *ImportTaskDto) SetCreatedOn(val OptDateTime) {
-	s.CreatedOn = val
+// SetTotalDocumentCount sets the value of TotalDocumentCount.
+func (s *ImportRunStatusResponse) SetTotalDocumentCount(val OptNilInt32) {
+	s.TotalDocumentCount = val
 }
 
-// SetModifiedBy sets the value of ModifiedBy.
-func (s *ImportTaskDto) SetModifiedBy(val OptNilString) {
-	s.ModifiedBy = val
+func (*ImportRunStatusResponse) aPIImporttasksIDImportrunsRunIdStatusGetRes() {}
+
+// Enum values:
+// - `RequestStart`
+// - `RequestCancel`
+// - `Started`
+// - `Failed`
+// - `Canceled`
+// - `Completed`
+// - `UndoStarted`
+// - `UndoCompleted`
+// - `Created`
+// - `Preparing`.
+// Ref: #/components/schemas/ImportStatus
+type ImportStatus string
+
+const (
+	ImportStatusRequestStart  ImportStatus = "RequestStart"
+	ImportStatusRequestCancel ImportStatus = "RequestCancel"
+	ImportStatusStarted       ImportStatus = "Started"
+	ImportStatusFailed        ImportStatus = "Failed"
+	ImportStatusCanceled      ImportStatus = "Canceled"
+	ImportStatusCompleted     ImportStatus = "Completed"
+	ImportStatusUndoStarted   ImportStatus = "UndoStarted"
+	ImportStatusUndoCompleted ImportStatus = "UndoCompleted"
+	ImportStatusCreated       ImportStatus = "Created"
+	ImportStatusPreparing     ImportStatus = "Preparing"
+)
+
+// AllValues returns all ImportStatus values.
+func (ImportStatus) AllValues() []ImportStatus {
+	return []ImportStatus{
+		ImportStatusRequestStart,
+		ImportStatusRequestCancel,
+		ImportStatusStarted,
+		ImportStatusFailed,
+		ImportStatusCanceled,
+		ImportStatusCompleted,
+		ImportStatusUndoStarted,
+		ImportStatusUndoCompleted,
+		ImportStatusCreated,
+		ImportStatusPreparing,
+	}
 }
 
-// SetModifiedOn sets the value of ModifiedOn.
-func (s *ImportTaskDto) SetModifiedOn(val OptNilDateTime) {
-	s.ModifiedOn = val
+// MarshalText implements encoding.TextMarshaler.
+func (s ImportStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case ImportStatusRequestStart:
+		return []byte(s), nil
+	case ImportStatusRequestCancel:
+		return []byte(s), nil
+	case ImportStatusStarted:
+		return []byte(s), nil
+	case ImportStatusFailed:
+		return []byte(s), nil
+	case ImportStatusCanceled:
+		return []byte(s), nil
+	case ImportStatusCompleted:
+		return []byte(s), nil
+	case ImportStatusUndoStarted:
+		return []byte(s), nil
+	case ImportStatusUndoCompleted:
+		return []byte(s), nil
+	case ImportStatusCreated:
+		return []byte(s), nil
+	case ImportStatusPreparing:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// SetAnalysisRecords sets the value of AnalysisRecords.
-func (s *ImportTaskDto) SetAnalysisRecords(val []AnalysisRecordDto) {
-	s.AnalysisRecords = val
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ImportStatus) UnmarshalText(data []byte) error {
+	switch ImportStatus(data) {
+	case ImportStatusRequestStart:
+		*s = ImportStatusRequestStart
+		return nil
+	case ImportStatusRequestCancel:
+		*s = ImportStatusRequestCancel
+		return nil
+	case ImportStatusStarted:
+		*s = ImportStatusStarted
+		return nil
+	case ImportStatusFailed:
+		*s = ImportStatusFailed
+		return nil
+	case ImportStatusCanceled:
+		*s = ImportStatusCanceled
+		return nil
+	case ImportStatusCompleted:
+		*s = ImportStatusCompleted
+		return nil
+	case ImportStatusUndoStarted:
+		*s = ImportStatusUndoStarted
+		return nil
+	case ImportStatusUndoCompleted:
+		*s = ImportStatusUndoCompleted
+		return nil
+	case ImportStatusCreated:
+		*s = ImportStatusCreated
+		return nil
+	case ImportStatusPreparing:
+		*s = ImportStatusPreparing
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
-
-// SetDefaultValues sets the value of DefaultValues.
-func (s *ImportTaskDto) SetDefaultValues(val []DefaultValueDto) {
-	s.DefaultValues = val
-}
-
-// SetDocuments sets the value of Documents.
-func (s *ImportTaskDto) SetDocuments(val []DocumentDto) {
-	s.Documents = val
-}
-
-// SetImports sets the value of Imports.
-func (s *ImportTaskDto) SetImports(val []ImportDto) {
-	s.Imports = val
-}
-
-func (*ImportTaskDto) aPIImportTasksIDPatchRes() {}
 
 // Enum values:
 // - `Neu`: The initial status of an import task
@@ -1798,19 +745,16 @@ func (s *ImportTaskStatus) UnmarshalText(data []byte) error {
 	}
 }
 
+// Response containing the status of an import task (analysis phase).
 // Ref: #/components/schemas/ImportTaskStatusResponse
 type ImportTaskStatusResponse struct {
 	Status         ImportTaskStatus  `json:"status"`
 	AnalysisResult OptAnalysisResult `json:"analysisResult"`
 	// During the analysis, this indicates the progress in percent.
-	AnalysisProgressInPercent OptNilInt32     `json:"analysisProgressInPercent"`
-	ImportResult              OptImportResult `json:"importResult"`
-	// During the import, this indicates the progress in percent.
-	ImportProgressInPercent OptNilInt32 `json:"importProgressInPercent"`
-	// How many records were processed by the import.
-	ProcessedDocumentCount OptNilInt32 `json:"processedDocumentCount"`
-	// The total number of records that should have been processed by the import.
-	TotalDocumentCount OptNilInt32 `json:"totalDocumentCount"`
+	AnalysisProgressInPercent OptNilInt32 `json:"analysisProgressInPercent"`
+	// If there was an error during the analysis, this contains the error message.
+	AnalysisErrorMessage OptNilString    `json:"analysisErrorMessage"`
+	ImportResult         OptImportResult `json:"importResult"`
 }
 
 // GetStatus returns the value of Status.
@@ -1828,24 +772,14 @@ func (s *ImportTaskStatusResponse) GetAnalysisProgressInPercent() OptNilInt32 {
 	return s.AnalysisProgressInPercent
 }
 
+// GetAnalysisErrorMessage returns the value of AnalysisErrorMessage.
+func (s *ImportTaskStatusResponse) GetAnalysisErrorMessage() OptNilString {
+	return s.AnalysisErrorMessage
+}
+
 // GetImportResult returns the value of ImportResult.
 func (s *ImportTaskStatusResponse) GetImportResult() OptImportResult {
 	return s.ImportResult
-}
-
-// GetImportProgressInPercent returns the value of ImportProgressInPercent.
-func (s *ImportTaskStatusResponse) GetImportProgressInPercent() OptNilInt32 {
-	return s.ImportProgressInPercent
-}
-
-// GetProcessedDocumentCount returns the value of ProcessedDocumentCount.
-func (s *ImportTaskStatusResponse) GetProcessedDocumentCount() OptNilInt32 {
-	return s.ProcessedDocumentCount
-}
-
-// GetTotalDocumentCount returns the value of TotalDocumentCount.
-func (s *ImportTaskStatusResponse) GetTotalDocumentCount() OptNilInt32 {
-	return s.TotalDocumentCount
 }
 
 // SetStatus sets the value of Status.
@@ -1863,58 +797,50 @@ func (s *ImportTaskStatusResponse) SetAnalysisProgressInPercent(val OptNilInt32)
 	s.AnalysisProgressInPercent = val
 }
 
+// SetAnalysisErrorMessage sets the value of AnalysisErrorMessage.
+func (s *ImportTaskStatusResponse) SetAnalysisErrorMessage(val OptNilString) {
+	s.AnalysisErrorMessage = val
+}
+
 // SetImportResult sets the value of ImportResult.
 func (s *ImportTaskStatusResponse) SetImportResult(val OptImportResult) {
 	s.ImportResult = val
 }
 
-// SetImportProgressInPercent sets the value of ImportProgressInPercent.
-func (s *ImportTaskStatusResponse) SetImportProgressInPercent(val OptNilInt32) {
-	s.ImportProgressInPercent = val
-}
+func (*ImportTaskStatusResponse) aPIImporttasksIDStatusGetRes() {}
 
-// SetProcessedDocumentCount sets the value of ProcessedDocumentCount.
-func (s *ImportTaskStatusResponse) SetProcessedDocumentCount(val OptNilInt32) {
-	s.ProcessedDocumentCount = val
-}
-
-// SetTotalDocumentCount sets the value of TotalDocumentCount.
-func (s *ImportTaskStatusResponse) SetTotalDocumentCount(val OptNilInt32) {
-	s.TotalDocumentCount = val
-}
-
-// NewOptAPIImportTasksIDImportRunsPostReq returns new OptAPIImportTasksIDImportRunsPostReq with value set to v.
-func NewOptAPIImportTasksIDImportRunsPostReq(v APIImportTasksIDImportRunsPostReq) OptAPIImportTasksIDImportRunsPostReq {
-	return OptAPIImportTasksIDImportRunsPostReq{
+// NewOptAPIImporttasksIDImportrunsPostReq returns new OptAPIImporttasksIDImportrunsPostReq with value set to v.
+func NewOptAPIImporttasksIDImportrunsPostReq(v APIImporttasksIDImportrunsPostReq) OptAPIImporttasksIDImportrunsPostReq {
+	return OptAPIImporttasksIDImportrunsPostReq{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptAPIImportTasksIDImportRunsPostReq is optional APIImportTasksIDImportRunsPostReq.
-type OptAPIImportTasksIDImportRunsPostReq struct {
-	Value APIImportTasksIDImportRunsPostReq
+// OptAPIImporttasksIDImportrunsPostReq is optional APIImporttasksIDImportrunsPostReq.
+type OptAPIImporttasksIDImportrunsPostReq struct {
+	Value APIImporttasksIDImportrunsPostReq
 	Set   bool
 }
 
-// IsSet returns true if OptAPIImportTasksIDImportRunsPostReq was set.
-func (o OptAPIImportTasksIDImportRunsPostReq) IsSet() bool { return o.Set }
+// IsSet returns true if OptAPIImporttasksIDImportrunsPostReq was set.
+func (o OptAPIImporttasksIDImportrunsPostReq) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptAPIImportTasksIDImportRunsPostReq) Reset() {
-	var v APIImportTasksIDImportRunsPostReq
+func (o *OptAPIImporttasksIDImportrunsPostReq) Reset() {
+	var v APIImporttasksIDImportrunsPostReq
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptAPIImportTasksIDImportRunsPostReq) SetTo(v APIImportTasksIDImportRunsPostReq) {
+func (o *OptAPIImporttasksIDImportrunsPostReq) SetTo(v APIImporttasksIDImportrunsPostReq) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptAPIImportTasksIDImportRunsPostReq) Get() (v APIImportTasksIDImportRunsPostReq, ok bool) {
+func (o OptAPIImporttasksIDImportrunsPostReq) Get() (v APIImporttasksIDImportrunsPostReq, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1922,45 +848,45 @@ func (o OptAPIImportTasksIDImportRunsPostReq) Get() (v APIImportTasksIDImportRun
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptAPIImportTasksIDImportRunsPostReq) Or(d APIImportTasksIDImportRunsPostReq) APIImportTasksIDImportRunsPostReq {
+func (o OptAPIImporttasksIDImportrunsPostReq) Or(d APIImporttasksIDImportrunsPostReq) APIImporttasksIDImportrunsPostReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
 }
 
-// NewOptAPIImportTasksPostReq returns new OptAPIImportTasksPostReq with value set to v.
-func NewOptAPIImportTasksPostReq(v APIImportTasksPostReq) OptAPIImportTasksPostReq {
-	return OptAPIImportTasksPostReq{
+// NewOptAPIImporttasksPostReq returns new OptAPIImporttasksPostReq with value set to v.
+func NewOptAPIImporttasksPostReq(v APIImporttasksPostReq) OptAPIImporttasksPostReq {
+	return OptAPIImporttasksPostReq{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptAPIImportTasksPostReq is optional APIImportTasksPostReq.
-type OptAPIImportTasksPostReq struct {
-	Value APIImportTasksPostReq
+// OptAPIImporttasksPostReq is optional APIImporttasksPostReq.
+type OptAPIImporttasksPostReq struct {
+	Value APIImporttasksPostReq
 	Set   bool
 }
 
-// IsSet returns true if OptAPIImportTasksPostReq was set.
-func (o OptAPIImportTasksPostReq) IsSet() bool { return o.Set }
+// IsSet returns true if OptAPIImporttasksPostReq was set.
+func (o OptAPIImporttasksPostReq) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptAPIImportTasksPostReq) Reset() {
-	var v APIImportTasksPostReq
+func (o *OptAPIImporttasksPostReq) Reset() {
+	var v APIImporttasksPostReq
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptAPIImportTasksPostReq) SetTo(v APIImportTasksPostReq) {
+func (o *OptAPIImporttasksPostReq) SetTo(v APIImporttasksPostReq) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptAPIImportTasksPostReq) Get() (v APIImportTasksPostReq, ok bool) {
+func (o OptAPIImporttasksPostReq) Get() (v APIImporttasksPostReq, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1968,7 +894,7 @@ func (o OptAPIImportTasksPostReq) Get() (v APIImportTasksPostReq, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptAPIImportTasksPostReq) Or(d APIImportTasksPostReq) APIImportTasksPostReq {
+func (o OptAPIImporttasksPostReq) Or(d APIImporttasksPostReq) APIImporttasksPostReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2015,98 +941,6 @@ func (o OptAnalysisResult) Get() (v AnalysisResult, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptAnalysisResult) Or(d AnalysisResult) AnalysisResult {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptBool returns new OptBool with value set to v.
-func NewOptBool(v bool) OptBool {
-	return OptBool{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptBool is optional bool.
-type OptBool struct {
-	Value bool
-	Set   bool
-}
-
-// IsSet returns true if OptBool was set.
-func (o OptBool) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptBool) Reset() {
-	var v bool
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptBool) SetTo(v bool) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptBool) Get() (v bool, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptBool) Or(d bool) bool {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptDateTime returns new OptDateTime with value set to v.
-func NewOptDateTime(v time.Time) OptDateTime {
-	return OptDateTime{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDateTime is optional time.Time.
-type OptDateTime struct {
-	Value time.Time
-	Set   bool
-}
-
-// IsSet returns true if OptDateTime was set.
-func (o OptDateTime) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDateTime) Reset() {
-	var v time.Time
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDateTime) SetTo(v time.Time) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDateTime) Get() (v time.Time, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDateTime) Or(d time.Time) time.Time {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2245,333 +1079,6 @@ func (o OptImportResult) Get() (v ImportResult, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptImportResult) Or(d ImportResult) ImportResult {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptImportTaskDto returns new OptImportTaskDto with value set to v.
-func NewOptImportTaskDto(v ImportTaskDto) OptImportTaskDto {
-	return OptImportTaskDto{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptImportTaskDto is optional ImportTaskDto.
-type OptImportTaskDto struct {
-	Value ImportTaskDto
-	Set   bool
-}
-
-// IsSet returns true if OptImportTaskDto was set.
-func (o OptImportTaskDto) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptImportTaskDto) Reset() {
-	var v ImportTaskDto
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptImportTaskDto) SetTo(v ImportTaskDto) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptImportTaskDto) Get() (v ImportTaskDto, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptImportTaskDto) Or(d ImportTaskDto) ImportTaskDto {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptInt32 returns new OptInt32 with value set to v.
-func NewOptInt32(v int32) OptInt32 {
-	return OptInt32{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptInt32 is optional int32.
-type OptInt32 struct {
-	Value int32
-	Set   bool
-}
-
-// IsSet returns true if OptInt32 was set.
-func (o OptInt32) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptInt32) Reset() {
-	var v int32
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptInt32) SetTo(v int32) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptInt32) Get() (v int32, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptInt32) Or(d int32) int32 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptInt64 returns new OptInt64 with value set to v.
-func NewOptInt64(v int64) OptInt64 {
-	return OptInt64{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptInt64 is optional int64.
-type OptInt64 struct {
-	Value int64
-	Set   bool
-}
-
-// IsSet returns true if OptInt64 was set.
-func (o OptInt64) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptInt64) Reset() {
-	var v int64
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptInt64) SetTo(v int64) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptInt64) Get() (v int64, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptInt64) Or(d int64) int64 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptNilBool returns new OptNilBool with value set to v.
-func NewOptNilBool(v bool) OptNilBool {
-	return OptNilBool{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptNilBool is optional nullable bool.
-type OptNilBool struct {
-	Value bool
-	Set   bool
-	Null  bool
-}
-
-// IsSet returns true if OptNilBool was set.
-func (o OptNilBool) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptNilBool) Reset() {
-	var v bool
-	o.Value = v
-	o.Set = false
-	o.Null = false
-}
-
-// SetTo sets value to v.
-func (o *OptNilBool) SetTo(v bool) {
-	o.Set = true
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o OptNilBool) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *OptNilBool) SetToNull() {
-	o.Set = true
-	o.Null = true
-	var v bool
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptNilBool) Get() (v bool, ok bool) {
-	if o.Null {
-		return v, false
-	}
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptNilBool) Or(d bool) bool {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptNilByte returns new OptNilByte with value set to v.
-func NewOptNilByte(v []byte) OptNilByte {
-	return OptNilByte{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptNilByte is optional nullable []byte.
-type OptNilByte struct {
-	Value []byte
-	Set   bool
-	Null  bool
-}
-
-// IsSet returns true if OptNilByte was set.
-func (o OptNilByte) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptNilByte) Reset() {
-	var v []byte
-	o.Value = v
-	o.Set = false
-	o.Null = false
-}
-
-// SetTo sets value to v.
-func (o *OptNilByte) SetTo(v []byte) {
-	o.Set = true
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o OptNilByte) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *OptNilByte) SetToNull() {
-	o.Set = true
-	o.Null = true
-	var v []byte
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptNilByte) Get() (v []byte, ok bool) {
-	if o.Null {
-		return v, false
-	}
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptNilByte) Or(d []byte) []byte {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptNilDateTime returns new OptNilDateTime with value set to v.
-func NewOptNilDateTime(v time.Time) OptNilDateTime {
-	return OptNilDateTime{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptNilDateTime is optional nullable time.Time.
-type OptNilDateTime struct {
-	Value time.Time
-	Set   bool
-	Null  bool
-}
-
-// IsSet returns true if OptNilDateTime was set.
-func (o OptNilDateTime) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptNilDateTime) Reset() {
-	var v time.Time
-	o.Value = v
-	o.Set = false
-	o.Null = false
-}
-
-// SetTo sets value to v.
-func (o *OptNilDateTime) SetTo(v time.Time) {
-	o.Set = true
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o OptNilDateTime) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *OptNilDateTime) SetToNull() {
-	o.Set = true
-	o.Null = true
-	var v time.Time
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptNilDateTime) Get() (v time.Time, ok bool) {
-	if o.Null {
-		return v, false
-	}
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptNilDateTime) Or(d time.Time) time.Time {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2767,144 +1274,6 @@ func (o OptNilString) Or(d string) string {
 	return d
 }
 
-// NewOptString returns new OptString with value set to v.
-func NewOptString(v string) OptString {
-	return OptString{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptString is optional string.
-type OptString struct {
-	Value string
-	Set   bool
-}
-
-// IsSet returns true if OptString was set.
-func (o OptString) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptString) Reset() {
-	var v string
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptString) SetTo(v string) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptString) Get() (v string, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptString) Or(d string) string {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptUUID returns new OptUUID with value set to v.
-func NewOptUUID(v uuid.UUID) OptUUID {
-	return OptUUID{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptUUID is optional uuid.UUID.
-type OptUUID struct {
-	Value uuid.UUID
-	Set   bool
-}
-
-// IsSet returns true if OptUUID was set.
-func (o OptUUID) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptUUID) Reset() {
-	var v uuid.UUID
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptUUID) SetTo(v uuid.UUID) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptUUID) Get() (v uuid.UUID, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptValidationProblemDetailsErrors returns new OptValidationProblemDetailsErrors with value set to v.
-func NewOptValidationProblemDetailsErrors(v ValidationProblemDetailsErrors) OptValidationProblemDetailsErrors {
-	return OptValidationProblemDetailsErrors{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptValidationProblemDetailsErrors is optional ValidationProblemDetailsErrors.
-type OptValidationProblemDetailsErrors struct {
-	Value ValidationProblemDetailsErrors
-	Set   bool
-}
-
-// IsSet returns true if OptValidationProblemDetailsErrors was set.
-func (o OptValidationProblemDetailsErrors) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptValidationProblemDetailsErrors) Reset() {
-	var v ValidationProblemDetailsErrors
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptValidationProblemDetailsErrors) SetTo(v ValidationProblemDetailsErrors) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptValidationProblemDetailsErrors) Get() (v ValidationProblemDetailsErrors, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptValidationProblemDetailsErrors) Or(d ValidationProblemDetailsErrors) ValidationProblemDetailsErrors {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // Ref: #/components/schemas/ProblemDetails
 type ProblemDetails struct {
 	Type            OptNilString `json:"type"`
@@ -2974,8 +1343,6 @@ func (s *ProblemDetails) SetInstance(val OptNilString) {
 func (s *ProblemDetails) SetAdditionalProps(val ProblemDetailsAdditional) {
 	s.AdditionalProps = val
 }
-
-func (*ProblemDetails) aPIImportTasksPostRes() {}
 
 type ProblemDetailsAdditional map[string]jx.Raw
 
@@ -3072,109 +1439,4 @@ func (s *Smart) SetToken(val string) {
 // SetRoles sets the value of Roles.
 func (s *Smart) SetRoles(val []string) {
 	s.Roles = val
-}
-
-// Ref: #/components/schemas/ValidationProblemDetails
-type ValidationProblemDetails struct {
-	Type            OptNilString                      `json:"type"`
-	Title           OptNilString                      `json:"title"`
-	Status          OptNilInt32                       `json:"status"`
-	Detail          OptNilString                      `json:"detail"`
-	Instance        OptNilString                      `json:"instance"`
-	Errors          OptValidationProblemDetailsErrors `json:"errors"`
-	AdditionalProps ValidationProblemDetailsAdditional
-}
-
-// GetType returns the value of Type.
-func (s *ValidationProblemDetails) GetType() OptNilString {
-	return s.Type
-}
-
-// GetTitle returns the value of Title.
-func (s *ValidationProblemDetails) GetTitle() OptNilString {
-	return s.Title
-}
-
-// GetStatus returns the value of Status.
-func (s *ValidationProblemDetails) GetStatus() OptNilInt32 {
-	return s.Status
-}
-
-// GetDetail returns the value of Detail.
-func (s *ValidationProblemDetails) GetDetail() OptNilString {
-	return s.Detail
-}
-
-// GetInstance returns the value of Instance.
-func (s *ValidationProblemDetails) GetInstance() OptNilString {
-	return s.Instance
-}
-
-// GetErrors returns the value of Errors.
-func (s *ValidationProblemDetails) GetErrors() OptValidationProblemDetailsErrors {
-	return s.Errors
-}
-
-// GetAdditionalProps returns the value of AdditionalProps.
-func (s *ValidationProblemDetails) GetAdditionalProps() ValidationProblemDetailsAdditional {
-	return s.AdditionalProps
-}
-
-// SetType sets the value of Type.
-func (s *ValidationProblemDetails) SetType(val OptNilString) {
-	s.Type = val
-}
-
-// SetTitle sets the value of Title.
-func (s *ValidationProblemDetails) SetTitle(val OptNilString) {
-	s.Title = val
-}
-
-// SetStatus sets the value of Status.
-func (s *ValidationProblemDetails) SetStatus(val OptNilInt32) {
-	s.Status = val
-}
-
-// SetDetail sets the value of Detail.
-func (s *ValidationProblemDetails) SetDetail(val OptNilString) {
-	s.Detail = val
-}
-
-// SetInstance sets the value of Instance.
-func (s *ValidationProblemDetails) SetInstance(val OptNilString) {
-	s.Instance = val
-}
-
-// SetErrors sets the value of Errors.
-func (s *ValidationProblemDetails) SetErrors(val OptValidationProblemDetailsErrors) {
-	s.Errors = val
-}
-
-// SetAdditionalProps sets the value of AdditionalProps.
-func (s *ValidationProblemDetails) SetAdditionalProps(val ValidationProblemDetailsAdditional) {
-	s.AdditionalProps = val
-}
-
-func (*ValidationProblemDetails) aPIImportTasksIDImportRunsPostRes() {}
-
-type ValidationProblemDetailsAdditional map[string]jx.Raw
-
-func (s *ValidationProblemDetailsAdditional) init() ValidationProblemDetailsAdditional {
-	m := *s
-	if m == nil {
-		m = map[string]jx.Raw{}
-		*s = m
-	}
-	return m
-}
-
-type ValidationProblemDetailsErrors map[string][]string
-
-func (s *ValidationProblemDetailsErrors) init() ValidationProblemDetailsErrors {
-	m := *s
-	if m == nil {
-		m = map[string][]string{}
-		*s = m
-	}
-	return m
 }
