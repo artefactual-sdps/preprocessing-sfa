@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.0.4",
   "info": {
     "title": "APIS API",
     "description": "This is the API definition of APIS (archive plan analysis and import service)",
@@ -11,7 +11,7 @@
     "version": "v1"
   },
   "paths": {
-    "/api/Healthz": {
+    "/api/healthz": {
       "get": {
         "tags": [
           "Healthz"
@@ -61,7 +61,7 @@
         }
       }
     },
-    "/api/ImportTasks": {
+    "/api/importtasks": {
       "post": {
         "tags": [
           "ImportTasks"
@@ -122,7 +122,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateImportTaskResponse"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -142,7 +142,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateImportTaskResponse"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -152,7 +152,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateImportTaskResponse"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -160,17 +160,17 @@
         }
       }
     },
-    "/api/ImportTasks/{id}/status": {
+    "/api/importtasks/{id}/status": {
       "get": {
         "tags": [
           "ImportTasks"
         ],
-        "summary": "Query the status of an ongoing analysis or import",
+        "summary": "Query the status of an ongoing analysis (import task).",
         "parameters": [
           {
             "name": "id",
             "in": "path",
-            "description": "The id of the import task to query",
+            "description": "The id of the import task to query.",
             "required": true,
             "schema": {
               "type": "string"
@@ -187,21 +187,52 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
-        }
+        },
+        "description": "This endpoint returns the status of the import task analysis phase only.\r\nFor import run progress and results, use the import run status endpoint."
       }
     },
-    "/api/ImportTasks/{id}": {
-      "patch": {
+    "/api/importtasks/{id}/cancel": {
+      "post": {
         "tags": [
           "ImportTasks"
         ],
-        "summary": "Updates the status of an existing import task.",
+        "summary": "Cancels an existing import task.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
-            "description": "The unique identifier of the import task to be updated.",
+            "description": "The unique identifier of the import task to cancel.",
             "required": true,
             "schema": {
               "type": "string"
@@ -209,7 +240,7 @@
           }
         ],
         "requestBody": {
-          "description": "The request containing the new status and related details for the import task. Only the status Evelix.Apis.Contract.Common.Entities.CodeValues.ImportTaskStatus.Abgebrochen is allowed.",
+          "description": "Optional cancellation details including reason.",
           "content": {
             "application/json": {
               "schema": {
@@ -229,28 +260,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "The import task was successfully updated.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImportTaskDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImportTaskDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImportTaskDto"
-                }
-              }
-            }
-          },
           "409": {
-            "description": "The requested status transition is not allowed.",
+            "description": "The import task cannot be cancelled in its current state.",
             "content": {
               "text/plain": {
                 "schema": {
@@ -288,11 +299,54 @@
                 }
               }
             }
+          },
+          "204": {
+            "description": "The import task was successfully cancelled."
+          },
+          "401": {
+            "description": "The user is not authorized.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/ImportTasks/{id}/importRuns": {
+    "/api/importtasks/{id}/importruns": {
       "post": {
         "tags": [
           "ImportTasks"
@@ -314,17 +368,22 @@
             "multipart/form-data": {
               "schema": {
                 "required": [
-                  "file"
+                  "file",
+                  "username"
                 ],
                 "type": "object",
                 "properties": {
                   "file": {
                     "type": "string",
-                    "description": "The METS file required for the import.\r\n(To be decided: Or a zip file containing the METS and the metadata.xml file?))",
+                    "description": "The METS file required for the import.",
                     "format": "binary"
                   },
                   "importBehaviour": {
                     "$ref": "#/components/schemas/ImportBehaviourType"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "The username that is logged as the creator of the import task. Can be the email for example."
                   }
                 }
               },
@@ -333,6 +392,9 @@
                   "style": "form"
                 },
                 "importBehaviour": {
+                  "style": "form"
+                },
+                "username": {
                   "style": "form"
                 }
               }
@@ -365,17 +427,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -443,7 +505,7 @@
         }
       }
     },
-    "/api/ImportTasks/{id}/importRuns/{runId}/status": {
+    "/api/importtasks/{id}/importruns/{runId}/status": {
       "get": {
         "tags": [
           "ImportTasks"
@@ -453,6 +515,7 @@
           {
             "name": "id",
             "in": "path",
+            "description": "The import task identifier.",
             "required": true,
             "schema": {
               "type": "string"
@@ -461,6 +524,7 @@
           {
             "name": "runId",
             "in": "path",
+            "description": "The import run identifier.",
             "required": true,
             "schema": {
               "type": "string"
@@ -527,154 +591,34 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
-        }
+        },
+        "description": "If the import has started in ACTApro (TaskId is present), the status is fetched from ACTApro.\r\nOtherwise, the local status from the database is returned."
       }
     }
   },
   "components": {
     "schemas": {
-      "AnalysisRecordDto": {
-        "type": "object",
-        "properties": {
-          "analysisRecordId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "rowVersion": {
-            "type": "string",
-            "format": "byte"
-          },
-          "importTaskId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "comparisonDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "targetPrimaryKey": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "docKey": {
-            "type": "string",
-            "nullable": true
-          },
-          "referenceCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "level": {
-            "type": "string",
-            "nullable": true
-          },
-          "sourcePrimaryKey": {
-            "type": "string",
-            "nullable": true
-          },
-          "positionNumber": {
-            "type": "string"
-          },
-          "sourceTitle": {
-            "type": "string"
-          },
-          "destinationTitle": {
-            "type": "string",
-            "nullable": true
-          },
-          "sourceField1": {
-            "type": "string",
-            "nullable": true
-          },
-          "destinationField1": {
-            "type": "string",
-            "nullable": true
-          },
-          "sourceField2": {
-            "type": "string",
-            "nullable": true
-          },
-          "destinationField2": {
-            "type": "string",
-            "nullable": true
-          },
-          "sourceField3": {
-            "type": "string",
-            "nullable": true
-          },
-          "destinationField3": {
-            "type": "string",
-            "nullable": true
-          },
-          "sourceField4": {
-            "type": "string",
-            "nullable": true
-          },
-          "destinationField4": {
-            "type": "string",
-            "nullable": true
-          },
-          "sourceField5": {
-            "type": "string",
-            "nullable": true
-          },
-          "destinationField5": {
-            "type": "string",
-            "nullable": true
-          },
-          "titleIsDifferent": {
-            "type": "boolean"
-          },
-          "field1IsDifferent": {
-            "type": "boolean"
-          },
-          "field2IsDifferent": {
-            "type": "boolean"
-          },
-          "field3IsDifferent": {
-            "type": "boolean"
-          },
-          "field4IsDifferent": {
-            "type": "boolean"
-          },
-          "field5IsDifferent": {
-            "type": "boolean"
-          },
-          "status": {
-            "type": "string",
-            "nullable": true
-          },
-          "errorMessage": {
-            "type": "string",
-            "nullable": true
-          },
-          "containerDocKey": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdOn": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "modifiedBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "modifiedOn": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "importTask": {
-            "$ref": "#/components/schemas/ImportTaskDto"
-          }
-        },
-        "additionalProperties": false
-      },
       "AnalysisResult": {
         "enum": [
           "AlleGleich",
@@ -692,198 +636,49 @@
         ]
       },
       "CancelImportTaskRequest": {
-        "required": [
-          "status"
-        ],
         "type": "object",
         "properties": {
-          "status": {
-            "$ref": "#/components/schemas/ImportTaskStatus"
+          "reason": {
+            "type": "string",
+            "description": "Optional reason for canceling the import task.",
+            "nullable": true
+          },
+          "cancelledBy": {
+            "type": "string",
+            "description": "The user who initiated the cancellation.",
+            "nullable": true
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Request to cancel an import task."
       },
       "CreateImportRunResponse": {
         "type": "object",
         "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "Gets a value indicating whether the creation of the import run was successful."
-          },
-          "importTaskId": {
-            "type": "string",
-            "description": "Gets the identifier of the import task associated with the response."
-          },
           "importRunId": {
             "type": "string",
-            "description": "Gets the unique identifier for the created import run.",
-            "nullable": true
-          },
-          "error": {
-            "type": "string",
-            "description": "Gets or initializes the error message associated with the result of the import run creation.",
-            "nullable": true
+            "description": "Gets the unique identifier for the created import run."
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "required": [
+          "importRunId"
+        ],
+        "description": "Response returned when an import run is successfully created."
       },
       "CreateImportTaskResponse": {
         "type": "object",
         "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "Gets a value indicating whether the creation of the import task was successful."
-          },
-          "error": {
-            "type": "string",
-            "description": "Gets or initializes the error message associated with the result of the import task creation.",
-            "nullable": true
-          },
-          "id": {
-            "type": "string",
-            "description": "Gets the unique identifier for the created import task.",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "DefaultValueDto": {
-        "type": "object",
-        "properties": {
-          "defaultValueId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "rowVersion": {
-            "type": "string",
-            "format": "byte"
-          },
           "importTaskId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "accessionDocKey": {
-            "type": "string"
-          },
-          "accessionIdName": {
-            "type": "string"
-          },
-          "insertNodeDocKey": {
-            "type": "string"
-          },
-          "insertNodeIdName": {
-            "type": "string"
-          },
-          "status": {
             "type": "string",
-            "nullable": true
-          },
-          "protectionBaseDate": {
-            "type": "string",
-            "nullable": true
-          },
-          "protectionCategory": {
-            "type": "string",
-            "nullable": true
-          },
-          "protectionDuration": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "metadataCanBePublished": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "accessibility": {
-            "type": "string",
-            "nullable": true
-          },
-          "usability": {
-            "type": "string",
-            "nullable": true
-          },
-          "permissionType": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdOn": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "modifiedBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "modifiedOn": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "importTask": {
-            "$ref": "#/components/schemas/ImportTaskDto"
+            "description": "Gets the unique identifier for the created import task."
           }
         },
-        "additionalProperties": false
-      },
-      "DocumentDto": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "rowVersion": {
-            "type": "string",
-            "format": "byte"
-          },
-          "importTaskId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "dataBlob": {
-            "type": "string",
-            "format": "byte"
-          },
-          "uploadDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "xmlSourceType": {
-            "type": "string",
-            "nullable": true
-          },
-          "fileSize": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdOn": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "modifiedBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "modifiedOn": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "importTask": {
-            "$ref": "#/components/schemas/ImportTaskDto"
-          }
-        },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "required": [
+          "importTaskId"
+        ],
+        "description": "Response returned when an import task is successfully created."
       },
       "HealthCheckResult": {
         "required": [
@@ -943,76 +738,6 @@
           ""
         ]
       },
-      "ImportDto": {
-        "type": "object",
-        "properties": {
-          "importId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "rowVersion": {
-            "type": "string",
-            "format": "byte"
-          },
-          "taskId": {
-            "type": "string"
-          },
-          "importTaskId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "status": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "processedDocumentCount": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "totalDocumentCount": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "importDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "importFileBlob": {
-            "type": "string",
-            "format": "byte",
-            "nullable": true
-          },
-          "isSuccessful": {
-            "type": "boolean"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdOn": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "modifiedBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "modifiedOn": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "importTask": {
-            "$ref": "#/components/schemas/ImportTaskDto"
-          }
-        },
-        "additionalProperties": false
-      },
       "ImportResult": {
         "enum": [
           "Erfolgreich",
@@ -1028,114 +753,36 @@
       "ImportRunStatusResponse": {
         "type": "object",
         "properties": {
-          "importTaskId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "importRunId": {
-            "type": "string"
-          },
           "status": {
-            "type": "string"
+            "$ref": "#/components/schemas/ImportStatus"
           },
           "progressPercent": {
             "type": "integer",
             "format": "int32",
-            "nullable": true
+            "nullable": true,
+            "description": "The progress of the import run in percent (0-100), if available."
           },
-          "error": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "ImportTaskDto": {
-        "type": "object",
-        "properties": {
-          "importTaskId": {
+          "importResult": {
+            "$ref": "#/components/schemas/ImportResult"
+          },
+          "processedDocumentCount": {
             "type": "integer",
-            "format": "int32"
-          },
-          "rowVersion": {
-            "type": "string",
-            "format": "byte"
-          },
-          "taskType": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "noAutomaticImport": {
-            "type": "boolean"
-          },
-          "requiresContainers": {
-            "type": "boolean"
-          },
-          "status": {
-            "type": "string"
-          },
-          "analysisErrorMessage": {
-            "type": "string",
-            "nullable": true
-          },
-          "analysisResult": {
-            "type": "string",
-            "nullable": true
-          },
-          "analysisProgressInPercent": {
-            "type": "integer",
+            "description": "How many records were processed during the import.",
             "format": "int32",
             "nullable": true
           },
-          "importResult": {
-            "type": "string",
+          "totalDocumentCount": {
+            "type": "integer",
+            "description": "The total number of records to be processed during the import.",
+            "format": "int32",
             "nullable": true
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdOn": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "modifiedBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "modifiedOn": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "analysisRecords": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AnalysisRecordDto"
-            }
-          },
-          "defaultValues": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DefaultValueDto"
-            }
-          },
-          "documents": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DocumentDto"
-            }
-          },
-          "imports": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ImportDto"
-            }
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "required": [
+          "status"
+        ],
+        "description": "Response containing the status of an import run."
       },
       "ImportTaskStatus": {
         "enum": [
@@ -1178,26 +825,14 @@
           "importResult": {
             "$ref": "#/components/schemas/ImportResult"
           },
-          "importProgressInPercent": {
-            "type": "integer",
-            "description": "During the import, this indicates the progress in percent.",
-            "format": "int32",
-            "nullable": true
-          },
-          "processedDocumentCount": {
-            "type": "integer",
-            "description": "How many records were processed by the import",
-            "format": "int32",
-            "nullable": true
-          },
-          "totalDocumentCount": {
-            "type": "integer",
-            "description": "The total number of records that should have been processed by the import",
-            "format": "int32",
+          "analysisErrorMessage": {
+            "type": "string",
+            "description": "If there was an error during the analysis, this contains the error message.",
             "nullable": true
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Response containing the status of an import task (analysis phase)."
       },
       "ProblemDetails": {
         "type": "object",
@@ -1242,41 +877,33 @@
           ""
         ]
       },
-      "ValidationProblemDetails": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "nullable": true
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "detail": {
-            "type": "string",
-            "nullable": true
-          },
-          "instance": {
-            "type": "string",
-            "nullable": true
-          },
-          "errors": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "additionalProperties": { }
+      "ImportStatus": {
+        "enum": [
+          "RequestStart",
+          "RequestCancel",
+          "Started",
+          "Failed",
+          "Canceled",
+          "Completed",
+          "UndoStarted",
+          "UndoCompleted",
+          "Created",
+          "Preparing"
+        ],
+        "type": "string",
+        "description": "Enum values:\r\n- `RequestStart`\r\n- `RequestCancel`\r\n- `Started`\r\n- `Failed`\r\n- `Canceled`\r\n- `Completed`\r\n- `UndoStarted`\r\n- `UndoCompleted`\r\n- `Created`\r\n- `Preparing`",
+        "x-enumDescriptions": [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
       }
     },
     "securitySchemes": {
