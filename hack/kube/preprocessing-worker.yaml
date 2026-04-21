@@ -37,8 +37,13 @@ spec:
             - name: config
               mountPath: /home/preprocessing/.config
               readOnly: true
+            - name: shared-dir
+              mountPath: /home/preprocessing/shared
           resources: {}
       volumes:
         - name: config
           secret:
             secretName: preprocessing-secret
+        - name: shared-dir
+          persistentVolumeClaim:
+            claimName: preprocessing-pvc

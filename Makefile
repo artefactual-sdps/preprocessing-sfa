@@ -158,3 +158,6 @@ tool-%:
 tools: # @HELP Install all tools managed by bine.
 tools:
 	go tool bine sync
+
+validate-tilt: # @HELP Validate the Tiltfile and Kubernetes manifests.
+	tilt alpha tiltfile-result > /dev/null
