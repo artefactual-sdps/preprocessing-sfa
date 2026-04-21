@@ -1,6 +1,9 @@
 # preprocessing-sfa
 
-**preprocessing-sfa** is an Enduro preprocessing workflow for SFA SIPs.
+**preprocessing-sfa** provides two Enduro child workflows for SFA SIPs: a
+preprocessing child workflow and an AIS poststorage child workflow. Despite the
+project name, the worker binary starts two independent Temporal workers, one
+for each child workflow.
 
 - [Configuration](#configuration)
 - [Local environment](#local-environment)
@@ -9,53 +12,107 @@
 
 ## Configuration
 
-The preprocessing workers need to share the filesystem with Enduro's a3m or
-Archivematica workers. They must be connected to the same Temporal server
-and related to each other with the namespace, task queue and workflow name.
+The worker binary starts a preprocessing Temporal worker and an AIS poststorage
+Temporal worker. They need to share the filesystem with Enduro's a3m or
+Archivematica workers, connect to the same Temporal server, and be related to
+Enduro with the correct namespace, task queue and workflow names.
 
-### Preprocessing
+### Worker configuration
 
-The required configuration for the preprocessing worker:
+An example configuration for the worker binary:
 
 ```toml
 debug = false
 verbosity = 0
-sharedPath = "/home/enduro/preprocessing"
+
+sharedPath = "/home/preprocessing/shared"
+checkDuplicates = false
+
+[persistence]
+dsn = "user:password@tcp(mysql.enduro-sdps:3306)/preprocessing_sfa"
+driver = "mysql"
+migrate = true
 
 [temporal]
-address = "temporal.enduro-sdps:7233"
+address = "temporal-frontend.enduro-sdps:7233"
 namespace = "default"
 taskQueue = "preprocessing"
 workflowName = "preprocessing"
 
 [worker]
 maxConcurrentSessions = 1
-```
 
-Optional BagIt bag configuration:
-
-```toml
 [bagit]
 checksumAlgorithm = "md5"
+
+[apis]
+enabled = true
+url = "http://apis-mock.enduro-sdps:8080"
+timeout = "10s"
+pollInterval = "1s"
+token = "mock-token"
+
+[apis.oidc]
+enabled = false
+providerURL = "http://keycloak:7470/realms/artefactual"
+tokenURL = ""
+clientID = "enduro-s2s"
+clientSecret = "uSh7f2r4j2U5wA9d7mJ3xP6nQ8cT1vL0"
+scopes = ""
+audience = ""
+tokenExpiryLeeway = "30s"
+retryMaxAttempts = 3
+retryInitialInterval = "500ms"
+retryMaxInterval = "2s"
+retryBackoffCoefficient = 2.0
+
+[ais]
+workingDir = "/tmp"
+
+[ais.temporal]
+address = "temporal-frontend.enduro-sdps:7233"
+namespace = "default"
+taskQueue = "ais"
+workflowName = "ais"
+
+[ais.worker]
+maxConcurrentSessions = 1
+
+[ais.amss]
+url = "http://ambox.enduro-sdps:64081"
+user = "test"
+key = "test"
+
+[ais.bucket]
+endpoint = "http://minio.enduro-sdps:9000"
+pathStyle = true
+accessKey = "minio"
+secretKey = "minio123"
+region = "us-west-1"
+bucket = "ais"
+
+[fileFormat]
+allowlistPath = "/home/preprocessing/.config/allowed_file_formats.csv"
+
+[filevalidate.verapdf]
+path = "/opt/verapdf/verapdf"
 ```
 
 ### Enduro
 
-The preprocessing section for Enduro's configuration:
+The child workflow sections for Enduro's configuration:
 
 ```toml
-[preprocessing]
-enabled = true
-extract = true # Extract must be true for the preprocessing-sfa workflow.
-sharedPath = "/home/enduro/preprocessing"
-
-[preprocessing.temporal]
+[[childWorkflows]]
+type = "preprocessing"
 namespace = "default"
 taskQueue = "preprocessing"
 workflowName = "preprocessing"
+extract = true
+sharedPath = "/home/enduro/preprocessing"
 
-# Enable the AIS poststorage workflow.
-[[poststorage]]
+[[childWorkflows]]
+type = "poststorage"
 namespace = "default"
 taskQueue = "ais"
 workflowName = "ais"
@@ -63,150 +120,34 @@ workflowName = "ais"
 
 ## Local environment
 
-### Requirements
+This project provides two child workflows for the Enduro development
+environment. The supported development workflow is to run `tilt up` from the
+Enduro repository and load this repository through Enduro's
+`CHILD_WORKFLOW_PATHS` mechanism.
 
-This project uses Tilt to set up a local environment building the Docker images
-in a Kubernetes cluster. It has been tested with k3d, Minikube and Kind.
+Bring up the Enduro environment by following the [Enduro development manual].
 
-- [Docker] (v18.09+)
-- [kubectl]
-- [Tilt] (v0.22.2+)
+### Set up
 
-A local Kubernetes cluster:
+The specific requirements for `preprocessing-sfa` are:
 
-- [k3d] _(recomended, used in CI)_
-- [Minikube] _(tested)_
-- [Kind] _(tested)_
+- clone this repository as a sibling of the Enduro repository
+- configure `CHILD_WORKFLOW_PATHS=../preprocessing-sfa`
+- configure `MOUNT_PREPROCESSING_VOLUME=true`
+- run `tilt up` from the Enduro repository
 
-It can run with other solutions like Microk8s or Docker for Desktop/Mac and
-even against remote clusters, check Tilt's [Choosing a Local Dev Cluster] and
-[Install] documentation for more information to install these requirements.
-
-Additionally, follow the [Manage Docker as a non-root user] post-install guide
-so that you don’t have to run Tilt with `sudo`. _Note that managing Docker as a
-non-root user is **different** from running the docker daemon as a non-root user
-(rootless)._
+All other development workflow details, including `.tilt.env`, live updates,
+starting, stopping, and clearing the environment, are documented in Enduro.
+This repository can also provide local overrides through its own `.tilt.env`
+file, including settings such as `TRIGGER_MODE_AUTO`.
 
 ### Requirements for development
 
 While we run the services inside a Kubernetes cluster we recomend installing
 Go and other tools locally to ease the development process.
 
-- [Go] (1.22+)
+- [Go] (1.26+)
 - GNU [Make] and [GCC]
-
-### Set up
-
-Start a local Kubernetes cluster with a local registry. For example, with k3d:
-
-```bash
-k3d cluster create preprocessing --registry-create sdps-registry
-```
-
-Or using an existing registry:
-
-```bash
-k3d cluster create preprocessing --registry-use sdps-registry
-```
-
-Make sure kubectl is available and configured to use that cluster:
-
-```bash
-kubectl config view
-```
-
-Clone this repository and move into its folder if you have not done that
-previously:
-
-```bash
-git clone git@github.com:artefactual-sdps/preprocessing-sfa.git
-cd preprocessing-sfa
-```
-
-Bring up the environment:
-
-```bash
-tilt up
-```
-
-While the Docker images are built/downloaded and the Kubernetes resources are
-created, hit `space` to open the Tilt UI in your browser. Check the [Tilt UI]
-documentation to learn more about it.
-
-### Live updates
-
-Tilt, by default, will watch for file changes in the project folder and it will
-sync those changes, rebuild the Docker images and recreate the resources when
-necessary. However, we have _disabled_ auto-load within the Tiltfile to reduce
-the use of hardware resources. There are refresh buttons on each resource in the
-Tilt UI that allow triggering manual updates and re-executing jobs and local
-resources. You can also set the `trigger_mode` env string to `TRIGGER_MODE_AUTO`
-within your local `.tilt.env` file to override this change and enable auto mode.
-
-### Stop/start the environment
-
-Run `ctrl-c` on the terminal where `tilt up` is running and stop the cluster
-with:
-
-```bash
-k3d cluster stop preprocessing
-```
-
-To start the environment again:
-
-```bash
-k3d cluster start preprocessing
-tilt up
-```
-
-### Clear the cluster
-
-> Check the Tilt UI helpers below to just flush the existing data.
-
-To remove the resources created by Tilt in the cluster, execute:
-
-```bash
-tilt down
-```
-
-Note that it will take some time to delete the persistent volumes when you
-run `tilt down` and flushing the existing data does not delete the cluster.
-To delete the volumes immediately, you can delete the cluster.
-
-### Delete the cluster
-
-Deleting the cluster will remove all the resources immediatly, deleting
-cluster container from the host. With k3d, run:
-
-```bash
-k3d cluster delete preprocessing
-```
-
-### Tilt environment configuration
-
-A few configuration options can be changed by having a `.tilt.env` file
-located in the root of the project. Example:
-
-```text
-TRIGGER_MODE_AUTO=true
-```
-
-#### TRIGGER_MODE_AUTO
-
-Enables live updates on code changes for the preprocessing worker.
-
-### Tilt UI helpers
-
-#### Submit
-
-In the Tilt UI header there is a cloud icon/button that can trigger the
-preprocessing workflow. Click the caret to set the path to a file/directory in
-the host, then click the cloud icon to trigger the workflow.
-
-#### Flush
-
-Also in the Tilt UI header, click the trash button to flush the existing data.
-This will recreate the MySQL databases and restart the required resources.
 
 ## Makefile
 
@@ -218,7 +159,20 @@ Dependencies are downloaded automatically.
 
 The debug mode produces more output, including the commands executed. E.g.:
 
+```shell
+$ make env DBG_MAKEFILE=1
+Makefile:10: ***** starting Makefile for goal(s) "env"
+Makefile:11: ***** Fri 10 Nov 2023 11:16:16 AM CET
+go env
+GO111MODULE=''
+GOARCH='amd64'
+...
+```
+
 ## Available activities
+
+Most of the activities documented below belong to the preprocessing child
+workflow.
 
 * [Calculate SIP checksum](#calculate-sip-checksum)
 * [Check for duplicate SIP](#check-for-duplicate-sip)
@@ -519,7 +473,7 @@ parsing by the preservation engine
 
 ### Other activities
 
-The SFA workflow that invokes the activities listed above (see the
+The preprocessing child workflow that invokes the activities listed above (see the
 [preprocessing.go](https://github.com/artefactual-sdps/preprocessing-sfa/blob/main/internal/workflow/preprocessing.go) 
 file) also uses a number of other more general Enduro
 [temporal activites](https://github.com/artefactual-sdps/temporal-activities), including:
@@ -530,8 +484,8 @@ file) also uses a number of other more general Enduro
 * `ffvalidate`
 * `xmlvalidate`
 
-There is also one custom post-preservation workflow activity maintained in this
-repository as well:
+The AIS poststorage child workflow uses one custom workflow activity maintained
+in this repository:
 
 #### Create AIS metadata bundle
 
@@ -550,28 +504,7 @@ the AIS for synchronization.
 * Metadata bundle is successfully generated and deposited
 * AIS is able to receive and ingest the metadata
 
-
-```shell
-$ make env DBG_MAKEFILE=1
-Makefile:10: ***** starting Makefile for goal(s) "env"
-Makefile:11: ***** Fri 10 Nov 2023 11:16:16 AM CET
-go env
-GO111MODULE=''
-GOARCH='amd64'
-...
-```
-
-[enduro documentation]: https://github.com/artefactual-sdps/enduro/blob/main/docs/src/dev-manual/preprocessing.md
-[docker]: https://docs.docker.com/get-docker/
-[kubectl]: https://kubernetes.io/docs/tasks/tools/#kubectl
-[tilt]: https://docs.tilt.dev/tutorial/1-prerequisites.html#install-tilt
-[k3d]: https://k3d.io/v5.4.3/#installation
-[minikube]: https://minikube.sigs.k8s.io/docs/start/
-[kind]: https://kind.sigs.k8s.io/docs/user/quick-start#installation
-[choosing a local dev cluster]: https://docs.tilt.dev/choosing_clusters.html
-[install]: https://docs.tilt.dev/install.html
-[manage docker as a non-root user]: https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user
-[tilt ui]: https://docs.tilt.dev/tutorial/3-tilt-ui.html
+[Enduro development manual]: https://enduro.readthedocs.io/dev-manual/devel/
 [go]: https://go.dev/doc/install
 [make]: https://www.gnu.org/software/make/
 [gcc]: https://gcc.gnu.org/
