@@ -20,10 +20,12 @@ import (
 	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
+	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 	"gotest.tools/v3/fs"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
+	apisgen "github.com/artefactual-sdps/preprocessing-sfa/internal/apis/gen"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
@@ -35,7 +37,8 @@ import (
 )
 
 const (
-	sipName = "SIP_20240606_dept.zip"
+	sipName    = "SIP_20240606_dept.zip"
+	apisTaskID = "task-000001"
 
 	// The relPath reflects an actual SFA ZIP path passed from Enduro to
 	// preprocessing-sfa — it seems that ingest prepends "SIP_" to the original
@@ -123,6 +126,133 @@ const (
 var (
 	testTime = time.Date(2024, 6, 6, 15, 8, 39, 0, time.UTC)
 	sipUUID  = uuid.MustParse("8fdfaea1-06ed-4cf6-8bdf-d15d80420f35")
+
+	preAPISEvents = []*eventlog.Event{
+		{
+			Name:        "Calculate SIP checksum",
+			Message:     "SIP checksum calculated using SHA-256",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Check for duplicate SIP",
+			Message:     "SIP is not a duplicate",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Extract SIP",
+			Message:     "SIP extracted",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Validate Bag",
+			Message:     "Bag successfully validated",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Unbag SIP",
+			Message:     "SIP unbagged",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Identify SIP structure",
+			Message:     "SIP structure identified: DigitizedAIP",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Validate SIP structure",
+			Message:     "SIP structure matches validation criteria",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Validate SIP name",
+			Message:     "SIP name matches expected naming convention for the identified structure type",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Verify SIP manifest",
+			Message:     "SIP contents match manifest",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Verify SIP checksums",
+			Message:     "SIP checksums match file contents",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Validate SIP file formats",
+			Message:     "No invalid files found",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name: "Validate SIP metadata",
+			Message: `Metadata validation successful on the following file(s):
+
+- UpdatedAreldaMetadata.xml`,
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Validate logical metadata",
+			Message:     "Logical metadata validation successful",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+	}
+
+	postAPISEvents = []*eventlog.Event{
+		{
+			Name:        "Create premis.xml",
+			Message:     "Created a premis.xml file and stored it in the metadata directory",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Restructure SIP",
+			Message:     "SIP has been restructured for preservation processing",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Create identifier.json",
+			Message:     "Created an identifier.json file and stored it in the metadata directory",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		{
+			Name:        "Bag SIP",
+			Message:     "SIP has been bagged",
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+	}
 )
 
 type PreprocessingTestSuite struct {
@@ -235,6 +365,7 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 	)
 
 	s.workflow = workflow.NewPreprocessingWorkflow(nil, s.testDir, cfg.CheckDuplicates, cfg.APIS.Enabled)
+	s.env.RegisterWorkflow(s.workflow.Execute)
 }
 
 func (s *PreprocessingTestSuite) digitizedAIP(path string) sip.SIP {
@@ -323,23 +454,12 @@ Tag-File-Character-Encoding: UTF-8
 	}
 }
 
-func (s *PreprocessingTestSuite) TestSuccess() {
-	s.SetupTest(&config.Configuration{
-		CheckDuplicates: true,
-		APIS:            apis.Config{Enabled: true},
-	})
-	s.writeBagitTxt(s.sipPath)
-
+func (s *PreprocessingTestSuite) preAPISActivities(ar apisgen.AnalysisResult) (sip.SIP, string, string) {
 	extractPath := filepath.Join(filepath.Dir(s.sipPath), fsutil.BaseNoExt(filepath.Base(sipName)))
 	expectedSIP := s.digitizedAIP(extractPath)
-	expectedPIP := pips.NewFromSIP(expectedSIP)
-
-	// Mock activities.
 	ctx := mock.AnythingOfType("*context.valueCtx")
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
-	premisFilePath := filepath.Join(expectedSIP.Path, "metadata", "premis.xml")
 	checksum := "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-	apisTaskID := "task-000001"
 
 	s.env.OnActivity(
 		activities.ChecksumSIPName,
@@ -359,7 +479,6 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 	).Return(
 		&localact.CheckDuplicateResult{}, nil,
 	)
-
 	s.env.OnActivity(
 		archiveextract.Name,
 		sessionCtx,
@@ -433,7 +552,6 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 	).Return(
 		&xmlvalidate.Result{}, nil,
 	)
-
 	s.env.OnActivity(
 		activities.ValidatePREMISName,
 		sessionCtx,
@@ -456,10 +574,17 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 		sessionCtx,
 		&apis.PollImportTaskStatusParams{TaskID: apisTaskID},
 	).Return(
-		&apis.PollImportTaskStatusResult{AnalysisResult: "AlleNeu"}, nil,
+		&apis.PollImportTaskStatusResult{AnalysisResult: ar}, nil,
 	)
 
-	// PREMIS activities.
+	return expectedSIP, extractPath, apisTaskID
+}
+
+func (s *PreprocessingTestSuite) postAPISActivities(expectedSIP sip.SIP) {
+	sessionCtx := mock.AnythingOfType("*context.timerCtx")
+	premisFilePath := filepath.Join(expectedSIP.Path, "metadata", "premis.xml")
+	expectedPIP := pips.NewFromSIP(expectedSIP)
+
 	s.env.OnActivity(
 		activities.AddPREMISObjectsName,
 		sessionCtx,
@@ -540,8 +665,6 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 	).Return(
 		&activities.AddPREMISAgentResult{}, nil,
 	)
-
-	// Transform SIP.
 	s.env.OnActivity(
 		activities.TransformSIPName,
 		sessionCtx,
@@ -549,7 +672,6 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 	).Return(
 		&activities.TransformSIPResult{PIP: expectedPIP}, nil,
 	)
-
 	s.env.OnActivity(
 		activities.WriteIdentifierFileName,
 		sessionCtx,
@@ -559,14 +681,104 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 			Path: filepath.Join(s.sipPath, "metadata", "identifiers.json"),
 		}, nil,
 	)
-
 	s.env.OnActivity(
 		bagcreate.Name,
 		sessionCtx,
-		&bagcreate.Params{SourcePath: extractPath},
+		&bagcreate.Params{SourcePath: expectedSIP.Path},
 	).Return(
 		&bagcreate.Result{}, nil,
 	)
+}
+
+func apisEvents(
+	taskID string,
+	waitMessage string,
+	waitOutcome enums.EventOutcome,
+	includePostAPIS bool,
+) []*eventlog.Event {
+	events := append([]*eventlog.Event{}, preAPISEvents...)
+	events = append(events,
+		&eventlog.Event{
+			Name:        "Submit metadata to APIS",
+			Message:     fmt.Sprintf(`Submitted metadata to APIS with import task ID %q`, taskID),
+			Outcome:     enums.EventOutcomeSuccess,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+		&eventlog.Event{
+			Name:        "Wait for APIS analysis",
+			Message:     waitMessage,
+			Outcome:     waitOutcome,
+			StartedAt:   testTime,
+			CompletedAt: testTime,
+		},
+	)
+	if includePostAPIS {
+		events = append(events, postAPISEvents...)
+	}
+
+	return events
+}
+
+func (s *PreprocessingTestSuite) executeAsChildWithHumanReview(
+	params *workflow.PreprocessingWorkflowParams,
+	decision workflow.DecisionResponse,
+) *workflow.PreprocessingWorkflowResult {
+	parentWorkflow := func(
+		ctx temporalsdk_workflow.Context,
+		childParams *workflow.PreprocessingWorkflowParams,
+	) (*workflow.PreprocessingWorkflowResult, error) {
+		childFuture := temporalsdk_workflow.ExecuteChildWorkflow(ctx, s.workflow.Execute, childParams)
+
+		var request workflow.DecisionRequest
+		temporalsdk_workflow.GetSignalChannel(ctx, workflow.DecisionRequestSignal).Receive(ctx, &request)
+		s.Equal(
+			workflow.DecisionRequest{
+				Message: fmt.Sprintf(
+					"APIS detected metadata conflicts for import task ID %q. Review the APIS task and choose how ingest should continue.",
+					apisTaskID,
+				),
+				Options: []string{
+					workflow.DecisionOptionCancelIngest,
+					workflow.DecisionOptionContinueOverwrite,
+					workflow.DecisionOptionContinueAppend,
+				},
+			},
+			request,
+		)
+
+		err := childFuture.SignalChildWorkflow(ctx, workflow.DecisionResponseSignal, decision).Get(ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		var childResult workflow.PreprocessingWorkflowResult
+		if err := childFuture.Get(ctx, &childResult); err != nil {
+			return nil, err
+		}
+
+		return &childResult, nil
+	}
+
+	s.env.ExecuteWorkflow(parentWorkflow, params)
+	s.True(s.env.IsWorkflowCompleted())
+
+	var result workflow.PreprocessingWorkflowResult
+	err := s.env.GetWorkflowResult(&result)
+	s.NoError(err)
+
+	return &result
+}
+
+func (s *PreprocessingTestSuite) TestSuccess() {
+	s.SetupTest(&config.Configuration{
+		CheckDuplicates: true,
+		APIS:            apis.Config{Enabled: true},
+	})
+	s.writeBagitTxt(s.sipPath)
+
+	expectedSIP, extractPath, apisTaskID := s.preAPISActivities(apisgen.AnalysisResultAlleNeu)
+	s.postAPISActivities(expectedSIP)
 
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
@@ -589,143 +801,16 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 		&workflow.PreprocessingWorkflowResult{
 			Outcome:      workflow.OutcomeSuccess,
 			RelativePath: relPath,
-			PreservationTasks: []*eventlog.Event{
-				{
-					Name:        "Calculate SIP checksum",
-					Message:     "SIP checksum calculated using SHA-256",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Check for duplicate SIP",
-					Message:     "SIP is not a duplicate",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Extract SIP",
-					Message:     "SIP extracted",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Validate Bag",
-					Message:     "Bag successfully validated",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Unbag SIP",
-					Message:     "SIP unbagged",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Identify SIP structure",
-					Message:     "SIP structure identified: DigitizedAIP",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Validate SIP structure",
-					Message:     "SIP structure matches validation criteria",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Validate SIP name",
-					Message:     "SIP name matches expected naming convention for the identified structure type",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Verify SIP manifest",
-					Message:     "SIP contents match manifest",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Verify SIP checksums",
-					Message:     "SIP checksums match file contents",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Validate SIP file formats",
-					Message:     "No invalid files found",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name: "Validate SIP metadata",
-					Message: `Metadata validation successful on the following file(s):
-
-- UpdatedAreldaMetadata.xml`,
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Validate logical metadata",
-					Message:     "Logical metadata validation successful",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Submit metadata to APIS",
-					Message:     `Submitted metadata to APIS with import task ID "task-000001"`,
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Wait for APIS analysis",
-					Message:     `APIS analysis completed for import task ID "task-000001" with result "AlleNeu"`,
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Create premis.xml",
-					Message:     "Created a premis.xml file and stored it in the metadata directory",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Restructure SIP",
-					Message:     "SIP has been restructured for preservation processing",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Create identifier.json",
-					Message:     "Created an identifier.json file and stored it in the metadata directory",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-				{
-					Name:        "Bag SIP",
-					Message:     "SIP has been bagged",
-					Outcome:     enums.EventOutcomeSuccess,
-					StartedAt:   testTime,
-					CompletedAt: testTime,
-				},
-			},
+			PreservationTasks: apisEvents(
+				apisTaskID,
+				fmt.Sprintf(
+					`APIS analysis completed for import task ID %q with result %q`,
+					apisTaskID,
+					apisgen.AnalysisResultAlleNeu,
+				),
+				enums.EventOutcomeSuccess,
+				true,
+			),
 		},
 		&result,
 	)
@@ -1095,8 +1180,8 @@ func (s *PreprocessingTestSuite) TestExtractionError() {
 		sessionCtx,
 		&activities.IdentifySIPParams{Path: extractPath},
 	).Return(
-		activities.IdentifySIPResult{},
 		nil,
+		fmt.Errorf("IdentifySIP: NewSIP: stat : no such file or directory"),
 	)
 
 	// Execute workflow.
@@ -1145,5 +1230,174 @@ Enduro could not identify the package type. Please ensure that your SIP matches 
 			},
 		},
 		&result,
+	)
+}
+
+func (s *PreprocessingTestSuite) TestHumanReviewContinueAndOverwrite() {
+	s.SetupTest(&config.Configuration{
+		CheckDuplicates: true,
+		APIS:            apis.Config{Enabled: true},
+	})
+	s.writeBagitTxt(s.sipPath)
+
+	expectedSIP, extractPath, apisTaskID := s.preAPISActivities(apisgen.AnalysisResultKonflikte)
+	s.postAPISActivities(expectedSIP)
+
+	result := s.executeAsChildWithHumanReview(
+		&workflow.PreprocessingWorkflowParams{
+			RelativePath: relPath,
+			SIPID:        sipUUID,
+			SIPName:      sipName,
+		},
+		workflow.DecisionResponse{
+			Option: workflow.DecisionOptionContinueOverwrite,
+		},
+	)
+
+	updatedRelPath, err := filepath.Rel(s.testDir, extractPath)
+	s.NoError(err)
+
+	s.Equal(
+		&workflow.PreprocessingWorkflowResult{
+			Outcome:      workflow.OutcomeSuccess,
+			RelativePath: updatedRelPath,
+			PreservationTasks: apisEvents(
+				apisTaskID,
+				fmt.Sprintf(
+					"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
+					apisTaskID,
+					workflow.DecisionOptionContinueOverwrite,
+				),
+				enums.EventOutcomeSuccess,
+				true,
+			),
+		},
+		result,
+	)
+}
+
+func (s *PreprocessingTestSuite) TestHumanReviewContinueAndAppend() {
+	s.SetupTest(&config.Configuration{
+		CheckDuplicates: true,
+		APIS:            apis.Config{Enabled: true},
+	})
+	s.writeBagitTxt(s.sipPath)
+
+	expectedSIP, extractPath, apisTaskID := s.preAPISActivities(apisgen.AnalysisResultKonflikte)
+	s.postAPISActivities(expectedSIP)
+
+	result := s.executeAsChildWithHumanReview(
+		&workflow.PreprocessingWorkflowParams{
+			RelativePath: relPath,
+			SIPID:        sipUUID,
+			SIPName:      sipName,
+		},
+		workflow.DecisionResponse{
+			Option: workflow.DecisionOptionContinueAppend,
+		},
+	)
+
+	updatedRelPath, err := filepath.Rel(s.testDir, extractPath)
+	s.NoError(err)
+
+	s.Equal(
+		&workflow.PreprocessingWorkflowResult{
+			Outcome:      workflow.OutcomeSuccess,
+			RelativePath: updatedRelPath,
+			PreservationTasks: apisEvents(
+				apisTaskID,
+				fmt.Sprintf(
+					"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
+					apisTaskID,
+					workflow.DecisionOptionContinueAppend,
+				),
+				enums.EventOutcomeSuccess,
+				true,
+			),
+		},
+		result,
+	)
+}
+
+func (s *PreprocessingTestSuite) TestHumanReviewCancelIngest() {
+	s.SetupTest(&config.Configuration{
+		CheckDuplicates: true,
+		APIS:            apis.Config{Enabled: true},
+	})
+	s.writeBagitTxt(s.sipPath)
+
+	_, extractPath, apisTaskID := s.preAPISActivities(apisgen.AnalysisResultKonflikte)
+
+	result := s.executeAsChildWithHumanReview(
+		&workflow.PreprocessingWorkflowParams{
+			RelativePath: relPath,
+			SIPID:        sipUUID,
+			SIPName:      sipName,
+		},
+		workflow.DecisionResponse{
+			Option: workflow.DecisionOptionCancelIngest,
+		},
+	)
+
+	updatedRelPath, err := filepath.Rel(s.testDir, extractPath)
+	s.NoError(err)
+
+	s.Equal(
+		&workflow.PreprocessingWorkflowResult{
+			Outcome:      workflow.OutcomeContentError,
+			RelativePath: updatedRelPath,
+			PreservationTasks: apisEvents(
+				apisTaskID,
+				fmt.Sprintf(
+					`Content error: ingest was canceled after APIS metadata conflict review.
+
+APIS detected metadata conflicts for import task ID %q and ingest was canceled by user decision.`,
+					apisTaskID,
+				),
+				enums.EventOutcomeValidationFailure,
+				false,
+			),
+		},
+		result,
+	)
+}
+
+func (s *PreprocessingTestSuite) TestHumanReviewInvalidOption() {
+	s.SetupTest(&config.Configuration{
+		CheckDuplicates: true,
+		APIS:            apis.Config{Enabled: true},
+	})
+	s.writeBagitTxt(s.sipPath)
+
+	_, extractPath, apisTaskID := s.preAPISActivities(apisgen.AnalysisResultKonflikte)
+
+	result := s.executeAsChildWithHumanReview(
+		&workflow.PreprocessingWorkflowParams{
+			RelativePath: relPath,
+			SIPID:        sipUUID,
+			SIPName:      sipName,
+		},
+		workflow.DecisionResponse{
+			Option: "Unexpected option",
+		},
+	)
+
+	updatedRelPath, err := filepath.Rel(s.testDir, extractPath)
+	s.NoError(err)
+
+	s.Equal(
+		&workflow.PreprocessingWorkflowResult{
+			Outcome:      workflow.OutcomeSystemError,
+			RelativePath: updatedRelPath,
+			PreservationTasks: apisEvents(
+				apisTaskID,
+				`System error: submission to APIS has failed.
+
+Received unsupported user decision "Unexpected option" while resolving APIS metadata conflicts. Please ask a system administrator to investigate.`,
+				enums.EventOutcomeSystemFailure,
+				false,
+			),
+		},
+		result,
 	)
 }

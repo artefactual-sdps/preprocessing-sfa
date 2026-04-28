@@ -60,10 +60,18 @@ type (
 		SIPName string
 	}
 
+	// PreprocessingWorkflowResult is returned to Enduro processing workflow and
+	// also serves as this workflow's local state.
 	PreprocessingWorkflowResult struct {
 		Outcome           Outcome
 		RelativePath      string
 		PreservationTasks []*eventlog.Event
+
+		// These APIS fields are kept as local state for now. They are excluded
+		// from Temporal serialization until we decide how they should be shared
+		// with the AIS poststorage workflow.
+		APISTaskID   string `json:"-"`
+		APISDecision string `json:"-"`
 	}
 )
 
@@ -592,10 +600,8 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 
 	// Create APIS import task.
-	// TODO: Share task ID and user decision with ais poststorage workflow.
 	if w.apisEnabled {
-		_ = w.createAPISImportTask(ctx, result, sip)
-		if result.Outcome == OutcomeSystemError {
+		if ok := w.createAPISImportTask(ctx, result, sip); !ok {
 			return result, nil
 		}
 	}
@@ -700,11 +706,15 @@ func withFilesysActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.C
 	})
 }
 
+// createAPISImportTask submits metadata to APIS, stores the resulting task ID
+// and decision, and handles the analysis outcome for the current workflow execution.
+// It returns false when processing should stop after recording the failure in
+// the workflow result/state.
 func (w *PreprocessingWorkflow) createAPISImportTask(
 	ctx temporalsdk_workflow.Context,
 	result *PreprocessingWorkflowResult,
 	sip sip.SIP,
-) string {
+) bool {
 	ev := result.newEvent(ctx, "Submit metadata to APIS")
 	var createAPISImportTask apis.CreateImportTaskResult
 	err := temporalsdk_workflow.ExecuteActivity(
@@ -730,10 +740,10 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 			"failed to submit metadata to APIS.",
 			"An error occurred while creating the APIS import task. Please try again, or ask a system administrator to investigate.",
 		)
-		return ""
+		return false
 	}
-	taskID := createAPISImportTask.TaskID
-	ev.Succeed(ctx, fmt.Sprintf("Submitted metadata to APIS with import task ID %q", taskID))
+	result.APISTaskID = createAPISImportTask.TaskID
+	ev.Succeed(ctx, fmt.Sprintf("Submitted metadata to APIS with import task ID %q", result.APISTaskID))
 
 	ev = result.newEvent(ctx, "Wait for APIS analysis")
 	var pollAPISImportTaskStatus apis.PollImportTaskStatusResult
@@ -748,7 +758,7 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 			},
 		}),
 		apis.PollImportTaskStatusActivityName,
-		&apis.PollImportTaskStatusParams{TaskID: taskID},
+		&apis.PollImportTaskStatusParams{TaskID: result.APISTaskID},
 	).Get(ctx, &pollAPISImportTaskStatus)
 	if err != nil {
 		result.systemError(
@@ -758,7 +768,7 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 			"failed to get an APIS analysis result.",
 			"An error occurred while checking the APIS import task status. Please try again, or ask a system administrator to investigate.",
 		)
-		return ""
+		return false
 	}
 
 	switch pollAPISImportTaskStatus.AnalysisResult {
@@ -767,43 +777,129 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 			ctx,
 			fmt.Sprintf(
 				"APIS analysis completed for import task ID %q with result %q",
-				taskID,
+				result.APISTaskID,
 				pollAPISImportTaskStatus.AnalysisResult,
 			),
 		)
-		return taskID
+		return true
 	case apisgen.AnalysisResultKonflikte:
-		// TODO: Signal parent and wait for user decision.
-		result.systemError(
-			ctx,
-			fmt.Errorf("APIS analysis reported metadata conflicts for task %q", taskID),
-			ev,
-			"submission to APIS requires human review.",
-			"APIS detected metadata conflicts and preprocessing cannot continue automatically. Review the APIS task before resuming or canceling the ingest.",
-		)
-		return ""
+		return w.waitForAPISDecision(ctx, result, ev)
 	case apisgen.AnalysisResultFehler:
 		result.systemError(
 			ctx,
-			fmt.Errorf("APIS analysis failed for task %q", taskID),
+			fmt.Errorf("APIS analysis failed for task %q", result.APISTaskID),
 			ev,
 			"submission to APIS has failed.",
 			"APIS reported an analysis error while processing the submitted metadata. Please try again, or ask a system administrator to investigate.",
 		)
-		return ""
+		return false
 	default:
 		result.systemError(
 			ctx,
 			fmt.Errorf(
 				"unexpected APIS analysis result %q for task %q",
 				pollAPISImportTaskStatus.AnalysisResult,
-				taskID,
+				result.APISTaskID,
 			),
 			ev,
 			"submission to APIS has failed.",
 			"APIS returned an unexpected analysis result. Please ask a system administrator to investigate.",
 		)
-		return ""
+		return false
+	}
+}
+
+// waitForAPISDecision asks the parent workflow for a decision and applies the
+// selected outcome to the current APIS conflict event. It returns false when
+// the workflow should stop after recording the failure in the workflow
+// result/state.
+func (w *PreprocessingWorkflow) waitForAPISDecision(
+	ctx temporalsdk_workflow.Context,
+	result *PreprocessingWorkflowResult,
+	ev *eventWrapper,
+) bool {
+	info := temporalsdk_workflow.GetInfo(ctx)
+	if info.ParentWorkflowExecution == nil {
+		result.systemError(
+			ctx,
+			fmt.Errorf(
+				"missing parent workflow execution while waiting for a decision on APIS import task %q",
+				result.APISTaskID,
+			),
+			ev,
+			"submission to APIS has failed.",
+			"An error occurred requesting a human decision on how to continue processing. Please try again, or ask a system administrator to investigate.",
+		)
+		return false
+	}
+
+	err := temporalsdk_workflow.SignalExternalWorkflow(
+		ctx,
+		info.ParentWorkflowExecution.ID,
+		info.ParentWorkflowExecution.RunID,
+		DecisionRequestSignal,
+		DecisionRequest{
+			Message: fmt.Sprintf(
+				"APIS detected metadata conflicts for import task ID %q. Review the APIS task and choose how ingest should continue.",
+				result.APISTaskID,
+			),
+			Options: []string{
+				DecisionOptionCancelIngest,
+				DecisionOptionContinueOverwrite,
+				DecisionOptionContinueAppend,
+			},
+		},
+	).Get(ctx, nil)
+	if err != nil {
+		result.systemError(
+			ctx,
+			fmt.Errorf("signal parent workflow for decision on APIS import task %q: %w", result.APISTaskID, err),
+			ev,
+			"submission to APIS has failed.",
+			"Could not notify the parent workflow that human review is required. Please try again, or ask a system administrator to investigate.",
+		)
+		return false
+	}
+
+	var decision DecisionResponse
+	temporalsdk_workflow.GetSignalChannel(ctx, DecisionResponseSignal).Receive(ctx, &decision)
+	result.APISDecision = decision.Option
+
+	switch result.APISDecision {
+	case DecisionOptionContinueOverwrite, DecisionOptionContinueAppend:
+		ev.Succeed(
+			ctx,
+			fmt.Sprintf(
+				"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
+				result.APISTaskID,
+				result.APISDecision,
+			),
+		)
+		return true
+	case DecisionOptionCancelIngest:
+		// TODO: Add and use canceled as workflow outcome.
+		result.validationError(
+			ctx,
+			ev,
+			"ingest was canceled after APIS metadata conflict review.",
+			fmt.Sprintf(
+				"APIS detected metadata conflicts for import task ID %q and ingest was canceled by user decision.",
+				result.APISTaskID,
+			),
+		)
+		return false
+	default:
+		result.systemError(
+			ctx,
+			fmt.Errorf("unsupported decision %q for APIS import task %q", result.APISDecision, result.APISTaskID),
+			ev,
+			"submission to APIS has failed.",
+			fmt.Sprintf(
+				"Received unsupported user decision %q while resolving APIS metadata conflicts. Please ask a system administrator to investigate.",
+				result.APISDecision,
+			),
+		)
+		return false
 	}
 }
 
