@@ -23,7 +23,7 @@ func NewClient(
 ) (Client, error) {
 	if httpClient == nil {
 		timeout := config.Timeout
-		if timeout <= 0 {
+		if timeout < 0 {
 			timeout = DefaultTimeout
 		}
 
