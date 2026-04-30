@@ -29,7 +29,7 @@ func TestTaskStatusDrivesAnalysisAndImportLifecycle(t *testing.T) {
 	status = getTaskStatus(t, ctx, h, taskID)
 	assert.DeepEqual(t, status, &gen.ImportTaskStatusResponse{
 		Status:         gen.ImportTaskStatusAnalysiert,
-		AnalysisResult: gen.NewOptAnalysisResult(gen.AnalysisResultAlleNeu),
+		AnalysisResult: gen.NewOptNilAnalysisResult(gen.AnalysisResultAlleNeu),
 	})
 
 	runID := createRun(t, ctx, h, taskID, "METS.xml", "")
@@ -41,7 +41,7 @@ func TestTaskStatusDrivesAnalysisAndImportLifecycle(t *testing.T) {
 	status = getTaskStatus(t, ctx, h, taskID)
 	assert.DeepEqual(t, status, &gen.ImportTaskStatusResponse{
 		Status:         gen.ImportTaskStatusWirdImportiert,
-		AnalysisResult: gen.NewOptAnalysisResult(gen.AnalysisResultAlleNeu),
+		AnalysisResult: gen.NewOptNilAnalysisResult(gen.AnalysisResultAlleNeu),
 	})
 
 	runStatus = getImportRunStatus(t, ctx, h, taskID, runID)
@@ -52,8 +52,8 @@ func TestTaskStatusDrivesAnalysisAndImportLifecycle(t *testing.T) {
 	status = getTaskStatus(t, ctx, h, taskID)
 	assert.DeepEqual(t, status, &gen.ImportTaskStatusResponse{
 		Status:         gen.ImportTaskStatusImportiert,
-		AnalysisResult: gen.NewOptAnalysisResult(gen.AnalysisResultAlleNeu),
-		ImportResult:   gen.NewOptImportResult(gen.ImportResultErfolgreich),
+		AnalysisResult: gen.NewOptNilAnalysisResult(gen.AnalysisResultAlleNeu),
+		ImportResult:   gen.NewOptNilImportResult(gen.ImportResultErfolgreich),
 	})
 
 	runStatus = getImportRunStatus(t, ctx, h, taskID, runID)
@@ -73,7 +73,7 @@ func TestConflictTaskCanBeCancelled(t *testing.T) {
 	status := getTaskStatus(t, ctx, h, taskID)
 	assert.DeepEqual(t, status, &gen.ImportTaskStatusResponse{
 		Status:         gen.ImportTaskStatusAnalysiert,
-		AnalysisResult: gen.NewOptAnalysisResult(gen.AnalysisResultKonflikte),
+		AnalysisResult: gen.NewOptNilAnalysisResult(gen.AnalysisResultKonflikte),
 	})
 
 	cancelRes, err := h.APIImporttasksIDCancelPost(
@@ -87,7 +87,7 @@ func TestConflictTaskCanBeCancelled(t *testing.T) {
 	status = getTaskStatus(t, ctx, h, taskID)
 	assert.DeepEqual(t, status, &gen.ImportTaskStatusResponse{
 		Status:         gen.ImportTaskStatusAbgebrochen,
-		AnalysisResult: gen.NewOptAnalysisResult(gen.AnalysisResultKonflikte),
+		AnalysisResult: gen.NewOptNilAnalysisResult(gen.AnalysisResultKonflikte),
 	})
 
 	runRes, err := h.APIImporttasksIDImportrunsPost(
@@ -119,8 +119,8 @@ func TestImportFailureIsSurfacedThroughTaskStatus(t *testing.T) {
 	status := getTaskStatus(t, ctx, h, taskID)
 	assert.DeepEqual(t, status, &gen.ImportTaskStatusResponse{
 		Status:         gen.ImportTaskStatusImportiert,
-		AnalysisResult: gen.NewOptAnalysisResult(gen.AnalysisResultAlleNeu),
-		ImportResult:   gen.NewOptImportResult(gen.ImportResultFehler),
+		AnalysisResult: gen.NewOptNilAnalysisResult(gen.AnalysisResultAlleNeu),
+		ImportResult:   gen.NewOptNilImportResult(gen.ImportResultFehler),
 	})
 
 	runStatus := getImportRunStatus(t, ctx, h, taskID, runID)

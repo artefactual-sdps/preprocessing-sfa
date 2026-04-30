@@ -842,7 +842,12 @@
             "$ref": "#/components/schemas/ImportTaskStatus"
           },
           "analysisResult": {
-            "$ref": "#/components/schemas/AnalysisResult"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnalysisResult"
+              }
+            ],
+            "nullable": true
           },
           "analysisProgressInPercent": {
             "type": "integer",
@@ -856,7 +861,12 @@
             "nullable": true
           },
           "importResult": {
-            "$ref": "#/components/schemas/ImportResult"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportResult"
+              }
+            ],
+            "nullable": true
           }
         },
         "additionalProperties": false,

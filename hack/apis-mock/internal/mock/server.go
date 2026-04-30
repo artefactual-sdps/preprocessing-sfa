@@ -260,10 +260,10 @@ func taskStatusResponse(task *taskState) *gen.ImportTaskStatusResponse {
 	res := &gen.ImportTaskStatusResponse{Status: task.status}
 
 	if task.analysisDone {
-		res.AnalysisResult = gen.NewOptAnalysisResult(task.analysisResult)
+		res.AnalysisResult = gen.NewOptNilAnalysisResult(task.analysisResult)
 	}
 	if task.importDone {
-		res.ImportResult = gen.NewOptImportResult(task.importResult)
+		res.ImportResult = gen.NewOptNilImportResult(task.importResult)
 	}
 
 	return res

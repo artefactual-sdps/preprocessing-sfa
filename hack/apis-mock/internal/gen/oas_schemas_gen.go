@@ -748,13 +748,13 @@ func (s *ImportTaskStatus) UnmarshalText(data []byte) error {
 // Response containing the status of an import task (analysis phase).
 // Ref: #/components/schemas/ImportTaskStatusResponse
 type ImportTaskStatusResponse struct {
-	Status         ImportTaskStatus  `json:"status"`
-	AnalysisResult OptAnalysisResult `json:"analysisResult"`
+	Status         ImportTaskStatus     `json:"status"`
+	AnalysisResult OptNilAnalysisResult `json:"analysisResult"`
 	// During the analysis, this indicates the progress in percent.
 	AnalysisProgressInPercent OptNilInt32 `json:"analysisProgressInPercent"`
 	// If there was an error during the analysis, this contains the error message.
-	AnalysisErrorMessage OptNilString    `json:"analysisErrorMessage"`
-	ImportResult         OptImportResult `json:"importResult"`
+	AnalysisErrorMessage OptNilString       `json:"analysisErrorMessage"`
+	ImportResult         OptNilImportResult `json:"importResult"`
 }
 
 // GetStatus returns the value of Status.
@@ -763,7 +763,7 @@ func (s *ImportTaskStatusResponse) GetStatus() ImportTaskStatus {
 }
 
 // GetAnalysisResult returns the value of AnalysisResult.
-func (s *ImportTaskStatusResponse) GetAnalysisResult() OptAnalysisResult {
+func (s *ImportTaskStatusResponse) GetAnalysisResult() OptNilAnalysisResult {
 	return s.AnalysisResult
 }
 
@@ -778,7 +778,7 @@ func (s *ImportTaskStatusResponse) GetAnalysisErrorMessage() OptNilString {
 }
 
 // GetImportResult returns the value of ImportResult.
-func (s *ImportTaskStatusResponse) GetImportResult() OptImportResult {
+func (s *ImportTaskStatusResponse) GetImportResult() OptNilImportResult {
 	return s.ImportResult
 }
 
@@ -788,7 +788,7 @@ func (s *ImportTaskStatusResponse) SetStatus(val ImportTaskStatus) {
 }
 
 // SetAnalysisResult sets the value of AnalysisResult.
-func (s *ImportTaskStatusResponse) SetAnalysisResult(val OptAnalysisResult) {
+func (s *ImportTaskStatusResponse) SetAnalysisResult(val OptNilAnalysisResult) {
 	s.AnalysisResult = val
 }
 
@@ -803,7 +803,7 @@ func (s *ImportTaskStatusResponse) SetAnalysisErrorMessage(val OptNilString) {
 }
 
 // SetImportResult sets the value of ImportResult.
-func (s *ImportTaskStatusResponse) SetImportResult(val OptImportResult) {
+func (s *ImportTaskStatusResponse) SetImportResult(val OptNilImportResult) {
 	s.ImportResult = val
 }
 
@@ -895,52 +895,6 @@ func (o OptAPIImporttasksPostReq) Get() (v APIImporttasksPostReq, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptAPIImporttasksPostReq) Or(d APIImporttasksPostReq) APIImporttasksPostReq {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptAnalysisResult returns new OptAnalysisResult with value set to v.
-func NewOptAnalysisResult(v AnalysisResult) OptAnalysisResult {
-	return OptAnalysisResult{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptAnalysisResult is optional AnalysisResult.
-type OptAnalysisResult struct {
-	Value AnalysisResult
-	Set   bool
-}
-
-// IsSet returns true if OptAnalysisResult was set.
-func (o OptAnalysisResult) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptAnalysisResult) Reset() {
-	var v AnalysisResult
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptAnalysisResult) SetTo(v AnalysisResult) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptAnalysisResult) Get() (v AnalysisResult, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptAnalysisResult) Or(d AnalysisResult) AnalysisResult {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1085,6 +1039,69 @@ func (o OptImportResult) Or(d ImportResult) ImportResult {
 	return d
 }
 
+// NewOptNilAnalysisResult returns new OptNilAnalysisResult with value set to v.
+func NewOptNilAnalysisResult(v AnalysisResult) OptNilAnalysisResult {
+	return OptNilAnalysisResult{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilAnalysisResult is optional nullable AnalysisResult.
+type OptNilAnalysisResult struct {
+	Value AnalysisResult
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilAnalysisResult was set.
+func (o OptNilAnalysisResult) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilAnalysisResult) Reset() {
+	var v AnalysisResult
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilAnalysisResult) SetTo(v AnalysisResult) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilAnalysisResult) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilAnalysisResult) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v AnalysisResult
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilAnalysisResult) Get() (v AnalysisResult, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilAnalysisResult) Or(d AnalysisResult) AnalysisResult {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilHealthCheckResultArray returns new OptNilHealthCheckResultArray with value set to v.
 func NewOptNilHealthCheckResultArray(v []HealthCheckResult) OptNilHealthCheckResultArray {
 	return OptNilHealthCheckResultArray{
@@ -1142,6 +1159,69 @@ func (o OptNilHealthCheckResultArray) Get() (v []HealthCheckResult, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilHealthCheckResultArray) Or(d []HealthCheckResult) []HealthCheckResult {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilImportResult returns new OptNilImportResult with value set to v.
+func NewOptNilImportResult(v ImportResult) OptNilImportResult {
+	return OptNilImportResult{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilImportResult is optional nullable ImportResult.
+type OptNilImportResult struct {
+	Value ImportResult
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilImportResult was set.
+func (o OptNilImportResult) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilImportResult) Reset() {
+	var v ImportResult
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilImportResult) SetTo(v ImportResult) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilImportResult) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilImportResult) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v ImportResult
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilImportResult) Get() (v ImportResult, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilImportResult) Or(d ImportResult) ImportResult {
 	if v, ok := o.Get(); ok {
 		return v
 	}

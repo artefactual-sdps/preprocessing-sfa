@@ -49,7 +49,7 @@ func TestPollImportTaskStatusActivity(t *testing.T) {
 				).Return(
 					&apisgen.ImportTaskStatusResponse{
 						Status:         apisgen.ImportTaskStatusAnalysiert,
-						AnalysisResult: apisgen.NewOptAnalysisResult(apisgen.AnalysisResultAlleNeu),
+						AnalysisResult: apisgen.NewOptNilAnalysisResult(apisgen.AnalysisResultAlleNeu),
 					},
 					nil,
 				)
@@ -66,7 +66,7 @@ func TestPollImportTaskStatusActivity(t *testing.T) {
 				).Return(
 					&apisgen.ImportTaskStatusResponse{
 						Status:         apisgen.ImportTaskStatusAnalysiert,
-						AnalysisResult: apisgen.NewOptAnalysisResult(apisgen.AnalysisResultKonflikte),
+						AnalysisResult: apisgen.NewOptNilAnalysisResult(apisgen.AnalysisResultKonflikte),
 					},
 					nil,
 				)
@@ -83,7 +83,7 @@ func TestPollImportTaskStatusActivity(t *testing.T) {
 				).Return(
 					&apisgen.ImportTaskStatusResponse{
 						Status:         apisgen.ImportTaskStatusAnalysiert,
-						AnalysisResult: apisgen.NewOptAnalysisResult(apisgen.AnalysisResultFehler),
+						AnalysisResult: apisgen.NewOptNilAnalysisResult(apisgen.AnalysisResultFehler),
 					},
 					nil,
 				)
