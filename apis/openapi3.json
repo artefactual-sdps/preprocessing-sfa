@@ -94,7 +94,16 @@
                     "format": "binary"
                   },
                   "importBehaviour": {
-                    "$ref": "#/components/schemas/ImportBehaviourType"
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/ImportBehaviourType"
+                      }
+                    ],
+                    "description": "What kind of behaviour should be applied when importing the data,\r\ne.g. OverwriteAndAppend or AppendOnly.\r\n\r\n\r\nEnum values:\r\n- `OverwriteAndAppend`\r\n- `AppendOnly`",
+                    "x-enumDescriptions": [
+                      "",
+                      ""
+                    ]
                   },
                   "username": {
                     "type": "string",
@@ -243,7 +252,18 @@
                     "format": "binary"
                   },
                   "sipType": {
-                    "$ref": "#/components/schemas/SipType"
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/SipType"
+                      }
+                    ],
+                    "description": "The source or type of the import, e.g. \"MigrationAccession\", \"MigrationDigitalisation\", \"Accession\" or \"Digitalisation\".\r\nThis is required for processing reasons.\r\n\r\n\r\nEnum values:\r\n- `DigitizedAIP`\r\n- `DigitizedSIP`\r\n- `BornDigitalAIP`\r\n- `BornDigitalSIP`",
+                    "x-enumDescriptions": [
+                      "",
+                      "",
+                      "",
+                      ""
+                    ]
                   },
                   "username": {
                     "type": "string",
@@ -514,17 +534,32 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CancelImportTaskRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CancelImportTaskRequest"
+                  }
+                ],
+                "description": "Request to cancel an import task."
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/CancelImportTaskRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CancelImportTaskRequest"
+                  }
+                ],
+                "description": "Request to cancel an import task."
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/CancelImportTaskRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CancelImportTaskRequest"
+                  }
+                ],
+                "description": "Request to cancel an import task."
               }
             }
           }
@@ -757,7 +792,24 @@
         "type": "object",
         "properties": {
           "status": {
-            "$ref": "#/components/schemas/ImportStatus"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportStatus"
+              }
+            ],
+            "description": "The current status of the import run.\r\n\r\n\r\nEnum values:\r\n- `RequestStart`\r\n- `RequestCancel`\r\n- `Started`\r\n- `Failed`\r\n- `Canceled`\r\n- `Completed`\r\n- `UndoStarted`\r\n- `UndoCompleted`\r\n- `Created`\r\n- `Preparing`",
+            "x-enumDescriptions": [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
           },
           "progressPercent": {
             "type": "integer",
@@ -766,7 +818,17 @@
             "nullable": true
           },
           "importResult": {
-            "$ref": "#/components/schemas/ImportResult"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportResult"
+              }
+            ],
+            "description": "Gets the result of the import operation, if available.\r\n\r\n\r\nEnum values:\r\n- `Erfolgreich`: The import was successfull\r\n- `Fehler`: The import failed and has errors",
+            "nullable": true,
+            "x-enumDescriptions": [
+              "The import was successfull",
+              "The import failed and has errors"
+            ]
           },
           "processedDocumentCount": {
             "type": "integer",
@@ -839,7 +901,20 @@
         "type": "object",
         "properties": {
           "status": {
-            "$ref": "#/components/schemas/ImportTaskStatus"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportTaskStatus"
+              }
+            ],
+            "description": "The overall status of the import task.\r\n\r\n\r\nEnum values:\r\n- `Neu`: The initial status of an import task\r\n- `InAnalyse`: The status during the analyisis process\r\n- `Analysiert`: The status after the analyisis process has ended\r\n- `WirdImportiert`: The status during the import process\r\n- `Importiert`: The status after the import process has ended\r\n- `Abgebrochen`: Indicates that the import task was canceled",
+            "x-enumDescriptions": [
+              "The initial status of an import task",
+              "The status during the analyisis process",
+              "The status after the analyisis process has ended",
+              "The status during the import process",
+              "The status after the import process has ended",
+              "Indicates that the import task was canceled"
+            ]
           },
           "analysisResult": {
             "allOf": [
@@ -847,7 +922,14 @@
                 "$ref": "#/components/schemas/AnalysisResult"
               }
             ],
-            "nullable": true
+            "description": "Gets the result of the analysis, if available.\r\n\r\n\r\nEnum values:\r\n- `AlleGleich`: The title of all series are the same\r\n- `AlleNeu`: The titles of all series are new\r\n- `Konflikte`: There are conflicts between titles of existing and new series\r\n- `Fehler`: There are errors in the analysis",
+            "nullable": true,
+            "x-enumDescriptions": [
+              "The title of all series are the same",
+              "The titles of all series are new",
+              "There are conflicts between titles of existing and new series",
+              "There are errors in the analysis"
+            ]
           },
           "analysisProgressInPercent": {
             "type": "integer",
@@ -866,7 +948,12 @@
                 "$ref": "#/components/schemas/ImportResult"
               }
             ],
-            "nullable": true
+            "description": "Contains the result of the import operation, after the import has finished.\r\n\r\n\r\nEnum values:\r\n- `Erfolgreich`: The import was successfull\r\n- `Fehler`: The import failed and has errors",
+            "nullable": true,
+            "x-enumDescriptions": [
+              "The import was successfull",
+              "The import failed and has errors"
+            ]
           }
         },
         "additionalProperties": false,

@@ -3,6 +3,8 @@
 package gen
 
 import (
+	"io"
+
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
 	ht "github.com/ogen-go/ogen/http"
@@ -37,6 +39,23 @@ type APIImporttasksIDCancelPostReqEmptyBody struct{}
 
 func (*APIImporttasksIDCancelPostReqEmptyBody) aPIImporttasksIDCancelPostReq() {}
 
+// Request to cancel an import task.
+type APIImporttasksIDCancelPostReqTextJSON struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s APIImporttasksIDCancelPostReqTextJSON) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+func (*APIImporttasksIDCancelPostReqTextJSON) aPIImporttasksIDCancelPostReq() {}
+
 type APIImporttasksIDCancelPostUnauthorized ProblemDetails
 
 func (*APIImporttasksIDCancelPostUnauthorized) aPIImporttasksIDCancelPostRes() {}
@@ -51,7 +70,12 @@ func (*APIImporttasksIDImportrunsPostNotFound) aPIImporttasksIDImportrunsPostRes
 
 type APIImporttasksIDImportrunsPostReq struct {
 	// The METS file required for the import.
-	File            ht.MultipartFile       `json:"file"`
+	File ht.MultipartFile `json:"file"`
+	// What kind of behaviour should be applied when importing the data,
+	// e.g. OverwriteAndAppend or AppendOnly.
+	// Enum values:
+	// - `OverwriteAndAppend`
+	// - `AppendOnly`.
 	ImportBehaviour OptImportBehaviourType `json:"importBehaviour"`
 	// The username that is logged as the creator of the import task. Can be the email for example.
 	Username string `json:"username"`
@@ -132,8 +156,16 @@ func (*APIImporttasksPostInternalServerError) aPIImporttasksPostRes() {}
 
 type APIImporttasksPostReq struct {
 	// The metadata.xml file according to eCH-0160.
-	File    ht.MultipartFile `json:"file"`
-	SipType SipType          `json:"sipType"`
+	File ht.MultipartFile `json:"file"`
+	// The source or type of the import, e.g. "MigrationAccession", "MigrationDigitalisation",
+	// "Accession" or "Digitalisation".
+	// This is required for processing reasons.
+	// Enum values:
+	// - `DigitizedAIP`
+	// - `DigitizedSIP`
+	// - `BornDigitalAIP`
+	// - `BornDigitalSIP`.
+	SipType SipType `json:"sipType"`
 	// The username that is logged as the creator of the import task. Can be the email for example.
 	Username string `json:"username"`
 }
@@ -497,10 +529,26 @@ func (s *ImportResult) UnmarshalText(data []byte) error {
 // Response containing the status of an import run.
 // Ref: #/components/schemas/ImportRunStatusResponse
 type ImportRunStatusResponse struct {
+	// The current status of the import run.
+	// Enum values:
+	// - `RequestStart`
+	// - `RequestCancel`
+	// - `Started`
+	// - `Failed`
+	// - `Canceled`
+	// - `Completed`
+	// - `UndoStarted`
+	// - `UndoCompleted`
+	// - `Created`
+	// - `Preparing`.
 	Status ImportStatus `json:"status"`
 	// The progress of the import run in percent (0-100), if available.
-	ProgressPercent OptNilInt32     `json:"progressPercent"`
-	ImportResult    OptImportResult `json:"importResult"`
+	ProgressPercent OptNilInt32 `json:"progressPercent"`
+	// Gets the result of the import operation, if available.
+	// Enum values:
+	// - `Erfolgreich`: The import was successfull
+	// - `Fehler`: The import failed and has errors.
+	ImportResult OptNilImportResult `json:"importResult"`
 	// How many records were processed during the import.
 	ProcessedDocumentCount OptNilInt32 `json:"processedDocumentCount"`
 	// The total number of records to be processed during the import.
@@ -518,7 +566,7 @@ func (s *ImportRunStatusResponse) GetProgressPercent() OptNilInt32 {
 }
 
 // GetImportResult returns the value of ImportResult.
-func (s *ImportRunStatusResponse) GetImportResult() OptImportResult {
+func (s *ImportRunStatusResponse) GetImportResult() OptNilImportResult {
 	return s.ImportResult
 }
 
@@ -543,7 +591,7 @@ func (s *ImportRunStatusResponse) SetProgressPercent(val OptNilInt32) {
 }
 
 // SetImportResult sets the value of ImportResult.
-func (s *ImportRunStatusResponse) SetImportResult(val OptImportResult) {
+func (s *ImportRunStatusResponse) SetImportResult(val OptNilImportResult) {
 	s.ImportResult = val
 }
 
@@ -748,13 +796,31 @@ func (s *ImportTaskStatus) UnmarshalText(data []byte) error {
 // Response containing the status of an import task (analysis phase).
 // Ref: #/components/schemas/ImportTaskStatusResponse
 type ImportTaskStatusResponse struct {
-	Status         ImportTaskStatus     `json:"status"`
+	// The overall status of the import task.
+	// Enum values:
+	// - `Neu`: The initial status of an import task
+	// - `InAnalyse`: The status during the analyisis process
+	// - `Analysiert`: The status after the analyisis process has ended
+	// - `WirdImportiert`: The status during the import process
+	// - `Importiert`: The status after the import process has ended
+	// - `Abgebrochen`: Indicates that the import task was canceled.
+	Status ImportTaskStatus `json:"status"`
+	// Gets the result of the analysis, if available.
+	// Enum values:
+	// - `AlleGleich`: The title of all series are the same
+	// - `AlleNeu`: The titles of all series are new
+	// - `Konflikte`: There are conflicts between titles of existing and new series
+	// - `Fehler`: There are errors in the analysis.
 	AnalysisResult OptNilAnalysisResult `json:"analysisResult"`
 	// During the analysis, this indicates the progress in percent.
 	AnalysisProgressInPercent OptNilInt32 `json:"analysisProgressInPercent"`
 	// If there was an error during the analysis, this contains the error message.
-	AnalysisErrorMessage OptNilString       `json:"analysisErrorMessage"`
-	ImportResult         OptNilImportResult `json:"importResult"`
+	AnalysisErrorMessage OptNilString `json:"analysisErrorMessage"`
+	// Contains the result of the import operation, after the import has finished.
+	// Enum values:
+	// - `Erfolgreich`: The import was successfull
+	// - `Fehler`: The import failed and has errors.
+	ImportResult OptNilImportResult `json:"importResult"`
 }
 
 // GetStatus returns the value of Status.
@@ -987,52 +1053,6 @@ func (o OptImportBehaviourType) Get() (v ImportBehaviourType, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptImportBehaviourType) Or(d ImportBehaviourType) ImportBehaviourType {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptImportResult returns new OptImportResult with value set to v.
-func NewOptImportResult(v ImportResult) OptImportResult {
-	return OptImportResult{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptImportResult is optional ImportResult.
-type OptImportResult struct {
-	Value ImportResult
-	Set   bool
-}
-
-// IsSet returns true if OptImportResult was set.
-func (o OptImportResult) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptImportResult) Reset() {
-	var v ImportResult
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptImportResult) SetTo(v ImportResult) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptImportResult) Get() (v ImportResult, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptImportResult) Or(d ImportResult) ImportResult {
 	if v, ok := o.Get(); ok {
 		return v
 	}

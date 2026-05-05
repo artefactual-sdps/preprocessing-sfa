@@ -59,7 +59,7 @@ func TestTaskStatusDrivesAnalysisAndImportLifecycle(t *testing.T) {
 	runStatus = getImportRunStatus(t, ctx, h, taskID, runID)
 	assert.DeepEqual(t, runStatus, &gen.ImportRunStatusResponse{
 		Status:       gen.ImportStatusCompleted,
-		ImportResult: gen.NewOptImportResult(gen.ImportResultErfolgreich),
+		ImportResult: gen.NewOptNilImportResult(gen.ImportResultErfolgreich),
 	})
 }
 
@@ -126,7 +126,7 @@ func TestImportFailureIsSurfacedThroughTaskStatus(t *testing.T) {
 	runStatus := getImportRunStatus(t, ctx, h, taskID, runID)
 	assert.DeepEqual(t, runStatus, &gen.ImportRunStatusResponse{
 		Status:       gen.ImportStatusFailed,
-		ImportResult: gen.NewOptImportResult(gen.ImportResultFehler),
+		ImportResult: gen.NewOptNilImportResult(gen.ImportResultFehler),
 	})
 }
 

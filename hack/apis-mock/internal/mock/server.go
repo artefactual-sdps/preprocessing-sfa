@@ -285,7 +285,7 @@ func importRunStatusResponse(task *taskState) *gen.ImportRunStatusResponse {
 		} else {
 			res.Status = gen.ImportStatusCompleted
 		}
-		res.ImportResult = gen.NewOptImportResult(task.importResult)
+		res.ImportResult = gen.NewOptNilImportResult(task.importResult)
 	}
 
 	return res

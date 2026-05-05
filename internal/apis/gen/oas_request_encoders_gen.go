@@ -47,6 +47,11 @@ func encodeAPIImporttasksIDCancelPostRequest(
 		encoded := e.Bytes()
 		ht.SetBody(r, bytes.NewReader(encoded), contentType)
 		return nil
+	case *APIImporttasksIDCancelPostReqTextJSON:
+		const contentType = "text/json"
+		body := req
+		ht.SetBody(r, body, contentType)
+		return nil
 	default:
 		return errors.Errorf("unexpected request type: %T", req)
 	}
@@ -63,7 +68,9 @@ func encodeAPIImporttasksIDImportrunsPostRequest(
 	}
 	request := req.Value
 
-	q := uri.NewFormEncoder(map[string]string{})
+	q := uri.NewFormEncoder(map[string]string{
+		"importBehaviour": "application/json; charset=utf-8",
+	})
 	{
 		// Encode "importBehaviour" form field.
 		cfg := uri.QueryParameterEncodingConfig{
@@ -72,10 +79,13 @@ func encodeAPIImporttasksIDImportrunsPostRequest(
 			Explode: true,
 		}
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := request.ImportBehaviour.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
+			var enc jx.Encoder
+			func(e *jx.Encoder) {
+				if request.ImportBehaviour.Set {
+					request.ImportBehaviour.Encode(e)
+				}
+			}(&enc)
+			return e.EncodeValue(string(enc.Bytes()))
 		}); err != nil {
 			return errors.Wrap(err, "encode query")
 		}
@@ -117,7 +127,9 @@ func encodeAPIImporttasksPostRequest(
 	}
 	request := req.Value
 
-	q := uri.NewFormEncoder(map[string]string{})
+	q := uri.NewFormEncoder(map[string]string{
+		"sipType": "application/json; charset=utf-8",
+	})
 	{
 		// Encode "sipType" form field.
 		cfg := uri.QueryParameterEncodingConfig{
@@ -126,7 +138,11 @@ func encodeAPIImporttasksPostRequest(
 			Explode: true,
 		}
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			return e.EncodeValue(conv.StringToString(string(request.SipType)))
+			var enc jx.Encoder
+			func(e *jx.Encoder) {
+				request.SipType.Encode(e)
+			}(&enc)
+			return e.EncodeValue(string(enc.Bytes()))
 		}); err != nil {
 			return errors.Wrap(err, "encode query")
 		}
