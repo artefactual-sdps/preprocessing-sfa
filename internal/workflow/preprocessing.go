@@ -521,7 +521,6 @@ func (w *PreprocessingWorkflow) Execute(
 
 	// Create APIS import task.
 	if w.apisEnabled {
-		// TODO: Add APIS import task ID and decision to result.CustomMetadata.
 		if ok := w.createAPISImportTask(ctx, result, sip); !ok {
 			return result, nil
 		}
@@ -630,10 +629,10 @@ func withFilesysActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.C
 	})
 }
 
-// createAPISImportTask submits metadata to APIS, stores the resulting task ID
-// and decision, and handles the analysis outcome for the current workflow execution.
-// It returns false when processing should stop after recording the failure in
-// the workflow result/state.
+// createAPISImportTask submits metadata to APIS, waits for analysis, and records
+// the resulting custom metadata for the AIS poststorage workflow. It returns
+// false when processing should stop after recording the failure in the workflow
+// result.
 func (w *PreprocessingWorkflow) createAPISImportTask(
 	ctx temporalsdk_workflow.Context,
 	result *childwf.PreprocessingResult,
@@ -668,10 +667,11 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 		)
 		return false
 	}
+	metadata := apis.CustomMetadata{ImportTaskID: createAPISImportTask.TaskID}
 	task.Succeed(
 		temporalsdk_workflow.Now(ctx),
 		"Submitted metadata to APIS with import task ID %q",
-		createAPISImportTask.TaskID,
+		metadata.ImportTaskID,
 	)
 
 	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Wait for APIS analysis")
@@ -687,7 +687,7 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 			},
 		}),
 		apis.PollImportTaskStatusActivityName,
-		&apis.PollImportTaskStatusParams{TaskID: createAPISImportTask.TaskID},
+		&apis.PollImportTaskStatusParams{TaskID: metadata.ImportTaskID},
 	).Get(ctx, &pollAPISImportTaskStatus)
 	if err != nil {
 		logger.Error("System error", "message", err.Error())
@@ -705,17 +705,20 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 		task.Succeed(
 			temporalsdk_workflow.Now(ctx),
 			"APIS analysis completed for import task ID %q with result %q",
-			createAPISImportTask.TaskID,
+			metadata.ImportTaskID,
 			pollAPISImportTaskStatus.AnalysisResult,
 		)
-		return true
 	case apisgen.AnalysisResultKonflikte:
-		return w.waitForAPISDecision(ctx, result, task, createAPISImportTask.TaskID)
+		decision, ok := w.waitForAPISDecision(ctx, result, task, metadata.ImportTaskID)
+		metadata.Decision = decision
+		if !ok {
+			return false
+		}
 	case apisgen.AnalysisResultFehler:
 		logger.Error(
 			"System error",
 			"message",
-			fmt.Sprintf("APIS analysis failed for task %q", createAPISImportTask.TaskID),
+			fmt.Sprintf("APIS analysis failed for task %q", metadata.ImportTaskID),
 		)
 		result.SystemError(
 			temporalsdk_workflow.Now(ctx),
@@ -728,7 +731,7 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 		logger.Error("System error", "message", fmt.Errorf(
 			"unexpected APIS analysis result %q for task %q",
 			pollAPISImportTaskStatus.AnalysisResult,
-			createAPISImportTask.TaskID,
+			metadata.ImportTaskID,
 		))
 		result.SystemError(
 			temporalsdk_workflow.Now(ctx),
@@ -738,20 +741,34 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 		)
 		return false
 	}
+
+	data, err := metadata.Marshal()
+	if err != nil {
+		logger.Error("System error", "message", err.Error())
+		task = result.NewTask(temporalsdk_workflow.Now(ctx), "Record APIS metadata")
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
+			"APIS metadata recording has failed.",
+			"An error occurred while recording APIS metadata for later workflow steps. Please try again, or ask a system administrator to investigate.",
+		)
+		return false
+	}
+	result.CustomMetadata = childwf.CustomMetadata{apis.CustomMetadataKey: data}
+
+	return true
 }
 
-// waitForAPISDecision asks the parent workflow for a decision and applies the
-// selected outcome to the current APIS conflict event. It returns false when
-// the workflow should stop after recording the failure in the workflow
-// result/state.
+// waitForAPISDecision asks the parent workflow for a decision. It returns the
+// selected decision and false when processing should stop after recording the
+// failure in the workflow result.
 func (w *PreprocessingWorkflow) waitForAPISDecision(
 	ctx temporalsdk_workflow.Context,
 	result *childwf.PreprocessingResult,
 	task *childwf.Task,
 	taskID string,
-) bool {
+) (string, bool) {
 	logger := temporalsdk_workflow.GetLogger(ctx)
-
 	info := temporalsdk_workflow.GetInfo(ctx)
 	if info.ParentWorkflowExecution == nil {
 		logger.Error("System error", "message", fmt.Errorf(
@@ -764,7 +781,7 @@ func (w *PreprocessingWorkflow) waitForAPISDecision(
 			"submission to APIS has failed.",
 			"An error occurred requesting a human decision on how to continue processing. Please try again, or ask a system administrator to investigate.",
 		)
-		return false
+		return "", false
 	}
 
 	err := temporalsdk_workflow.SignalExternalWorkflow(
@@ -794,7 +811,7 @@ func (w *PreprocessingWorkflow) waitForAPISDecision(
 			"submission to APIS has failed.",
 			"Could not notify the parent workflow that human review is required. Please try again, or ask a system administrator to investigate.",
 		)
-		return false
+		return "", false
 	}
 
 	var decision childwf.DecisionResponse
@@ -808,7 +825,7 @@ func (w *PreprocessingWorkflow) waitForAPISDecision(
 			taskID,
 			decision.Option,
 		)
-		return true
+		return decision.Option, true
 	case DecisionOptionCancelIngest:
 		// TODO: Add and use canceled as workflow outcome.
 		result.ValidationError(
@@ -820,7 +837,7 @@ func (w *PreprocessingWorkflow) waitForAPISDecision(
 				taskID,
 			),
 		)
-		return false
+		return decision.Option, false
 	default:
 		logger.Error("System error", "message", fmt.Errorf(
 			"unsupported decision %q for APIS import task %q", decision.Option, taskID,
@@ -834,7 +851,7 @@ func (w *PreprocessingWorkflow) waitForAPISDecision(
 				decision.Option,
 			),
 		)
-		return false
+		return decision.Option, false
 	}
 }
 

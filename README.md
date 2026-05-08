@@ -129,7 +129,7 @@ Bring up the Enduro environment by following the [Enduro development manual].
 
 ### Set up
 
-The specific requirements for `preprocessing-sfa` are:
+The specific requirements for this project are:
 
 - clone this repository as a sibling of the Enduro repository
 - configure `CHILD_WORKFLOW_PATHS=../preprocessing-sfa`

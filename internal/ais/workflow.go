@@ -18,6 +18,7 @@ import (
 	"gocloud.dev/blob"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 )
 
 type Workflow struct {
@@ -34,6 +35,18 @@ func (w *Workflow) Execute(
 ) (r *childwf.PostStorageResult, e error) {
 	logger := temporalsdk_workflow.GetLogger(ctx)
 	logger.Debug("AIS workflow running!", "params", params)
+
+	if data, ok := params.CustomMetadata[apis.CustomMetadataKey]; ok {
+		var metadata apis.CustomMetadata
+		if err := metadata.Unmarshal(data); err != nil {
+			return nil, err
+		}
+		logger.Info(
+			"Received APIS custom metadata.",
+			"importTaskID", metadata.ImportTaskID,
+			"decision", metadata.Decision,
+		)
+	}
 
 	defer func() {
 		logger.Debug("AIS workflow finished!", "result", r, "error", e)

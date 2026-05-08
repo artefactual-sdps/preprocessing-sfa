@@ -1,6 +1,7 @@
 package ais_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -14,6 +15,7 @@ import (
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 )
 
 type TestSuite struct {
@@ -48,7 +50,14 @@ func (s *TestSuite) TestWorkflowSuccess() {
 
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&childwf.PostStorageParams{AIPUUID: aipUUID},
+		&childwf.PostStorageParams{
+			AIPUUID: aipUUID,
+			CustomMetadata: childwf.CustomMetadata{
+				apis.CustomMetadataKey: json.RawMessage(
+					`{"importTaskId":"task-000001","decision":"Continue and append"}`,
+				),
+			},
+		},
 	)
 
 	s.True(s.env.IsWorkflowCompleted())

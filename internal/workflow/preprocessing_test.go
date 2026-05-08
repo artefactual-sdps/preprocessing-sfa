@@ -1,6 +1,7 @@
 package workflow_test
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -719,6 +720,16 @@ func apisTasks(
 	return events
 }
 
+func apisCustomMetadata(taskID, decision string) childwf.CustomMetadata {
+	return childwf.CustomMetadata{
+		apis.CustomMetadataKey: json.RawMessage(fmt.Sprintf(
+			`{"importTaskId":%q,"decision":%q}`,
+			taskID,
+			decision,
+		)),
+	}
+}
+
 func (s *PreprocessingTestSuite) executeAsChildWithHumanReview(
 	params *childwf.PreprocessingParams,
 	decision childwf.DecisionResponse,
@@ -798,8 +809,9 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 	s.NoError(err)
 	s.Equal(
 		&childwf.PreprocessingResult{
-			Outcome:      childwf.OutcomeSuccess,
-			RelativePath: relPath,
+			Outcome:        childwf.OutcomeSuccess,
+			CustomMetadata: apisCustomMetadata(apisTaskID, ""),
+			RelativePath:   relPath,
 			Tasks: apisTasks(
 				apisTaskID,
 				fmt.Sprintf(
@@ -1258,8 +1270,9 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndOverwrite() {
 
 	s.Equal(
 		&childwf.PreprocessingResult{
-			Outcome:      childwf.OutcomeSuccess,
-			RelativePath: updatedRelPath,
+			Outcome:        childwf.OutcomeSuccess,
+			CustomMetadata: apisCustomMetadata(apisTaskID, workflow.DecisionOptionContinueOverwrite),
+			RelativePath:   updatedRelPath,
 			Tasks: apisTasks(
 				apisTaskID,
 				fmt.Sprintf(
@@ -1301,8 +1314,9 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndAppend() {
 
 	s.Equal(
 		&childwf.PreprocessingResult{
-			Outcome:      childwf.OutcomeSuccess,
-			RelativePath: updatedRelPath,
+			Outcome:        childwf.OutcomeSuccess,
+			CustomMetadata: apisCustomMetadata(apisTaskID, workflow.DecisionOptionContinueAppend),
+			RelativePath:   updatedRelPath,
 			Tasks: apisTasks(
 				apisTaskID,
 				fmt.Sprintf(
