@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/artefactual-sdps/enduro/pkg/childwf"
 	"github.com/artefactual-sdps/temporal-activities/archivezip"
 	"github.com/artefactual-sdps/temporal-activities/bucketupload"
 	"github.com/artefactual-sdps/temporal-activities/removepaths"
@@ -19,14 +20,6 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 )
 
-type WorkflowParams struct {
-	AIPUUID string
-}
-
-type WorkflowResult struct {
-	Key string
-}
-
 type Workflow struct {
 	config Config
 }
@@ -35,9 +28,10 @@ func NewWorkflow(config Config) *Workflow {
 	return &Workflow{config: config}
 }
 
-func (w *Workflow) Execute(ctx temporalsdk_workflow.Context, params *WorkflowParams) (r *WorkflowResult, e error) {
-	r = &WorkflowResult{}
-
+func (w *Workflow) Execute(
+	ctx temporalsdk_workflow.Context,
+	params *childwf.PostStorageParams,
+) (r *childwf.PostStorageResult, e error) {
 	logger := temporalsdk_workflow.GetLogger(ctx)
 	logger.Debug("AIS workflow running!", "params", params)
 
@@ -86,7 +80,7 @@ func (w *Workflow) Execute(ctx temporalsdk_workflow.Context, params *WorkflowPar
 				return nil, fmt.Errorf("error creating session: %v", err)
 			}
 
-			r.Key, sessErr = w.SessionHandler(sessCtx, params.AIPUUID, getAIPPathResult.Path)
+			sessErr = w.SessionHandler(sessCtx, params.AIPUUID, getAIPPathResult.Path)
 
 			// We want to retry the session if it has been canceled as a result
 			// of losing the worker but not otherwise. This scenario seems to be
@@ -119,10 +113,10 @@ func (w *Workflow) Execute(ctx temporalsdk_workflow.Context, params *WorkflowPar
 		}
 	}
 
-	return r, nil
+	return &childwf.PostStorageResult{}, nil
 }
 
-func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aipPath string) (s string, e error) {
+func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aipPath string) (e error) {
 	removePaths := []string{}
 
 	defer func() {
@@ -159,7 +153,7 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 		},
 	).Get(ctx, &fetchMETSResult)
 	if e != nil {
-		return "", e
+		return e
 	}
 
 	var parseResult ParseActivityResult
@@ -169,7 +163,7 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 		&ParseActivityParams{METSPath: metsPath},
 	).Get(ctx, &parseResult)
 	if e != nil {
-		return "", e
+		return e
 	}
 
 	var metadataRelPath string
@@ -178,7 +172,7 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 	} else if parseResult.MetadataRelPath != "" {
 		metadataRelPath = parseResult.MetadataRelPath
 	} else {
-		return "", errors.New("UpdatedAreldaMetadata.xml and metadata.xml files not found in METS")
+		return errors.New("UpdatedAreldaMetadata.xml and metadata.xml files not found in METS")
 	}
 
 	metadataPath := filepath.Join(localDir, filepath.Base(metadataRelPath))
@@ -194,7 +188,7 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 		},
 	).Get(ctx, &fetchMetadataResult)
 	if e != nil {
-		return "", e
+		return e
 	}
 
 	var combineMDResult CombineMDActivityResult
@@ -208,7 +202,7 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 		},
 	).Get(ctx, &combineMDResult)
 	if e != nil {
-		return "", e
+		return e
 	}
 
 	var zipResult archivezip.Result
@@ -218,7 +212,7 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 		&archivezip.Params{SourceDir: localDir},
 	).Get(ctx, &zipResult)
 	if e != nil {
-		return "", e
+		return e
 	}
 
 	removePaths = append(removePaths, zipResult.Path)
@@ -230,10 +224,10 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 		&bucketupload.Params{Path: zipResult.Path},
 	).Get(ctx, &uploadResult)
 	if e != nil {
-		return "", e
+		return e
 	}
 
-	return uploadResult.Key, nil
+	return nil
 }
 
 func RegisterWorkflow(w temporalsdk_worker.Worker, config Config) {

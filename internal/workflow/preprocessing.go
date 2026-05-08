@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/artefactual-sdps/enduro/pkg/childwf"
 	"github.com/artefactual-sdps/temporal-activities/archiveextract"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
-	"github.com/google/uuid"
 	"go.artefactual.dev/tools/fsutil"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
@@ -21,59 +21,24 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	apisgen "github.com/artefactual-sdps/preprocessing-sfa/internal/apis/gen"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/localact"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
-type Outcome int
-
 const (
-	OutcomeSuccess Outcome = iota
-	OutcomeSystemError
-	OutcomeContentError
+	DecisionOptionCancelIngest      = "Cancel ingest"
+	DecisionOptionContinueOverwrite = "Continue and overwrite"
+	DecisionOptionContinueAppend    = "Continue and append"
 )
 
-type (
-	PreprocessingWorkflow struct {
-		psvc            persistence.Service
-		sharedPath      string
-		checkDuplicates bool
-		apisEnabled     bool
-	}
-
-	PreprocessingWorkflowParams struct {
-		// BatchID is the identifier of the batch being processed. If the SIP is
-		// not part of a batch, this will equal uuid.Nil.
-		BatchID uuid.UUID
-
-		// RelativePath is the path of the SIP relative to the shared path.
-		RelativePath string
-
-		// SIPID is the identifier of the SIP being processed.
-		SIPID uuid.UUID
-
-		// SIPName is the original filename of the SIP being processed.
-		SIPName string
-	}
-
-	// PreprocessingWorkflowResult is returned to Enduro processing workflow and
-	// also serves as this workflow's local state.
-	PreprocessingWorkflowResult struct {
-		Outcome           Outcome
-		RelativePath      string
-		PreservationTasks []*eventlog.Event
-
-		// These APIS fields are kept as local state for now. They are excluded
-		// from Temporal serialization until we decide how they should be shared
-		// with the AIS poststorage workflow.
-		APISTaskID   string `json:"-"`
-		APISDecision string `json:"-"`
-	}
-)
+type PreprocessingWorkflow struct {
+	psvc            persistence.Service
+	sharedPath      string
+	checkDuplicates bool
+	apisEnabled     bool
+}
 
 func NewPreprocessingWorkflow(
 	psvc persistence.Service,
@@ -89,62 +54,12 @@ func NewPreprocessingWorkflow(
 	}
 }
 
-func (r *PreprocessingWorkflowResult) newEvent(ctx temporalsdk_workflow.Context, name string) *eventWrapper {
-	ev := newWrappedEvent(ctx, name)
-	r.PreservationTasks = append(r.PreservationTasks, ev.Event)
-
-	return ev
-}
-
-func (r *PreprocessingWorkflowResult) validationError(
-	ctx temporalsdk_workflow.Context,
-	ev *eventWrapper,
-	msg ...string,
-) {
-	r.Outcome = OutcomeContentError
-	ev.Complete(
-		ctx,
-		enums.EventOutcomeValidationFailure,
-		fmt.Sprintf("Content error: %s", strings.Join(msg, "\n\n")),
-	)
-}
-
-func (r *PreprocessingWorkflowResult) systemError(
-	ctx temporalsdk_workflow.Context,
-	err error,
-	ev *eventWrapper,
-	msg ...string,
-) {
-	logger := temporalsdk_workflow.GetLogger(ctx)
-	logger.Error("System error", "message", err.Error())
-
-	// Complete last preservation task event.
-	r.Outcome = OutcomeSystemError
-	ev.Complete(
-		ctx,
-		enums.EventOutcomeSystemFailure,
-		fmt.Sprintf("System error: %s", strings.Join(msg, "\n\n")),
-	)
-}
-
-func (r *PreprocessingWorkflowResult) SetRelativePath(base, path string) error {
-	rp, err := filepath.Rel(base, path)
-	if err != nil {
-		return err
-	}
-
-	r.RelativePath = rp
-
-	return nil
-}
-
 func (w *PreprocessingWorkflow) Execute(
 	ctx temporalsdk_workflow.Context,
-	params *PreprocessingWorkflowParams,
-) (*PreprocessingWorkflowResult, error) {
+	params *childwf.PreprocessingParams,
+) (*childwf.PreprocessingResult, error) {
 	var e error
-	result := &PreprocessingWorkflowResult{}
-
+	result := &childwf.PreprocessingResult{}
 	logger := temporalsdk_workflow.GetLogger(ctx)
 	logger.Debug("Preprocessing workflow running!", "params", params)
 
@@ -164,7 +79,7 @@ func (w *PreprocessingWorkflow) Execute(
 
 	if w.checkDuplicates {
 		// Calculate SIP checksum.
-		ev := result.newEvent(ctx, "Calculate SIP checksum")
+		task := result.NewTask(temporalsdk_workflow.Now(ctx), "Calculate SIP checksum")
 		var checksumSIP activities.ChecksumSIPResult
 		e = temporalsdk_workflow.ExecuteActivity(
 			withFilesysActOpts(ctx),
@@ -172,22 +87,23 @@ func (w *PreprocessingWorkflow) Execute(
 			&activities.ChecksumSIPParams{Path: localPath},
 		).Get(ctx, &checksumSIP)
 		if e != nil {
-			result.systemError(
-				ctx,
-				e,
-				ev,
+			logger.Error("System error", "message", e.Error())
+			result.SystemError(
+				temporalsdk_workflow.Now(ctx),
+				task,
 				"checksum calculation has failed.",
 				"Enduro could not generate a checksum for the submitted SIP. Please try again, or ask a system administrator to investigate.",
 			)
 			return result, nil
 		}
-		ev.Succeed(
-			ctx,
-			fmt.Sprintf("SIP checksum calculated using %s", checksumSIP.Algo),
+		task.Succeed(
+			temporalsdk_workflow.Now(ctx),
+			"SIP checksum calculated using %s",
+			checksumSIP.Algo,
 		)
 
 		// Check for duplicate SIP.
-		ev = result.newEvent(ctx, "Check for duplicate SIP")
+		task = result.NewTask(temporalsdk_workflow.Now(ctx), "Check for duplicate SIP")
 		var checkDuplicate localact.CheckDuplicateResult
 		e = temporalsdk_workflow.ExecuteLocalActivity(
 			withLocalActOpts(ctx),
@@ -199,30 +115,30 @@ func (w *PreprocessingWorkflow) Execute(
 			},
 		).Get(ctx, &checkDuplicate)
 		if e != nil {
-			result.systemError(
-				ctx,
-				e,
-				ev,
+			logger.Error("System error", "message", e.Error())
+			result.SystemError(
+				temporalsdk_workflow.Now(ctx),
+				task,
 				"checking for a duplicate SIP has failed.",
 				"An error occurred when checking whether SIP is a duplicate. Please try again, or ask a system administrator to investigate.",
 			)
 			return result, nil
 		}
 		if checkDuplicate.IsDuplicate {
-			result.validationError(
-				ctx,
-				ev,
+			result.ValidationError(
+				temporalsdk_workflow.Now(ctx),
+				task,
 				"SIP is a duplicate.",
 				"A previously submitted SIP has the same checksum. Please ensure that your package has not already been ingested.",
 			)
 			return result, nil
 		}
-		ev.Succeed(ctx, "SIP is not a duplicate")
+		task.Succeed(temporalsdk_workflow.Now(ctx), "SIP is not a duplicate")
 	}
 
 	// Extract SIP.
 	localPath = w.extractSIP(ctx, result, localPath, params.SIPName)
-	if result.Outcome == OutcomeSystemError {
+	if result.Outcome == childwf.OutcomeSystemError {
 		return result, nil
 	}
 
@@ -239,7 +155,7 @@ func (w *PreprocessingWorkflow) Execute(
 
 	// Unbag the SIP if it is a bag.
 	if isBag.IsBag {
-		ev := result.newEvent(ctx, "Validate Bag")
+		task := result.NewTask(temporalsdk_workflow.Now(ctx), "Validate Bag")
 		var bagValidateResult bagvalidate.Result
 		e = temporalsdk_workflow.ExecuteActivity(
 			withFilesysActOpts(ctx),
@@ -247,19 +163,19 @@ func (w *PreprocessingWorkflow) Execute(
 			&bagvalidate.Params{Path: localPath},
 		).Get(ctx, &bagValidateResult)
 		if e != nil {
-			result.systemError(
-				ctx,
-				e,
-				ev,
+			logger.Error("System error", "message", e.Error())
+			result.SystemError(
+				temporalsdk_workflow.Now(ctx),
+				task,
 				"Bag validation has failed.",
 				"An error occurred during the bag validation process. Please try again, or ask a system administrator to investigate.",
 			)
 			return result, nil
 		}
 		if bagValidateResult.Error != "" {
-			result.validationError(
-				ctx,
-				ev,
+			result.ValidationError(
+				temporalsdk_workflow.Now(ctx),
+				task,
 				"Bag validation has failed.",
 				// TODO: Add BagIt tool and version info.
 				// "An attempt to validate the bag using [tool] - version [version] has failed:",
@@ -269,10 +185,10 @@ func (w *PreprocessingWorkflow) Execute(
 			)
 		} else {
 			// TODO: Add BagIt tool and version info.
-			ev.Succeed(ctx, "Bag successfully validated")
+			task.Succeed(temporalsdk_workflow.Now(ctx), "Bag successfully validated")
 		}
 
-		ev = result.newEvent(ctx, "Unbag SIP")
+		task = result.NewTask(temporalsdk_workflow.Now(ctx), "Unbag SIP")
 		var unbagResult activities.UnbagResult
 		e = temporalsdk_workflow.ExecuteActivity(
 			withFilesysActOpts(ctx),
@@ -280,10 +196,10 @@ func (w *PreprocessingWorkflow) Execute(
 			&activities.UnbagParams{Path: localPath},
 		).Get(ctx, &unbagResult)
 		if e != nil {
-			result.systemError(
-				ctx,
-				e,
-				ev,
+			logger.Error("System error", "message", e.Error())
+			result.SystemError(
+				temporalsdk_workflow.Now(ctx),
+				task,
 				"SIP unbagging has failed.",
 				"An error occurred during the SIP unbagging process. Please try again, or ask a system administrator to investigate.",
 			)
@@ -291,21 +207,22 @@ func (w *PreprocessingWorkflow) Execute(
 		}
 
 		localPath = unbagResult.Path
-		if e := result.SetRelativePath(w.sharedPath, localPath); e != nil {
-			result.systemError(
-				ctx,
-				e,
-				ev,
+		result.RelativePath, e = filepath.Rel(w.sharedPath, localPath)
+		if e != nil {
+			logger.Error("System error", "message", e.Error())
+			result.SystemError(
+				temporalsdk_workflow.Now(ctx),
+				task,
 				"SIP unbagging has failed.",
 				"An error occurred during the SIP unbagging process. Please try again, or ask a system administrator to investigate.",
 			)
 			return result, nil
 		}
-		ev.Succeed(ctx, "SIP unbagged")
+		task.Succeed(temporalsdk_workflow.Now(ctx), "SIP unbagged")
 	}
 
 	// Identify SIP.
-	ev := result.newEvent(ctx, "Identify SIP structure")
+	task := result.NewTask(temporalsdk_workflow.Now(ctx), "Identify SIP structure")
 	var identifySIP activities.IdentifySIPResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -313,9 +230,9 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.IdentifySIPParams{Path: localPath},
 	).Get(ctx, &identifySIP)
 	if e != nil {
-		result.validationError(
-			ctx,
-			ev,
+		result.ValidationError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"SIP identification has failed.",
 			"Enduro could not identify the package type. Please ensure that your SIP matches one of the supported package structures.",
 		)
@@ -323,10 +240,10 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 
 	sip := identifySIP.SIP
-	ev.Succeed(ctx, fmt.Sprintf("SIP structure identified: %s", sip.Type))
+	task.Succeed(temporalsdk_workflow.Now(ctx), "SIP structure identified: %s", sip.Type)
 
 	// Validate structure.
-	ev = result.newEvent(ctx, "Validate SIP structure")
+	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Validate SIP structure")
 	var validateStructure activities.ValidateStructureResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -334,29 +251,29 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.ValidateStructureParams{SIP: sip},
 	).Get(ctx, &validateStructure)
 	if e != nil {
-		result.systemError(
-			ctx,
-			e,
-			ev,
+		logger.Error("System error", "message", e.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"SIP structure validation has failed.",
 			"An error occurred during the structure validation process. Please try again, or ask a system administrator to investigate.",
 		)
 		return result, nil
 	}
 	if validateStructure.Failures != nil {
-		result.validationError(
-			ctx,
-			ev,
+		result.ValidationError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"SIP structure validation has failed.",
 			ul(validateStructure.Failures),
 			fmt.Sprintf("Please review the SIP and ensure that its structure matches the %s specifications.", sip.Type),
 		)
 	} else {
-		ev.Succeed(ctx, "SIP structure matches validation criteria")
+		task.Succeed(temporalsdk_workflow.Now(ctx), "SIP structure matches validation criteria")
 	}
 
 	// Validate SIP name.
-	ev = result.newEvent(ctx, "Validate SIP name")
+	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Validate SIP name")
 	var ValidateSIPName activities.ValidateSIPNameResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -364,19 +281,19 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.ValidateSIPNameParams{SIP: sip},
 	).Get(ctx, &ValidateSIPName)
 	if e != nil {
-		result.systemError(
-			ctx,
-			e,
-			ev,
+		logger.Error("System error", "message", e.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"SIP name validation has failed.",
 			"An error occurred during the SIP name validation process. Please try again, or ask a system administrator to investigate.",
 		)
 		return result, nil
 	}
 	if ValidateSIPName.Failures != nil {
-		result.validationError(
-			ctx,
-			ev,
+		result.ValidationError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"SIP name validation has failed.",
 			fmt.Sprintf(
 				"The name used for the package does not match the expected convention for the %q type.",
@@ -386,12 +303,15 @@ func (w *PreprocessingWorkflow) Execute(
 			"Please review the naming conventions specified for this type of SIP.",
 		)
 	} else {
-		ev.Succeed(ctx, "SIP name matches expected naming convention for the identified structure type")
+		task.Succeed(
+			temporalsdk_workflow.Now(ctx),
+			"SIP name matches expected naming convention for the identified structure type",
+		)
 	}
 
 	// Verify that package contents match the manifest.
-	manifestEv := result.newEvent(ctx, "Verify SIP manifest")
-	checksumEv := result.newEvent(ctx, "Verify SIP checksums")
+	manifestTask := result.NewTask(temporalsdk_workflow.Now(ctx), "Verify SIP manifest")
+	checksumTask := result.NewTask(temporalsdk_workflow.Now(ctx), "Verify SIP checksums")
 	var verifyManifest activities.VerifyManifestResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -399,17 +319,16 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.VerifyManifestParams{SIP: sip},
 	).Get(ctx, &verifyManifest)
 	if e != nil {
-		result.systemError(
-			ctx,
-			e,
-			manifestEv,
+		logger.Error("System error", "message", e.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			manifestTask,
 			"SIP manifest verification has failed.",
 			"An error occurred during the manifest verification process. Please try again, or ask a system administrator to investigate.",
 		)
-		result.systemError(
-			ctx,
-			e,
-			checksumEv,
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			checksumTask,
 			"SIP checksum verification has failed.",
 			"An error occurred during the checksum verification process. Please try again, or ask a system administrator to investigate.",
 		)
@@ -418,9 +337,9 @@ func (w *PreprocessingWorkflow) Execute(
 
 	if len(verifyManifest.ManifestFailures) > 0 || len(verifyManifest.MissingFiles) > 0 ||
 		len(verifyManifest.UnexpectedFiles) > 0 {
-		result.validationError(
-			ctx,
-			manifestEv,
+		result.ValidationError(
+			temporalsdk_workflow.Now(ctx),
+			manifestTask,
 			fmt.Sprintf(
 				"%q manifest could not be verified against the contents of the SIP.",
 				filepath.Base(sip.ManifestPath),
@@ -435,24 +354,24 @@ func (w *PreprocessingWorkflow) Execute(
 			"Please review the SIP and ensure that its contents match those listed in the metadata manifest.",
 		)
 	} else {
-		manifestEv.Succeed(ctx, "SIP contents match manifest")
+		manifestTask.Succeed(temporalsdk_workflow.Now(ctx), "SIP contents match manifest")
 	}
 
 	if len(verifyManifest.ChecksumFailures) > 0 {
-		result.validationError(
-			ctx,
-			checksumEv,
+		result.ValidationError(
+			temporalsdk_workflow.Now(ctx),
+			checksumTask,
 			"SIP checksums do not match file contents.",
 			ul(verifyManifest.ChecksumFailures),
 			"Please review the SIP and ensure that the metadata checksums match those of the files.",
 		)
 	} else {
-		checksumEv.Succeed(ctx, "SIP checksums match file contents")
+		checksumTask.Succeed(temporalsdk_workflow.Now(ctx), "SIP checksums match file contents")
 	}
 
 	// Check for disallowed file formats (SIP types only).
 	if sip.IsSIP() {
-		ev = result.newEvent(ctx, "Check for disallowed file formats")
+		task = result.NewTask(temporalsdk_workflow.Now(ctx), "Check for disallowed file formats")
 		var ffvalidateResult ffvalidate.Result
 		e = temporalsdk_workflow.ExecuteActivity(
 			withFilesysActOpts(ctx),
@@ -460,10 +379,10 @@ func (w *PreprocessingWorkflow) Execute(
 			&ffvalidate.Params{Path: sip.ContentPath},
 		).Get(ctx, &ffvalidateResult)
 		if e != nil {
-			result.systemError(
-				ctx,
-				e,
-				ev,
+			logger.Error("System error", "message", e.Error())
+			result.SystemError(
+				temporalsdk_workflow.Now(ctx),
+				task,
 				"file format check has failed.",
 				"An error occurred when checking for disallowed file formats. Please try again, or ask a system administrator to investigate.",
 			)
@@ -471,21 +390,21 @@ func (w *PreprocessingWorkflow) Execute(
 		}
 
 		if ffvalidateResult.Failures != nil {
-			result.validationError(
-				ctx,
-				ev,
+			result.ValidationError(
+				temporalsdk_workflow.Now(ctx),
+				task,
 				"file format check has failed.",
 				"One or more file formats are not allowed:",
 				ul(ffvalidateResult.Failures),
 				"Please review the SIP and remove or replace all disallowed file formats.",
 			)
 		} else {
-			ev.Succeed(ctx, "No disallowed file formats found")
+			task.Succeed(temporalsdk_workflow.Now(ctx), "No disallowed file formats found")
 		}
 	}
 
 	// Validate SIP file formats against the format specifications.
-	ev = result.newEvent(ctx, "Validate SIP file formats")
+	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Validate SIP file formats")
 	var validateFilesResult activities.ValidateFilesResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -493,10 +412,10 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.ValidateFilesParams{SIP: sip},
 	).Get(ctx, &validateFilesResult)
 	if e != nil {
-		result.systemError(
-			ctx,
-			e,
-			ev,
+		logger.Error("System error", "message", e.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"file format validation has failed.",
 			"An error occurred during the file format validation process. Please try again, or ask a system administrator to investigate.",
 		)
@@ -504,20 +423,20 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 
 	if validateFilesResult.Failures != nil {
-		result.validationError(
-			ctx,
-			ev,
+		result.ValidationError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"file format validation has failed.",
 			// TODO: Add tool name and version info.
 			ul(validateFilesResult.Failures),
 			"Please ensure all files are well-formed.",
 		)
 	} else {
-		ev.Succeed(ctx, "No invalid files found")
+		task.Succeed(temporalsdk_workflow.Now(ctx), "No invalid files found")
 	}
 
 	// Validate metadata.
-	ev = result.newEvent(ctx, "Validate SIP metadata")
+	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Validate SIP metadata")
 	var validateMetadata xmlvalidate.Result
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -528,10 +447,10 @@ func (w *PreprocessingWorkflow) Execute(
 		},
 	).Get(ctx, &validateMetadata)
 	if e != nil {
-		result.systemError(
-			ctx,
-			e,
-			ev,
+		logger.Error("System error", "message", e.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"metadata validation has failed.",
 			fmt.Sprintf(
 				"An error has occurred while attempting to validate the %q file. Please try again, or ask a system administrator to investigate.",
@@ -545,23 +464,24 @@ func (w *PreprocessingWorkflow) Execute(
 		for idx, f := range validateMetadata.Failures {
 			validateMetadata.Failures[idx] = strings.ReplaceAll(f, sip.Path+"/", "")
 		}
-		result.validationError(
-			ctx,
-			ev,
+		result.ValidationError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"metadata validation has failed.",
 			ul(validateMetadata.Failures),
 			"Please ensure all metadata files are present and well-formed.",
 		)
 	} else {
-		ev.Succeed(ctx,
-			"Metadata validation successful on the following file(s):",
+		task.Succeed(
+			temporalsdk_workflow.Now(ctx),
+			"Metadata validation successful on the following file(s):\n\n%s",
 			ul([]string{filepath.Base(sip.ManifestPath)}),
 		)
 	}
 
 	// Validate logical metadata (AIP types only).
 	if sip.IsAIP() {
-		ev = result.newEvent(ctx, "Validate logical metadata")
+		task = result.NewTask(temporalsdk_workflow.Now(ctx), "Validate logical metadata")
 		var validateLMD activities.ValidatePREMISResult
 		e = temporalsdk_workflow.ExecuteActivity(
 			withFilesysActOpts(ctx),
@@ -569,10 +489,10 @@ func (w *PreprocessingWorkflow) Execute(
 			activities.ValidatePREMISParams{Path: sip.LogicalMDPath},
 		).Get(ctx, &validateLMD)
 		if e != nil {
-			result.systemError(
-				ctx,
-				e,
-				ev,
+			logger.Error("System error", "message", e.Error())
+			result.SystemError(
+				temporalsdk_workflow.Now(ctx),
+				task,
 				"logical metadata validation has failed.",
 				fmt.Sprintf(
 					"An error has occurred while attempting to validate the %q file. Please try again, or ask a system administrator to investigate.",
@@ -582,46 +502,47 @@ func (w *PreprocessingWorkflow) Execute(
 			return result, nil
 		}
 		if validateLMD.Failures != nil {
-			result.validationError(
-				ctx,
-				ev,
+			result.ValidationError(
+				temporalsdk_workflow.Now(ctx),
+				task,
 				"logical metadata validation has failed.",
 				ul(validateLMD.Failures),
 				"Please ensure all metadata files are present and well-formed.",
 			)
 		} else {
-			ev.Succeed(ctx, "Logical metadata validation successful")
+			task.Succeed(temporalsdk_workflow.Now(ctx), "Logical metadata validation successful")
 		}
 	}
 
 	// Stop here if the SIP content isn't valid.
-	if result.Outcome == OutcomeContentError {
+	if result.Outcome == childwf.OutcomeContentError {
 		return result, nil
 	}
 
 	// Create APIS import task.
 	if w.apisEnabled {
+		// TODO: Add APIS import task ID and decision to result.CustomMetadata.
 		if ok := w.createAPISImportTask(ctx, result, sip); !ok {
 			return result, nil
 		}
 	}
 
 	// Write PREMIS XML.
-	ev = result.newEvent(ctx, "Create premis.xml")
+	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Create premis.xml")
 	if e = writePREMISFile(ctx, sip); e != nil {
-		result.systemError(
-			ctx,
-			e,
-			ev,
+		logger.Error("System error", "message", e.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"premis.xml creation has failed",
 			"An error has occurred while attempting to create the premis.xml file and store it in the metadata directory. Please try again, or ask a system administrator to investigate.",
 		)
 		return result, nil
 	}
-	ev.Succeed(ctx, "Created a premis.xml file and stored it in the metadata directory")
+	task.Succeed(temporalsdk_workflow.Now(ctx), "Created a premis.xml file and stored it in the metadata directory")
 
 	// Re-structure SIP.
-	ev = result.newEvent(ctx, "Restructure SIP")
+	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Restructure SIP")
 	var transformSIP activities.TransformSIPResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -629,19 +550,19 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.TransformSIPParams{SIP: sip},
 	).Get(ctx, &transformSIP)
 	if e != nil {
-		result.systemError(
-			ctx,
-			e,
-			ev,
+		logger.Error("System error", "message", e.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"restructuring has failed",
 			"An error has occurred while attempting to restructure the SIP for preservation processing. Please try again, or ask a system administrator to investigate.",
 		)
 		return result, nil
 	}
-	ev.Succeed(ctx, "SIP has been restructured for preservation processing")
+	task.Succeed(temporalsdk_workflow.Now(ctx), "SIP has been restructured for preservation processing")
 
 	// Write the identifiers.json file.
-	ev = result.newEvent(ctx, "Create identifier.json")
+	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Create identifier.json")
 	var writeIDFile activities.WriteIdentifierFileResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -649,19 +570,22 @@ func (w *PreprocessingWorkflow) Execute(
 		&activities.WriteIdentifierFileParams{PIP: transformSIP.PIP},
 	).Get(ctx, &writeIDFile)
 	if e != nil {
-		result.systemError(
-			ctx,
-			e,
-			ev,
+		logger.Error("System error", "message", e.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"identifier.json creation has failed.",
 			"An error has occurred while attempting to create the identifier.json file and store it in the metadata directory. Please try again, or ask a system administrator to investigate.",
 		)
 		return result, nil
 	}
-	ev.Succeed(ctx, "Created an identifier.json file and stored it in the metadata directory")
+	task.Succeed(
+		temporalsdk_workflow.Now(ctx),
+		"Created an identifier.json file and stored it in the metadata directory",
+	)
 
 	// Bag the SIP for Enduro processing.
-	ev = result.newEvent(ctx, "Bag SIP")
+	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Bag SIP")
 	var createBag bagcreate.Result
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -669,16 +593,16 @@ func (w *PreprocessingWorkflow) Execute(
 		&bagcreate.Params{SourcePath: localPath},
 	).Get(ctx, &createBag)
 	if e != nil {
-		result.systemError(
-			ctx,
-			e,
-			ev,
+		logger.Error("System error", "message", e.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"SIP bagging has failed.",
 			"An error has occurred while attempting to bag the SIP. Please try again, or ask a system administrator to investigate.",
 		)
 		return result, nil
 	}
-	ev.Succeed(ctx, "SIP has been bagged")
+	task.Succeed(temporalsdk_workflow.Now(ctx), "SIP has been bagged")
 
 	return result, nil
 }
@@ -712,10 +636,12 @@ func withFilesysActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.C
 // the workflow result/state.
 func (w *PreprocessingWorkflow) createAPISImportTask(
 	ctx temporalsdk_workflow.Context,
-	result *PreprocessingWorkflowResult,
+	result *childwf.PreprocessingResult,
 	sip sip.SIP,
 ) bool {
-	ev := result.newEvent(ctx, "Submit metadata to APIS")
+	logger := temporalsdk_workflow.GetLogger(ctx)
+
+	task := result.NewTask(temporalsdk_workflow.Now(ctx), "Submit metadata to APIS")
 	var createAPISImportTask apis.CreateImportTaskResult
 	err := temporalsdk_workflow.ExecuteActivity(
 		temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
@@ -733,19 +659,22 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 		},
 	).Get(ctx, &createAPISImportTask)
 	if err != nil {
-		result.systemError(
-			ctx,
-			err,
-			ev,
+		logger.Error("System error", "message", err.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"failed to submit metadata to APIS.",
 			"An error occurred while creating the APIS import task. Please try again, or ask a system administrator to investigate.",
 		)
 		return false
 	}
-	result.APISTaskID = createAPISImportTask.TaskID
-	ev.Succeed(ctx, fmt.Sprintf("Submitted metadata to APIS with import task ID %q", result.APISTaskID))
+	task.Succeed(
+		temporalsdk_workflow.Now(ctx),
+		"Submitted metadata to APIS with import task ID %q",
+		createAPISImportTask.TaskID,
+	)
 
-	ev = result.newEvent(ctx, "Wait for APIS analysis")
+	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Wait for APIS analysis")
 	var pollAPISImportTaskStatus apis.PollImportTaskStatusResult
 	err = temporalsdk_workflow.ExecuteActivity(
 		temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
@@ -758,13 +687,13 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 			},
 		}),
 		apis.PollImportTaskStatusActivityName,
-		&apis.PollImportTaskStatusParams{TaskID: result.APISTaskID},
+		&apis.PollImportTaskStatusParams{TaskID: createAPISImportTask.TaskID},
 	).Get(ctx, &pollAPISImportTaskStatus)
 	if err != nil {
-		result.systemError(
-			ctx,
-			err,
-			ev,
+		logger.Error("System error", "message", err.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"failed to get an APIS analysis result.",
 			"An error occurred while checking the APIS import task status. Please try again, or ask a system administrator to investigate.",
 		)
@@ -773,35 +702,37 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 
 	switch pollAPISImportTaskStatus.AnalysisResult {
 	case apisgen.AnalysisResultAlleNeu, apisgen.AnalysisResultAlleGleich:
-		ev.Succeed(
-			ctx,
-			fmt.Sprintf(
-				"APIS analysis completed for import task ID %q with result %q",
-				result.APISTaskID,
-				pollAPISImportTaskStatus.AnalysisResult,
-			),
+		task.Succeed(
+			temporalsdk_workflow.Now(ctx),
+			"APIS analysis completed for import task ID %q with result %q",
+			createAPISImportTask.TaskID,
+			pollAPISImportTaskStatus.AnalysisResult,
 		)
 		return true
 	case apisgen.AnalysisResultKonflikte:
-		return w.waitForAPISDecision(ctx, result, ev)
+		return w.waitForAPISDecision(ctx, result, task, createAPISImportTask.TaskID)
 	case apisgen.AnalysisResultFehler:
-		result.systemError(
-			ctx,
-			fmt.Errorf("APIS analysis failed for task %q", result.APISTaskID),
-			ev,
+		logger.Error(
+			"System error",
+			"message",
+			fmt.Sprintf("APIS analysis failed for task %q", createAPISImportTask.TaskID),
+		)
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"submission to APIS has failed.",
 			"APIS reported an analysis error while processing the submitted metadata. Please try again, or ask a system administrator to investigate.",
 		)
 		return false
 	default:
-		result.systemError(
-			ctx,
-			fmt.Errorf(
-				"unexpected APIS analysis result %q for task %q",
-				pollAPISImportTaskStatus.AnalysisResult,
-				result.APISTaskID,
-			),
-			ev,
+		logger.Error("System error", "message", fmt.Errorf(
+			"unexpected APIS analysis result %q for task %q",
+			pollAPISImportTaskStatus.AnalysisResult,
+			createAPISImportTask.TaskID,
+		))
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"submission to APIS has failed.",
 			"APIS returned an unexpected analysis result. Please ask a system administrator to investigate.",
 		)
@@ -815,18 +746,21 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 // result/state.
 func (w *PreprocessingWorkflow) waitForAPISDecision(
 	ctx temporalsdk_workflow.Context,
-	result *PreprocessingWorkflowResult,
-	ev *eventWrapper,
+	result *childwf.PreprocessingResult,
+	task *childwf.Task,
+	taskID string,
 ) bool {
+	logger := temporalsdk_workflow.GetLogger(ctx)
+
 	info := temporalsdk_workflow.GetInfo(ctx)
 	if info.ParentWorkflowExecution == nil {
-		result.systemError(
-			ctx,
-			fmt.Errorf(
-				"missing parent workflow execution while waiting for a decision on APIS import task %q",
-				result.APISTaskID,
-			),
-			ev,
+		logger.Error("System error", "message", fmt.Errorf(
+			"missing parent workflow execution while waiting for a decision on APIS import task %q",
+			taskID,
+		))
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"submission to APIS has failed.",
 			"An error occurred requesting a human decision on how to continue processing. Please try again, or ask a system administrator to investigate.",
 		)
@@ -837,11 +771,11 @@ func (w *PreprocessingWorkflow) waitForAPISDecision(
 		ctx,
 		info.ParentWorkflowExecution.ID,
 		info.ParentWorkflowExecution.RunID,
-		DecisionRequestSignal,
-		DecisionRequest{
+		childwf.DecisionRequestSignalName,
+		childwf.DecisionRequest{
 			Message: fmt.Sprintf(
 				"APIS detected metadata conflicts for import task ID %q. Review the APIS task and choose how ingest should continue.",
-				result.APISTaskID,
+				taskID,
 			),
 			Options: []string{
 				DecisionOptionCancelIngest,
@@ -851,52 +785,53 @@ func (w *PreprocessingWorkflow) waitForAPISDecision(
 		},
 	).Get(ctx, nil)
 	if err != nil {
-		result.systemError(
-			ctx,
-			fmt.Errorf("signal parent workflow for decision on APIS import task %q: %w", result.APISTaskID, err),
-			ev,
+		logger.Error("System error", "message", fmt.Errorf(
+			"signal parent workflow for decision on APIS import task %q: %w", taskID, err,
+		))
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"submission to APIS has failed.",
 			"Could not notify the parent workflow that human review is required. Please try again, or ask a system administrator to investigate.",
 		)
 		return false
 	}
 
-	var decision DecisionResponse
-	temporalsdk_workflow.GetSignalChannel(ctx, DecisionResponseSignal).Receive(ctx, &decision)
-	result.APISDecision = decision.Option
+	var decision childwf.DecisionResponse
+	temporalsdk_workflow.GetSignalChannel(ctx, childwf.DecisionResponseSignalName).Receive(ctx, &decision)
 
-	switch result.APISDecision {
+	switch decision.Option {
 	case DecisionOptionContinueOverwrite, DecisionOptionContinueAppend:
-		ev.Succeed(
-			ctx,
-			fmt.Sprintf(
-				"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
-				result.APISTaskID,
-				result.APISDecision,
-			),
+		task.Succeed(
+			temporalsdk_workflow.Now(ctx),
+			"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
+			taskID,
+			decision.Option,
 		)
 		return true
 	case DecisionOptionCancelIngest:
 		// TODO: Add and use canceled as workflow outcome.
-		result.validationError(
-			ctx,
-			ev,
+		result.ValidationError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"ingest was canceled after APIS metadata conflict review.",
 			fmt.Sprintf(
 				"APIS detected metadata conflicts for import task ID %q and ingest was canceled by user decision.",
-				result.APISTaskID,
+				taskID,
 			),
 		)
 		return false
 	default:
-		result.systemError(
-			ctx,
-			fmt.Errorf("unsupported decision %q for APIS import task %q", result.APISDecision, result.APISTaskID),
-			ev,
+		logger.Error("System error", "message", fmt.Errorf(
+			"unsupported decision %q for APIS import task %q", decision.Option, taskID,
+		))
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"submission to APIS has failed.",
 			fmt.Sprintf(
 				"Received unsupported user decision %q while resolving APIS metadata conflicts. Please ask a system administrator to investigate.",
-				result.APISDecision,
+				decision.Option,
 			),
 		)
 		return false
@@ -905,12 +840,13 @@ func (w *PreprocessingWorkflow) waitForAPISDecision(
 
 func (w *PreprocessingWorkflow) extractSIP(
 	ctx temporalsdk_workflow.Context,
-	result *PreprocessingWorkflowResult,
+	result *childwf.PreprocessingResult,
 	path string,
 	sipName string,
 ) string {
-	ev := result.newEvent(ctx, "Extract SIP")
+	logger := temporalsdk_workflow.GetLogger(ctx)
 
+	task := result.NewTask(temporalsdk_workflow.Now(ctx), "Extract SIP")
 	var archiveExtract archiveextract.Result
 	e := temporalsdk_workflow.ExecuteActivity(
 		withFilesysActOpts(ctx),
@@ -918,10 +854,10 @@ func (w *PreprocessingWorkflow) extractSIP(
 		&archiveextract.Params{SourcePath: path},
 	).Get(ctx, &archiveExtract)
 	if e != nil {
-		result.systemError(
-			ctx,
-			fmt.Errorf("extract SIP: %w", e),
-			ev,
+		logger.Error("System error", "message", fmt.Errorf("extract SIP: %w", e))
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"SIP extraction has failed.",
 			fmt.Sprintf(
 				`%q could not be successfully extracted. Please try again, or ask a system administrator to investigate.`,
@@ -934,9 +870,9 @@ func (w *PreprocessingWorkflow) extractSIP(
 	// Verify that the extraction directory has the same name as the uploaded
 	// archive minus the file extension (e.g. "example.zip" -> "example").
 	if filepath.Base(archiveExtract.ExtractPath) != fsutil.BaseNoExt(sipName) {
-		result.validationError(
-			ctx,
-			ev,
+		result.ValidationError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"SIP extraction has failed.",
 			fmt.Sprintf(
 				"The extracted SIP is missing the top-level %q folder.",
@@ -947,11 +883,12 @@ func (w *PreprocessingWorkflow) extractSIP(
 		return archiveExtract.ExtractPath
 	}
 
-	if e := result.SetRelativePath(w.sharedPath, archiveExtract.ExtractPath); e != nil {
-		result.systemError(
-			ctx,
-			fmt.Errorf("extract SIP: set relative path: %w", e),
-			ev,
+	result.RelativePath, e = filepath.Rel(w.sharedPath, archiveExtract.ExtractPath)
+	if e != nil {
+		logger.Error("System error", "message", fmt.Errorf("extract SIP: set relative path: %w", e))
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
 			"SIP extraction has failed.",
 			fmt.Sprintf(
 				`%s could not be successfully extracted. Please try again, or ask a system administrator to investigate.`,
@@ -961,7 +898,7 @@ func (w *PreprocessingWorkflow) extractSIP(
 		return ""
 	}
 
-	ev.Succeed(ctx, "SIP extracted")
+	task.Succeed(temporalsdk_workflow.Now(ctx), "SIP extracted")
 
 	return archiveExtract.ExtractPath
 }

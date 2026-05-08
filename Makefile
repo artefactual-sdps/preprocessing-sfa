@@ -69,8 +69,7 @@ gen-enums: ENUM_FLAGS = --names --template=$(CURDIR)/hack/make/enums.tmpl
 gen-enums: tool-go-enum
 	go-enum $(ENUM_FLAGS) \
 		--nocomments \
-		-f internal/enums/sip_type.go \
-		-f internal/enums/event_outcome.go
+		-f internal/enums/sip_type.go
 
 gen-mock: # @HELP Generate mocks.
 gen-mock: tool-mockgen

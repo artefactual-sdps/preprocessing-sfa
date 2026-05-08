@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/artefactual-sdps/enduro/pkg/childwf"
 	"github.com/artefactual-sdps/temporal-activities/archiveextract"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
@@ -27,8 +28,6 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	apisgen "github.com/artefactual-sdps/preprocessing-sfa/internal/apis/gen"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/enums"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/eventlog"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/localact"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/pips"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
@@ -127,81 +126,81 @@ var (
 	testTime = time.Date(2024, 6, 6, 15, 8, 39, 0, time.UTC)
 	sipUUID  = uuid.MustParse("8fdfaea1-06ed-4cf6-8bdf-d15d80420f35")
 
-	preAPISEvents = []*eventlog.Event{
+	preAPISEvents = []*childwf.Task{
 		{
 			Name:        "Calculate SIP checksum",
 			Message:     "SIP checksum calculated using SHA-256",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Check for duplicate SIP",
 			Message:     "SIP is not a duplicate",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Extract SIP",
 			Message:     "SIP extracted",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Validate Bag",
 			Message:     "Bag successfully validated",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Unbag SIP",
 			Message:     "SIP unbagged",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Identify SIP structure",
 			Message:     "SIP structure identified: DigitizedAIP",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Validate SIP structure",
 			Message:     "SIP structure matches validation criteria",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Validate SIP name",
 			Message:     "SIP name matches expected naming convention for the identified structure type",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Verify SIP manifest",
 			Message:     "SIP contents match manifest",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Verify SIP checksums",
 			Message:     "SIP checksums match file contents",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Validate SIP file formats",
 			Message:     "No invalid files found",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
@@ -210,45 +209,45 @@ var (
 			Message: `Metadata validation successful on the following file(s):
 
 - UpdatedAreldaMetadata.xml`,
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Validate logical metadata",
 			Message:     "Logical metadata validation successful",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 	}
 
-	postAPISEvents = []*eventlog.Event{
+	postAPISEvents = []*childwf.Task{
 		{
 			Name:        "Create premis.xml",
 			Message:     "Created a premis.xml file and stored it in the metadata directory",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Restructure SIP",
 			Message:     "SIP has been restructured for preservation processing",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Create identifier.json",
 			Message:     "Created an identifier.json file and stored it in the metadata directory",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
 		{
 			Name:        "Bag SIP",
 			Message:     "SIP has been bagged",
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
@@ -690,22 +689,22 @@ func (s *PreprocessingTestSuite) postAPISActivities(expectedSIP sip.SIP) {
 	)
 }
 
-func apisEvents(
+func apisTasks(
 	taskID string,
 	waitMessage string,
-	waitOutcome enums.EventOutcome,
+	waitOutcome childwf.TaskOutcome,
 	includePostAPIS bool,
-) []*eventlog.Event {
-	events := append([]*eventlog.Event{}, preAPISEvents...)
+) []*childwf.Task {
+	events := append([]*childwf.Task{}, preAPISEvents...)
 	events = append(events,
-		&eventlog.Event{
+		&childwf.Task{
 			Name:        "Submit metadata to APIS",
 			Message:     fmt.Sprintf(`Submitted metadata to APIS with import task ID %q`, taskID),
-			Outcome:     enums.EventOutcomeSuccess,
+			Outcome:     childwf.TaskOutcomeSuccess,
 			StartedAt:   testTime,
 			CompletedAt: testTime,
 		},
-		&eventlog.Event{
+		&childwf.Task{
 			Name:        "Wait for APIS analysis",
 			Message:     waitMessage,
 			Outcome:     waitOutcome,
@@ -721,19 +720,19 @@ func apisEvents(
 }
 
 func (s *PreprocessingTestSuite) executeAsChildWithHumanReview(
-	params *workflow.PreprocessingWorkflowParams,
-	decision workflow.DecisionResponse,
-) *workflow.PreprocessingWorkflowResult {
+	params *childwf.PreprocessingParams,
+	decision childwf.DecisionResponse,
+) *childwf.PreprocessingResult {
 	parentWorkflow := func(
 		ctx temporalsdk_workflow.Context,
-		childParams *workflow.PreprocessingWorkflowParams,
-	) (*workflow.PreprocessingWorkflowResult, error) {
+		childParams *childwf.PreprocessingParams,
+	) (*childwf.PreprocessingResult, error) {
 		childFuture := temporalsdk_workflow.ExecuteChildWorkflow(ctx, s.workflow.Execute, childParams)
 
-		var request workflow.DecisionRequest
-		temporalsdk_workflow.GetSignalChannel(ctx, workflow.DecisionRequestSignal).Receive(ctx, &request)
+		var request childwf.DecisionRequest
+		temporalsdk_workflow.GetSignalChannel(ctx, childwf.DecisionRequestSignalName).Receive(ctx, &request)
 		s.Equal(
-			workflow.DecisionRequest{
+			childwf.DecisionRequest{
 				Message: fmt.Sprintf(
 					"APIS detected metadata conflicts for import task ID %q. Review the APIS task and choose how ingest should continue.",
 					apisTaskID,
@@ -747,12 +746,12 @@ func (s *PreprocessingTestSuite) executeAsChildWithHumanReview(
 			request,
 		)
 
-		err := childFuture.SignalChildWorkflow(ctx, workflow.DecisionResponseSignal, decision).Get(ctx, nil)
+		err := childFuture.SignalChildWorkflow(ctx, childwf.DecisionResponseSignalName, decision).Get(ctx, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		var childResult workflow.PreprocessingWorkflowResult
+		var childResult childwf.PreprocessingResult
 		if err := childFuture.Get(ctx, &childResult); err != nil {
 			return nil, err
 		}
@@ -763,7 +762,7 @@ func (s *PreprocessingTestSuite) executeAsChildWithHumanReview(
 	s.env.ExecuteWorkflow(parentWorkflow, params)
 	s.True(s.env.IsWorkflowCompleted())
 
-	var result workflow.PreprocessingWorkflowResult
+	var result childwf.PreprocessingResult
 	err := s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 
@@ -782,7 +781,7 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{
+		&childwf.PreprocessingParams{
 			RelativePath: relPath,
 			SIPID:        sipUUID,
 			SIPName:      sipName,
@@ -794,21 +793,21 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 	relPath, err := filepath.Rel(s.testDir, extractPath)
 	s.NoError(err)
 
-	var result workflow.PreprocessingWorkflowResult
+	var result childwf.PreprocessingResult
 	err = s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 	s.Equal(
-		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeSuccess,
+		&childwf.PreprocessingResult{
+			Outcome:      childwf.OutcomeSuccess,
 			RelativePath: relPath,
-			PreservationTasks: apisEvents(
+			Tasks: apisTasks(
 				apisTaskID,
 				fmt.Sprintf(
 					`APIS analysis completed for import task ID %q with result %q`,
 					apisTaskID,
 					apisgen.AnalysisResultAlleNeu,
 				),
-				enums.EventOutcomeSuccess,
+				childwf.TaskOutcomeSuccess,
 				true,
 			),
 		},
@@ -840,7 +839,7 @@ func (s *PreprocessingTestSuite) TestIdentifySIPFailure() {
 
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{
+		&childwf.PreprocessingParams{
 			RelativePath: relPath,
 			SIPID:        sipUUID,
 			SIPName:      sipName,
@@ -852,18 +851,18 @@ func (s *PreprocessingTestSuite) TestIdentifySIPFailure() {
 	relPath, err := filepath.Rel(s.testDir, extractPath)
 	s.NoError(err)
 
-	var result workflow.PreprocessingWorkflowResult
+	var result childwf.PreprocessingResult
 	err = s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 	s.Equal(
-		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeContentError,
+		&childwf.PreprocessingResult{
+			Outcome:      childwf.OutcomeContentError,
 			RelativePath: relPath,
-			PreservationTasks: []*eventlog.Event{
+			Tasks: []*childwf.Task{
 				{
 					Name:        "Extract SIP",
 					Message:     "SIP extracted",
-					Outcome:     enums.EventOutcomeSuccess,
+					Outcome:     childwf.TaskOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -872,7 +871,7 @@ func (s *PreprocessingTestSuite) TestIdentifySIPFailure() {
 					Message: `Content error: SIP identification has failed.
 
 Enduro could not identify the package type. Please ensure that your SIP matches one of the supported package structures.`,
-					Outcome:     enums.EventOutcomeValidationFailure,
+					Outcome:     childwf.TaskOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -981,7 +980,7 @@ func (s *PreprocessingTestSuite) TestValidationError() {
 	// Execute workflow.
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{
+		&childwf.PreprocessingParams{
 			RelativePath: relPath,
 			SIPID:        sipUUID,
 			SIPName:      sipName,
@@ -993,25 +992,25 @@ func (s *PreprocessingTestSuite) TestValidationError() {
 	relPath, err := filepath.Rel(s.testDir, extractPath)
 	s.NoError(err)
 
-	var result workflow.PreprocessingWorkflowResult
+	var result childwf.PreprocessingResult
 	err = s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 	s.Equal(
-		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeContentError,
+		&childwf.PreprocessingResult{
+			Outcome:      childwf.OutcomeContentError,
 			RelativePath: relPath,
-			PreservationTasks: []*eventlog.Event{
+			Tasks: []*childwf.Task{
 				{
 					Name:        "Extract SIP",
 					Message:     "SIP extracted",
-					Outcome:     enums.EventOutcomeSuccess,
+					Outcome:     childwf.TaskOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
 				{
 					Name:        "Identify SIP structure",
 					Message:     "SIP structure identified: BornDigitalSIP",
-					Outcome:     enums.EventOutcomeSuccess,
+					Outcome:     childwf.TaskOutcomeSuccess,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -1023,7 +1022,7 @@ func (s *PreprocessingTestSuite) TestValidationError() {
 - metadata.xml is missing
 
 Please review the SIP and ensure that its structure matches the BornDigitalSIP specifications.`,
-					Outcome:     enums.EventOutcomeValidationFailure,
+					Outcome:     childwf.TaskOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -1036,7 +1035,7 @@ The name used for the package does not match the expected convention for the "Bo
 - SIP name "sip" violates naming standard
 
 Please review the naming conventions specified for this type of SIP.`,
-					Outcome:     enums.EventOutcomeValidationFailure,
+					Outcome:     childwf.TaskOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -1049,7 +1048,7 @@ Please review the naming conventions specified for this type of SIP.`,
 - Unexpected file: d_0000001/extra_file.txt
 
 Please review the SIP and ensure that its contents match those listed in the metadata manifest.`,
-					Outcome:     enums.EventOutcomeValidationFailure,
+					Outcome:     childwf.TaskOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -1060,7 +1059,7 @@ Please review the SIP and ensure that its contents match those listed in the met
 - Checksum mismatch for "content/content/d_0000001/00000001.jp2" (expected: "827ccb0eea8a706c4c34a16891f84e7b", got: "2714364e3a0ac68e8bf9b898b31ff303")
 
 Please review the SIP and ensure that the metadata checksums match those of the files.`,
-					Outcome:     enums.EventOutcomeValidationFailure,
+					Outcome:     childwf.TaskOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -1074,7 +1073,7 @@ One or more file formats are not allowed:
 - file format fmt/11 not allowed: "content/content/d_0000001/00000011.png"
 
 Please review the SIP and remove or replace all disallowed file formats.`,
-					Outcome:     enums.EventOutcomeValidationFailure,
+					Outcome:     childwf.TaskOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -1085,7 +1084,7 @@ Please review the SIP and remove or replace all disallowed file formats.`,
 - One or more PDF/A files are invalid
 
 Please ensure all files are well-formed.`,
-					Outcome:     enums.EventOutcomeValidationFailure,
+					Outcome:     childwf.TaskOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -1096,7 +1095,7 @@ Please ensure all files are well-formed.`,
 - metadata.xml does not match expected metadata requirements
 
 Please ensure all metadata files are present and well-formed.`,
-					Outcome:     enums.EventOutcomeValidationFailure,
+					Outcome:     childwf.TaskOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -1121,7 +1120,7 @@ func (s *PreprocessingTestSuite) TestSystemError() {
 	// Execute workflow.
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{
+		&childwf.PreprocessingParams{
 			RelativePath: relPath,
 			SIPID:        sipUUID,
 			SIPName:      sipName,
@@ -1130,14 +1129,14 @@ func (s *PreprocessingTestSuite) TestSystemError() {
 
 	s.True(s.env.IsWorkflowCompleted())
 
-	var result workflow.PreprocessingWorkflowResult
+	var result childwf.PreprocessingResult
 	err := s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 	s.Equal(
-		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeSystemError,
+		&childwf.PreprocessingResult{
+			Outcome:      childwf.OutcomeSystemError,
 			RelativePath: relPath,
-			PreservationTasks: []*eventlog.Event{
+			Tasks: []*childwf.Task{
 				{
 					Name: "Extract SIP",
 					Message: fmt.Sprintf(
@@ -1146,7 +1145,7 @@ func (s *PreprocessingTestSuite) TestSystemError() {
 %q could not be successfully extracted. Please try again, or ask a system administrator to investigate.`,
 						filepath.Base(relPath),
 					),
-					Outcome:     enums.EventOutcomeSystemFailure,
+					Outcome:     childwf.TaskOutcomeSystemFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -1187,7 +1186,7 @@ func (s *PreprocessingTestSuite) TestExtractionError() {
 	// Execute workflow.
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{
+		&childwf.PreprocessingParams{
 			RelativePath: relPath,
 			SIPID:        sipUUID,
 			SIPName:      sipName,
@@ -1196,14 +1195,14 @@ func (s *PreprocessingTestSuite) TestExtractionError() {
 
 	s.True(s.env.IsWorkflowCompleted())
 
-	var result workflow.PreprocessingWorkflowResult
+	var result childwf.PreprocessingResult
 	err := s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 	s.Equal(
-		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeContentError,
+		&childwf.PreprocessingResult{
+			Outcome:      childwf.OutcomeContentError,
 			RelativePath: relPath,
-			PreservationTasks: []*eventlog.Event{
+			Tasks: []*childwf.Task{
 				{
 					Name: "Extract SIP",
 					Message: fmt.Sprintf(
@@ -1214,7 +1213,7 @@ The extracted SIP is missing the top-level %q folder.
 Please ensure that the SIP is well-formed and try again.`,
 						fsutil.BaseNoExt(sipName),
 					),
-					Outcome:     enums.EventOutcomeValidationFailure,
+					Outcome:     childwf.TaskOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -1223,7 +1222,7 @@ Please ensure that the SIP is well-formed and try again.`,
 					Message: `Content error: SIP identification has failed.
 
 Enduro could not identify the package type. Please ensure that your SIP matches one of the supported package structures.`,
-					Outcome:     enums.EventOutcomeValidationFailure,
+					Outcome:     childwf.TaskOutcomeValidationFailure,
 					StartedAt:   testTime,
 					CompletedAt: testTime,
 				},
@@ -1244,12 +1243,12 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndOverwrite() {
 	s.postAPISActivities(expectedSIP)
 
 	result := s.executeAsChildWithHumanReview(
-		&workflow.PreprocessingWorkflowParams{
+		&childwf.PreprocessingParams{
 			RelativePath: relPath,
 			SIPID:        sipUUID,
 			SIPName:      sipName,
 		},
-		workflow.DecisionResponse{
+		childwf.DecisionResponse{
 			Option: workflow.DecisionOptionContinueOverwrite,
 		},
 	)
@@ -1258,17 +1257,17 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndOverwrite() {
 	s.NoError(err)
 
 	s.Equal(
-		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeSuccess,
+		&childwf.PreprocessingResult{
+			Outcome:      childwf.OutcomeSuccess,
 			RelativePath: updatedRelPath,
-			PreservationTasks: apisEvents(
+			Tasks: apisTasks(
 				apisTaskID,
 				fmt.Sprintf(
 					"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
 					apisTaskID,
 					workflow.DecisionOptionContinueOverwrite,
 				),
-				enums.EventOutcomeSuccess,
+				childwf.TaskOutcomeSuccess,
 				true,
 			),
 		},
@@ -1287,12 +1286,12 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndAppend() {
 	s.postAPISActivities(expectedSIP)
 
 	result := s.executeAsChildWithHumanReview(
-		&workflow.PreprocessingWorkflowParams{
+		&childwf.PreprocessingParams{
 			RelativePath: relPath,
 			SIPID:        sipUUID,
 			SIPName:      sipName,
 		},
-		workflow.DecisionResponse{
+		childwf.DecisionResponse{
 			Option: workflow.DecisionOptionContinueAppend,
 		},
 	)
@@ -1301,17 +1300,17 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndAppend() {
 	s.NoError(err)
 
 	s.Equal(
-		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeSuccess,
+		&childwf.PreprocessingResult{
+			Outcome:      childwf.OutcomeSuccess,
 			RelativePath: updatedRelPath,
-			PreservationTasks: apisEvents(
+			Tasks: apisTasks(
 				apisTaskID,
 				fmt.Sprintf(
 					"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
 					apisTaskID,
 					workflow.DecisionOptionContinueAppend,
 				),
-				enums.EventOutcomeSuccess,
+				childwf.TaskOutcomeSuccess,
 				true,
 			),
 		},
@@ -1329,12 +1328,12 @@ func (s *PreprocessingTestSuite) TestHumanReviewCancelIngest() {
 	_, extractPath, apisTaskID := s.preAPISActivities(apisgen.AnalysisResultKonflikte)
 
 	result := s.executeAsChildWithHumanReview(
-		&workflow.PreprocessingWorkflowParams{
+		&childwf.PreprocessingParams{
 			RelativePath: relPath,
 			SIPID:        sipUUID,
 			SIPName:      sipName,
 		},
-		workflow.DecisionResponse{
+		childwf.DecisionResponse{
 			Option: workflow.DecisionOptionCancelIngest,
 		},
 	)
@@ -1343,10 +1342,10 @@ func (s *PreprocessingTestSuite) TestHumanReviewCancelIngest() {
 	s.NoError(err)
 
 	s.Equal(
-		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeContentError,
+		&childwf.PreprocessingResult{
+			Outcome:      childwf.OutcomeContentError,
 			RelativePath: updatedRelPath,
-			PreservationTasks: apisEvents(
+			Tasks: apisTasks(
 				apisTaskID,
 				fmt.Sprintf(
 					`Content error: ingest was canceled after APIS metadata conflict review.
@@ -1354,7 +1353,7 @@ func (s *PreprocessingTestSuite) TestHumanReviewCancelIngest() {
 APIS detected metadata conflicts for import task ID %q and ingest was canceled by user decision.`,
 					apisTaskID,
 				),
-				enums.EventOutcomeValidationFailure,
+				childwf.TaskOutcomeValidationFailure,
 				false,
 			),
 		},
@@ -1372,12 +1371,12 @@ func (s *PreprocessingTestSuite) TestHumanReviewInvalidOption() {
 	_, extractPath, apisTaskID := s.preAPISActivities(apisgen.AnalysisResultKonflikte)
 
 	result := s.executeAsChildWithHumanReview(
-		&workflow.PreprocessingWorkflowParams{
+		&childwf.PreprocessingParams{
 			RelativePath: relPath,
 			SIPID:        sipUUID,
 			SIPName:      sipName,
 		},
-		workflow.DecisionResponse{
+		childwf.DecisionResponse{
 			Option: "Unexpected option",
 		},
 	)
@@ -1386,15 +1385,15 @@ func (s *PreprocessingTestSuite) TestHumanReviewInvalidOption() {
 	s.NoError(err)
 
 	s.Equal(
-		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeSystemError,
+		&childwf.PreprocessingResult{
+			Outcome:      childwf.OutcomeSystemError,
 			RelativePath: updatedRelPath,
-			PreservationTasks: apisEvents(
+			Tasks: apisTasks(
 				apisTaskID,
 				`System error: submission to APIS has failed.
 
 Received unsupported user decision "Unexpected option" while resolving APIS metadata conflicts. Please ask a system administrator to investigate.`,
-				enums.EventOutcomeSystemFailure,
+				childwf.TaskOutcomeSystemFailure,
 				false,
 			),
 		},

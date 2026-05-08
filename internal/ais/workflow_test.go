@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/artefactual-sdps/enduro/pkg/childwf"
 	"github.com/artefactual-sdps/temporal-activities/archivezip"
 	"github.com/artefactual-sdps/temporal-activities/bucketupload"
 	"github.com/stretchr/testify/mock"
@@ -47,17 +48,17 @@ func (s *TestSuite) TestWorkflowSuccess() {
 
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&ais.WorkflowParams{AIPUUID: aipUUID},
+		&childwf.PostStorageParams{AIPUUID: aipUUID},
 	)
 
 	s.True(s.env.IsWorkflowCompleted())
 	s.env.AssertExpectations(s.T())
 
-	var result ais.WorkflowResult
+	var result childwf.PostStorageResult
 	err := s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 
-	s.Equal(result, ais.WorkflowResult{Key: "search-md_test-" + aipUUID + ".zip"})
+	s.Equal(result, childwf.PostStorageResult{})
 }
 
 func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
