@@ -1,33 +1,47 @@
 package amss
 
-import "context"
+import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
+	"go.artefactual.dev/ssclient"
+)
 
 const GetAIPPathActivityName = "get-aip-path"
 
 type (
 	GetAIPPathActivity struct {
-		amssClient Client
+		packages *ssclient.PackagesService
 	}
 	GetAIPPathActivityParams struct {
-		AIPUUID string
+		AIPUUID uuid.UUID
 	}
 	GetAIPPathActivityResult struct {
 		Path string
 	}
 )
 
-func NewGetAIPPathActivity(amssClient Client) *GetAIPPathActivity {
-	return &GetAIPPathActivity{amssClient: amssClient}
+func NewGetAIPPathActivity(packages *ssclient.PackagesService) *GetAIPPathActivity {
+	return &GetAIPPathActivity{packages: packages}
 }
 
 func (a *GetAIPPathActivity) Execute(
 	ctx context.Context,
 	params *GetAIPPathActivityParams,
 ) (*GetAIPPathActivityResult, error) {
-	path, err := a.amssClient.GetAIPPath(ctx, params.AIPUUID)
+	pkg, err := a.packages.Get(ctx, params.AIPUUID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAIPPath: get package: %w", err)
+	}
+	if pkg == nil {
+		return nil, fmt.Errorf("GetAIPPath: package not found")
 	}
 
-	return &GetAIPPathActivityResult{Path: path}, nil
+	path := pkg.GetCurrentPath()
+	if path == nil {
+		return nil, fmt.Errorf("GetAIPPath: current_path not found in response")
+	}
+
+	return &GetAIPPathActivityResult{Path: *path}, nil
 }

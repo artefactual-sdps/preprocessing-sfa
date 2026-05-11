@@ -9,6 +9,7 @@ import (
 
 	"github.com/artefactual-sdps/enduro/pkg/childwf"
 	"github.com/artefactual-sdps/temporal-activities/removepaths"
+	"github.com/google/uuid"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
@@ -32,6 +33,15 @@ func (w *Poststorage) Execute(
 	logger := temporalsdk_workflow.GetLogger(ctx)
 	logger.Debug("Poststorage workflow running!", "params", params)
 
+	defer func() {
+		logger.Debug("Poststorage workflow finished!", "result", r, "error", e)
+	}()
+
+	aipUUID, err := uuid.Parse(params.AIPUUID)
+	if err != nil {
+		return nil, fmt.Errorf("parse AIP UUID: %v", err)
+	}
+
 	if data, ok := params.CustomMetadata[apis.CustomMetadataKey]; ok {
 		var metadata apis.CustomMetadata
 		if err := metadata.Unmarshal(data); err != nil {
@@ -44,12 +54,8 @@ func (w *Poststorage) Execute(
 		)
 	}
 
-	defer func() {
-		logger.Debug("Poststorage workflow finished!", "result", r, "error", e)
-	}()
-
 	var getAIPPathResult amss.GetAIPPathActivityResult
-	err := temporalsdk_workflow.ExecuteActivity(
+	err = temporalsdk_workflow.ExecuteActivity(
 		temporalsdk_workflow.WithActivityOptions(
 			ctx,
 			temporalsdk_workflow.ActivityOptions{
@@ -64,7 +70,7 @@ func (w *Poststorage) Execute(
 		),
 		amss.GetAIPPathActivityName,
 		&amss.GetAIPPathActivityParams{
-			AIPUUID: params.AIPUUID,
+			AIPUUID: aipUUID,
 		},
 	).Get(ctx, &getAIPPathResult)
 	if err != nil {
@@ -88,7 +94,7 @@ func (w *Poststorage) Execute(
 				return nil, fmt.Errorf("error creating session: %v", err)
 			}
 
-			sessErr = w.SessionHandler(sessCtx, params.AIPUUID, getAIPPathResult.Path)
+			sessErr = w.SessionHandler(sessCtx, aipUUID, getAIPPathResult.Path)
 
 			// We want to retry the session if it has been canceled as a result
 			// of losing the worker but not otherwise. This scenario seems to be
@@ -124,7 +130,7 @@ func (w *Poststorage) Execute(
 	return &childwf.PostStorageResult{}, nil
 }
 
-func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aipPath string) (e error) {
+func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID uuid.UUID, aipPath string) (e error) {
 	removePaths := []string{}
 
 	defer func() {
@@ -143,9 +149,10 @@ func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, 
 
 	// In case the AIP is compressed, remove its UUID and the possible
 	// extension from the directory/file name, and append the UUID back.
-	aipDirName := strings.Split(filepath.Base(aipPath), aipUUID)[0] + aipUUID
+	aipUUIDString := aipUUID.String()
+	aipDirName := strings.Split(filepath.Base(aipPath), aipUUIDString)[0] + aipUUIDString
 	localDir := filepath.Join(w.cfg.WorkingDir, fmt.Sprintf("search-md_%s", aipDirName))
-	metsName := fmt.Sprintf("METS.%s.xml", aipUUID)
+	metsName := fmt.Sprintf("METS.%s.xml", aipUUIDString)
 	metsPath := filepath.Join(localDir, metsName)
 
 	removePaths = append(removePaths, localDir)

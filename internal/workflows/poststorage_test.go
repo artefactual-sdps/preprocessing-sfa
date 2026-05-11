@@ -8,6 +8,7 @@ import (
 
 	"github.com/artefactual-sdps/enduro/pkg/childwf"
 	"github.com/artefactual-sdps/temporal-activities/removepaths"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -56,7 +57,7 @@ func TestWorkflow(t *testing.T) {
 }
 
 func (s *TestSuite) TestWorkflowSuccess() {
-	aipUUID := "9390594f-84c2-457d-bd6a-618f21f7c954"
+	aipUUID := uuid.MustParse("9390594f-84c2-457d-bd6a-618f21f7c954")
 
 	s.setup(&config.PoststorageConfig{})
 	s.mockActivitiesSuccess(aipUUID)
@@ -64,7 +65,7 @@ func (s *TestSuite) TestWorkflowSuccess() {
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
 		&childwf.PostStorageParams{
-			AIPUUID: aipUUID,
+			AIPUUID: aipUUID.String(),
 			CustomMetadata: childwf.CustomMetadata{
 				apis.CustomMetadataKey: json.RawMessage(
 					`{"importTaskId":"task-000001","decision":"Continue and append"}`,
@@ -83,8 +84,24 @@ func (s *TestSuite) TestWorkflowSuccess() {
 	s.Equal(result, childwf.PostStorageResult{})
 }
 
-func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
-	aipName := "test-" + aipUUID
+func (s *TestSuite) TestWorkflowErrorsWhenAIPUUIDIsInvalid() {
+	s.setup(&config.PoststorageConfig{})
+
+	s.env.ExecuteWorkflow(
+		s.workflow.Execute,
+		&childwf.PostStorageParams{
+			AIPUUID: "not-a-uuid",
+		},
+	)
+
+	s.True(s.env.IsWorkflowCompleted())
+	s.ErrorContains(s.env.GetWorkflowError(), "parse AIP UUID")
+	s.env.AssertExpectations(s.T())
+}
+
+func (s *TestSuite) mockActivitiesSuccess(aipUUID uuid.UUID) {
+	aipUUIDString := aipUUID.String()
+	aipName := "test-" + aipUUIDString
 	searchMDName := fmt.Sprintf("search-md_%s", aipName)
 	localDir := filepath.Join(s.testDir, searchMDName)
 
@@ -101,7 +118,7 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 
 	// Mock session activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
-	metsName := fmt.Sprintf("METS.%s.xml", aipUUID)
+	metsName := fmt.Sprintf("METS.%s.xml", aipUUIDString)
 	metsPath := filepath.Join(localDir, metsName)
 	s.env.OnActivity(
 		amss.FetchActivityName,

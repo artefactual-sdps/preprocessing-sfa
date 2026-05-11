@@ -16,6 +16,7 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"github.com/go-logr/logr"
 	"github.com/jonboulle/clockwork"
+	"go.artefactual.dev/ssclient"
 	"go.artefactual.dev/tools/clientauth"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -127,13 +128,13 @@ func (m *Main) Run(ctx context.Context) error {
 		}
 	}
 
-	amssClient, err := amss.NewPooledClient(m.cfg.Poststorage.AMSS)
+	ssClient, err := ssclient.New(m.cfg.Poststorage.AMSS)
 	if err != nil {
-		return fmt.Errorf("unable to create AMSS client: %w", err)
+		return fmt.Errorf("unable to create Storage Service client: %w", err)
 	}
 
 	m.registerPreprocessingWorkflow(psvc, apisClient, veraPDFValidator)
-	m.registerPoststorageWorkflow(amssClient)
+	m.registerPoststorageWorkflow(ssClient.Packages())
 
 	if err := w.Start(); err != nil {
 		m.logger.Error(err, "Worker failed to start.")
@@ -266,18 +267,18 @@ func (m *Main) registerPreprocessingWorkflow(
 	)
 }
 
-func (m *Main) registerPoststorageWorkflow(amssClient amss.Client) {
+func (m *Main) registerPoststorageWorkflow(packages *ssclient.PackagesService) {
 	m.temporalWorker.RegisterWorkflowWithOptions(
 		workflows.NewPoststorage(m.cfg.Poststorage).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Poststorage.WorkflowName},
 	)
 
 	m.temporalWorker.RegisterActivityWithOptions(
-		amss.NewGetAIPPathActivity(amssClient).Execute,
+		amss.NewGetAIPPathActivity(packages).Execute,
 		temporalsdk_activity.RegisterOptions{Name: amss.GetAIPPathActivityName},
 	)
 	m.temporalWorker.RegisterActivityWithOptions(
-		amss.NewFetchActivity(amssClient).Execute,
+		amss.NewFetchActivity(packages).Execute,
 		temporalsdk_activity.RegisterOptions{Name: amss.FetchActivityName},
 	)
 	m.temporalWorker.RegisterActivityWithOptions(

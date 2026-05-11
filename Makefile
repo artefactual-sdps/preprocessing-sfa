@@ -73,7 +73,6 @@ gen-enums: tool-go-enum
 
 gen-mock: # @HELP Generate mocks.
 gen-mock: tool-mockgen
-	mockgen -typed -destination=./internal/amss/fake/mock_client.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/amss Client
 	mockgen -typed -destination=./internal/apis/fake/mock_client.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/apis Client
 	mockgen -typed -destination=./internal/fformat/fake/mock_identifier.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/fformat Identifier
 	mockgen -typed -destination=./internal/fvalidate/fake/mock_validator.go -package=fake github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate Validator

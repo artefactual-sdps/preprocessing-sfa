@@ -56,8 +56,8 @@ workflowName = "poststorage"
 workingDir = "/tmp"
 
 [poststorage.amss]
-url = "http://ambox.enduro-sdps:64081"
-user = "test"
+baseURL = "http://ambox.enduro-sdps:64081"
+username = "test"
 key = "test"
 
 [apis]

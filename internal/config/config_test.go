@@ -6,10 +6,10 @@ import (
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
+	"go.artefactual.dev/ssclient"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
@@ -43,8 +43,8 @@ path = "/opt/verapdf/verapdf"
 workflowName = "poststorage"
 workingDir = "/tmp"
 [poststorage.amss]
-url = "http://amss.example.test"
-user = "test"
+baseURL = "http://amss.example.test"
+username = "test"
 key = "test"
 [apis]
 enabled = true
@@ -56,8 +56,8 @@ const validPoststorageConfig = `
 workflowName = "poststorage"
 workingDir = "/tmp"
 [poststorage.amss]
-url = "http://amss.example.test"
-user = "test"
+baseURL = "http://amss.example.test"
+username = "test"
 key = "test"
 `
 
@@ -121,10 +121,10 @@ func TestConfig(t *testing.T) {
 				Poststorage: config.PoststorageConfig{
 					WorkflowName: "poststorage",
 					WorkingDir:   "/tmp",
-					AMSS: amss.Config{
-						URL:  "http://amss.example.test",
-						User: "test",
-						Key:  "test",
+					AMSS: ssclient.Config{
+						BaseURL:  "http://amss.example.test",
+						Username: "test",
+						Key:      "test",
 					},
 				},
 			},
@@ -145,8 +145,8 @@ Preprocessing.SharedPath: missing required value
 Preprocessing.WorkflowName: missing required value
 Poststorage.WorkflowName: missing required value
 Poststorage.WorkingDir: missing required value
-Poststorage.AMSS.URL: missing required value
-Poststorage.AMSS.User: missing required value
+Poststorage.AMSS.BaseURL: missing required value
+Poststorage.AMSS.Username: missing required value
 Poststorage.AMSS.Key: missing required value`,
 		},
 		{
@@ -243,10 +243,10 @@ url = "http://apis.example.test"
 				Poststorage: config.PoststorageConfig{
 					WorkflowName: "poststorage",
 					WorkingDir:   "/tmp",
-					AMSS: amss.Config{
-						URL:  "http://amss.example.test",
-						User: "test",
-						Key:  "test",
+					AMSS: ssclient.Config{
+						BaseURL:  "http://amss.example.test",
+						Username: "test",
+						Key:      "test",
 					},
 				},
 			},
@@ -354,10 +354,10 @@ token = "mock-token"
 				Poststorage: config.PoststorageConfig{
 					WorkflowName: "poststorage",
 					WorkingDir:   "/tmp",
-					AMSS: amss.Config{
-						URL:  "http://amss.example.test",
-						User: "test",
-						Key:  "test",
+					AMSS: ssclient.Config{
+						BaseURL:  "http://amss.example.test",
+						Username: "test",
+						Key:      "test",
 					},
 				},
 			},
