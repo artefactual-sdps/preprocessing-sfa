@@ -37,10 +37,6 @@ func (s *TestSuite) setup(cfg *config.PoststorageConfig) {
 	cfg.WorkingDir = s.testDir
 
 	s.env.RegisterActivityWithOptions(
-		amss.NewGetAIPPathActivity(nil).Execute,
-		temporalsdk_activity.RegisterOptions{Name: amss.GetAIPPathActivityName},
-	)
-	s.env.RegisterActivityWithOptions(
 		amss.NewFetchActivity(nil).Execute,
 		temporalsdk_activity.RegisterOptions{Name: amss.FetchActivityName},
 	)
@@ -101,20 +97,7 @@ func (s *TestSuite) TestWorkflowErrorsWhenAIPUUIDIsInvalid() {
 
 func (s *TestSuite) mockActivitiesSuccess(aipUUID uuid.UUID) {
 	aipUUIDString := aipUUID.String()
-	aipName := "test-" + aipUUIDString
-	searchMDName := fmt.Sprintf("search-md_%s", aipName)
-	localDir := filepath.Join(s.testDir, searchMDName)
-
-	// Mock activities.
-	s.env.OnActivity(
-		amss.GetAIPPathActivityName,
-		mock.AnythingOfType("*context.timerCtx"),
-		&amss.GetAIPPathActivityParams{AIPUUID: aipUUID},
-	).Return(
-		&amss.GetAIPPathActivityResult{
-			Path: "9390/594f/84c2/457d/bd6a/618f/21f7/c954/test-9390594f-84c2-457d-bd6a-618f21f7c954.zip",
-		}, nil,
-	)
+	localDir := filepath.Join(s.testDir, aipUUIDString)
 
 	// Mock session activities.
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
@@ -125,7 +108,7 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID uuid.UUID) {
 		sessionCtx,
 		&amss.FetchActivityParams{
 			AIPUUID:      aipUUID,
-			RelativePath: fmt.Sprintf("%s/data/%s", aipName, metsName),
+			RelativePath: fmt.Sprintf("%s/data/%s", aipUUIDString, metsName),
 			Destination:  metsPath,
 		},
 	).Return(
