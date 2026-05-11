@@ -9,11 +9,9 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/oklog/run"
 	"github.com/spf13/pflag"
 	"go.artefactual.dev/tools/log"
 
-	"github.com/artefactual-sdps/preprocessing-sfa/cmd/worker/aiscmd"
 	"github.com/artefactual-sdps/preprocessing-sfa/cmd/worker/workercmd"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/version"
@@ -37,7 +35,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	var cfg config.Configuration
+	var cfg config.Config
 	configFile, _ := p.GetString("config")
 	configFileFound, configFileUsed, err := config.Read(&cfg, configFile)
 	if err != nil {
@@ -68,84 +66,25 @@ func main() {
 		logger.Info("Configuration file not found.")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	// Cancel the root context when the process receives a shutdown signal.
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-	var g run.Group
 
-	// Preprocessing worker.
-	{
-		done := make(chan struct{})
-		m := workercmd.NewMain(logger, cfg)
-		g.Add(
-			func() error {
-				if err := m.Run(ctx); err != nil {
-					return err
-				}
-				<-done
-				return nil
-			},
-			func(err error) {
-				if err := m.Close(); err != nil {
-					logger.Error(err, "Failed to close preprocessing worker.")
-				}
-				close(done)
-			},
-		)
-	}
+	m := workercmd.NewMain(logger, cfg)
 
-	// AIS worker.
-	{
-		done := make(chan struct{})
-		m := aiscmd.NewMain(logger, cfg.AIS)
-		g.Add(
-			func() error {
-				if err := m.Run(ctx); err != nil {
-					return err
-				}
-				<-done
-				return nil
-			},
-			func(err error) {
-				if err := m.Close(); err != nil {
-					logger.Error(err, "Failed to close AIS worker.")
-				}
-				close(done)
-			},
-		)
-	}
-
-	// Signal handler.
-	{
-		var (
-			cancelInterrupt = make(chan struct{})
-			ch              = make(chan os.Signal, 2)
-		)
-		defer close(ch)
-
-		g.Add(
-			func() error {
-				signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-
-				select {
-				case <-ch:
-				case <-cancelInterrupt:
-				}
-
-				return nil
-			},
-			func(err error) {
-				logger.Info("Quitting...")
-				close(cancelInterrupt)
-				cancel()
-				signal.Stop(ch)
-			},
-		)
-	}
-
-	err = g.Run()
-	if err != nil {
-		logger.Error(err, "Application failure.")
+	if err := m.Run(ctx); err != nil {
+		_ = m.Close()
 		os.Exit(1)
 	}
+
+	<-ctx.Done()
+	logger.Info("Quitting...")
+
+	if err := m.Close(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		logger.Error(err, "Failed to close the application.")
+		os.Exit(1)
+	}
+
 	logger.Info("Bye!")
 }

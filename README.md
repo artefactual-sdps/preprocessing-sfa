@@ -1,9 +1,8 @@
 # preprocessing-sfa
 
 **preprocessing-sfa** provides two Enduro child workflows for SFA SIPs: a
-preprocessing child workflow and an AIS poststorage child workflow. Despite the
-project name, the worker binary starts two independent Temporal workers, one
-for each child workflow.
+preprocessing child workflow and an AIS poststorage child workflow. The worker
+binary starts one Temporal worker that registers both child workflows.
 
 - [Configuration](#configuration)
 - [Local environment](#local-environment)
@@ -12,10 +11,9 @@ for each child workflow.
 
 ## Configuration
 
-The worker binary starts a preprocessing Temporal worker and an AIS poststorage
-Temporal worker. They need to share the filesystem with Enduro's a3m or
-Archivematica workers, connect to the same Temporal server, and be related to
-Enduro with the correct namespace, task queue and workflow names.
+The worker needs to share the filesystem with Enduro's a3m or Archivematica
+workers, connect to the same Temporal server, and be related to Enduro with the
+correct namespace, task queue and workflow names.
 
 ### Worker configuration
 
@@ -25,25 +23,49 @@ An example configuration for the worker binary:
 debug = false
 verbosity = 0
 
+[temporal]
+address = "temporal-frontend.enduro-sdps:7233"
+namespace = "default"
+
+[worker]
+maxConcurrentSessions = 1
+taskQueue = "sfa-enduro"
+
+[preprocessing]
+workflowName = "preprocessing"
 sharedPath = "/home/preprocessing/shared"
 checkDuplicates = false
 
-[persistence]
+[preprocessing.persistence]
 dsn = "user:password@tcp(mysql.enduro-sdps:3306)/preprocessing_sfa"
 driver = "mysql"
 migrate = true
 
-[temporal]
-address = "temporal-frontend.enduro-sdps:7233"
-namespace = "default"
-taskQueue = "preprocessing"
-workflowName = "preprocessing"
-
-[worker]
-maxConcurrentSessions = 1
-
-[bagit]
+[preprocessing.bagCreate]
 checksumAlgorithm = "md5"
+
+[preprocessing.fileFormat]
+allowlistPath = "/home/preprocessing/.config/allowed_file_formats.csv"
+
+[preprocessing.filevalidate.verapdf]
+path = "/opt/verapdf/verapdf"
+
+[poststorage]
+workflowName = "ais"
+workingDir = "/tmp"
+
+[poststorage.amss]
+url = "http://ambox.enduro-sdps:64081"
+user = "test"
+key = "test"
+
+[poststorage.bucket]
+endpoint = "http://minio.enduro-sdps:9000"
+pathStyle = true
+accessKey = "minio"
+secretKey = "minio123"
+region = "us-west-1"
+bucket = "ais"
 
 [apis]
 enabled = true
@@ -66,36 +88,6 @@ retryInitialInterval = "500ms"
 retryMaxInterval = "2s"
 retryBackoffCoefficient = 2.0
 
-[ais]
-workingDir = "/tmp"
-
-[ais.temporal]
-address = "temporal-frontend.enduro-sdps:7233"
-namespace = "default"
-taskQueue = "ais"
-workflowName = "ais"
-
-[ais.worker]
-maxConcurrentSessions = 1
-
-[ais.amss]
-url = "http://ambox.enduro-sdps:64081"
-user = "test"
-key = "test"
-
-[ais.bucket]
-endpoint = "http://minio.enduro-sdps:9000"
-pathStyle = true
-accessKey = "minio"
-secretKey = "minio123"
-region = "us-west-1"
-bucket = "ais"
-
-[fileFormat]
-allowlistPath = "/home/preprocessing/.config/allowed_file_formats.csv"
-
-[filevalidate.verapdf]
-path = "/opt/verapdf/verapdf"
 ```
 
 ### Enduro
@@ -106,7 +98,7 @@ The child workflow sections for Enduro's configuration:
 [[childWorkflows]]
 type = "preprocessing"
 namespace = "default"
-taskQueue = "preprocessing"
+taskQueue = "sfa-enduro"
 workflowName = "preprocessing"
 extract = true
 sharedPath = "/home/enduro/preprocessing"
@@ -114,7 +106,7 @@ sharedPath = "/home/enduro/preprocessing"
 [[childWorkflows]]
 type = "poststorage"
 namespace = "default"
-taskQueue = "ais"
+taskQueue = "sfa-enduro"
 workflowName = "ais"
 ```
 
@@ -474,7 +466,7 @@ parsing by the preservation engine
 ### Other activities
 
 The preprocessing child workflow that invokes the activities listed above (see the
-[preprocessing.go](https://github.com/artefactual-sdps/preprocessing-sfa/blob/main/internal/workflow/preprocessing.go) 
+[preprocessing.go](https://github.com/artefactual-sdps/preprocessing-sfa/blob/main/internal/workflows/preprocessing.go) 
 file) also uses a number of other more general Enduro
 [temporal activites](https://github.com/artefactual-sdps/temporal-activities), including:
 

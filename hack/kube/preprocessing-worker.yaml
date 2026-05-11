@@ -31,7 +31,7 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: password
-            - name: ENDURO_PREPROCESSING_PERSISTENCE_DSN
+            - name: ENDURO_PREPROCESSING_PREPROCESSING_PERSISTENCE_DSN
               value: $(MYSQL_USER):$(MYSQL_PASSWORD)@tcp(mysql.enduro-sdps:3306)/preprocessing_sfa
           volumeMounts:
             - name: config

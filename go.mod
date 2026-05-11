@@ -19,7 +19,6 @@ require (
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/mattn/go-sqlite3 v1.14.34
 	github.com/ogen-go/ogen v1.20.0
-	github.com/oklog/run v1.2.0
 	github.com/richardlehane/siegfried v1.11.4
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0

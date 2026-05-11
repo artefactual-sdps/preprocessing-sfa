@@ -1,4 +1,4 @@
-package ais_test
+package workflows_test
 
 import (
 	"encoding/json"
@@ -9,13 +9,17 @@ import (
 	"github.com/artefactual-sdps/enduro/pkg/childwf"
 	"github.com/artefactual-sdps/temporal-activities/archivezip"
 	"github.com/artefactual-sdps/temporal-activities/bucketupload"
+	"github.com/artefactual-sdps/temporal-activities/removepaths"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflows"
 )
 
 type TestSuite struct {
@@ -23,19 +27,46 @@ type TestSuite struct {
 	temporalsdk_testsuite.WorkflowTestSuite
 
 	env      *temporalsdk_testsuite.TestWorkflowEnvironment
-	workflow *ais.Workflow
+	workflow *workflows.Poststorage
 	testDir  string
 }
 
-func (s *TestSuite) setup(cfg *ais.Config) {
+func (s *TestSuite) setup(cfg *config.PoststorageConfig) {
 	s.env = s.NewTestWorkflowEnvironment()
 	s.env.SetWorkerOptions(temporalsdk_worker.Options{EnableSessionWorker: true})
 	s.testDir = s.T().TempDir()
 	cfg.WorkingDir = s.testDir
 
-	ais.RegisterActivities(s.env, nil, nil)
+	s.env.RegisterActivityWithOptions(
+		ais.NewGetAIPPathActivity(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: ais.GetAIPPathActivityName},
+	)
+	s.env.RegisterActivityWithOptions(
+		ais.NewFetchActivity(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: ais.FetchActivityName},
+	)
+	s.env.RegisterActivityWithOptions(
+		ais.NewParseActivity().Execute,
+		temporalsdk_activity.RegisterOptions{Name: ais.ParseActivityName},
+	)
+	s.env.RegisterActivityWithOptions(
+		ais.NewCombineMDActivity().Execute,
+		temporalsdk_activity.RegisterOptions{Name: ais.CombineMDActivityName},
+	)
+	s.env.RegisterActivityWithOptions(
+		archivezip.New().Execute,
+		temporalsdk_activity.RegisterOptions{Name: archivezip.Name},
+	)
+	s.env.RegisterActivityWithOptions(
+		bucketupload.New(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: bucketupload.Name},
+	)
+	s.env.RegisterActivityWithOptions(
+		removepaths.New().Execute,
+		temporalsdk_activity.RegisterOptions{Name: removepaths.Name},
+	)
 
-	s.workflow = ais.NewWorkflow(*cfg)
+	s.workflow = workflows.NewPoststorage(*cfg)
 }
 
 func TestWorkflow(t *testing.T) {
@@ -45,7 +76,7 @@ func TestWorkflow(t *testing.T) {
 func (s *TestSuite) TestWorkflowSuccess() {
 	aipUUID := "9390594f-84c2-457d-bd6a-618f21f7c954"
 
-	s.setup(&ais.Config{})
+	s.setup(&config.PoststorageConfig{})
 	s.mockActivitiesSuccess(aipUUID)
 
 	s.env.ExecuteWorkflow(

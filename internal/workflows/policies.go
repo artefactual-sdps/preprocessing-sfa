@@ -1,4 +1,4 @@
-package ais
+package workflows
 
 import (
 	"time"
@@ -9,6 +9,20 @@ import (
 
 // We use this constant to represent a long period of time (10 years).
 const forever = time.Hour * 24 * 365 * 10
+
+func withLocalActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
+	return temporalsdk_workflow.WithLocalActivityOptions(
+		ctx,
+		temporalsdk_workflow.LocalActivityOptions{
+			StartToCloseTimeout: time.Second * 10,
+			RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+				InitialInterval:    time.Second,
+				BackoffCoefficient: 2,
+				MaximumAttempts:    3,
+			},
+		},
+	)
+}
 
 // withActivityOptsForLongLivedRequest returns a workflow context with activity
 // options suited for long-running activities without heartbeats

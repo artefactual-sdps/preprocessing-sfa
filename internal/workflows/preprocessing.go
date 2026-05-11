@@ -1,4 +1,4 @@
-package workflow
+package workflows
 
 import (
 	"fmt"
@@ -21,6 +21,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	apisgen "github.com/artefactual-sdps/preprocessing-sfa/internal/apis/gen"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/localact"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
@@ -33,28 +34,25 @@ const (
 	DecisionOptionContinueAppend    = "Continue and append"
 )
 
-type PreprocessingWorkflow struct {
-	psvc            persistence.Service
-	sharedPath      string
-	checkDuplicates bool
-	apisEnabled     bool
+type Preprocessing struct {
+	psvc        persistence.Service
+	cfg         config.PreprocessingConfig
+	apisEnabled bool
 }
 
-func NewPreprocessingWorkflow(
+func NewPreprocessing(
 	psvc persistence.Service,
-	sharedPath string,
-	checkDuplicates bool,
+	cfg config.PreprocessingConfig,
 	apisEnabled bool,
-) *PreprocessingWorkflow {
-	return &PreprocessingWorkflow{
-		psvc:            psvc,
-		sharedPath:      sharedPath,
-		checkDuplicates: checkDuplicates,
-		apisEnabled:     apisEnabled,
+) *Preprocessing {
+	return &Preprocessing{
+		psvc:        psvc,
+		cfg:         cfg,
+		apisEnabled: apisEnabled,
 	}
 }
 
-func (w *PreprocessingWorkflow) Execute(
+func (w *Preprocessing) Execute(
 	ctx temporalsdk_workflow.Context,
 	params *childwf.PreprocessingParams,
 ) (*childwf.PreprocessingResult, error) {
@@ -75,14 +73,14 @@ func (w *PreprocessingWorkflow) Execute(
 	}
 	result.RelativePath = params.RelativePath
 
-	localPath := filepath.Join(w.sharedPath, filepath.Clean(params.RelativePath))
+	localPath := filepath.Join(w.cfg.SharedPath, filepath.Clean(params.RelativePath))
 
-	if w.checkDuplicates {
+	if w.cfg.CheckDuplicates {
 		// Calculate SIP checksum.
 		task := result.NewTask(temporalsdk_workflow.Now(ctx), "Calculate SIP checksum")
 		var checksumSIP activities.ChecksumSIPResult
 		e = temporalsdk_workflow.ExecuteActivity(
-			withFilesysActOpts(ctx),
+			withFilesystemActivityOpts(ctx),
 			activities.ChecksumSIPName,
 			&activities.ChecksumSIPParams{Path: localPath},
 		).Get(ctx, &checksumSIP)
@@ -158,7 +156,7 @@ func (w *PreprocessingWorkflow) Execute(
 		task := result.NewTask(temporalsdk_workflow.Now(ctx), "Validate Bag")
 		var bagValidateResult bagvalidate.Result
 		e = temporalsdk_workflow.ExecuteActivity(
-			withFilesysActOpts(ctx),
+			withFilesystemActivityOpts(ctx),
 			bagvalidate.Name,
 			&bagvalidate.Params{Path: localPath},
 		).Get(ctx, &bagValidateResult)
@@ -191,7 +189,7 @@ func (w *PreprocessingWorkflow) Execute(
 		task = result.NewTask(temporalsdk_workflow.Now(ctx), "Unbag SIP")
 		var unbagResult activities.UnbagResult
 		e = temporalsdk_workflow.ExecuteActivity(
-			withFilesysActOpts(ctx),
+			withFilesystemActivityOpts(ctx),
 			activities.UnbagName,
 			&activities.UnbagParams{Path: localPath},
 		).Get(ctx, &unbagResult)
@@ -207,7 +205,7 @@ func (w *PreprocessingWorkflow) Execute(
 		}
 
 		localPath = unbagResult.Path
-		result.RelativePath, e = filepath.Rel(w.sharedPath, localPath)
+		result.RelativePath, e = filepath.Rel(w.cfg.SharedPath, localPath)
 		if e != nil {
 			logger.Error("System error", "message", e.Error())
 			result.SystemError(
@@ -225,7 +223,7 @@ func (w *PreprocessingWorkflow) Execute(
 	task := result.NewTask(temporalsdk_workflow.Now(ctx), "Identify SIP structure")
 	var identifySIP activities.IdentifySIPResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.IdentifySIPName,
 		&activities.IdentifySIPParams{Path: localPath},
 	).Get(ctx, &identifySIP)
@@ -246,7 +244,7 @@ func (w *PreprocessingWorkflow) Execute(
 	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Validate SIP structure")
 	var validateStructure activities.ValidateStructureResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.ValidateStructureName,
 		&activities.ValidateStructureParams{SIP: sip},
 	).Get(ctx, &validateStructure)
@@ -276,7 +274,7 @@ func (w *PreprocessingWorkflow) Execute(
 	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Validate SIP name")
 	var ValidateSIPName activities.ValidateSIPNameResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.ValidateSIPNameName,
 		&activities.ValidateSIPNameParams{SIP: sip},
 	).Get(ctx, &ValidateSIPName)
@@ -314,7 +312,7 @@ func (w *PreprocessingWorkflow) Execute(
 	checksumTask := result.NewTask(temporalsdk_workflow.Now(ctx), "Verify SIP checksums")
 	var verifyManifest activities.VerifyManifestResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.VerifyManifestName,
 		&activities.VerifyManifestParams{SIP: sip},
 	).Get(ctx, &verifyManifest)
@@ -374,7 +372,7 @@ func (w *PreprocessingWorkflow) Execute(
 		task = result.NewTask(temporalsdk_workflow.Now(ctx), "Check for disallowed file formats")
 		var ffvalidateResult ffvalidate.Result
 		e = temporalsdk_workflow.ExecuteActivity(
-			withFilesysActOpts(ctx),
+			withFilesystemActivityOpts(ctx),
 			ffvalidate.Name,
 			&ffvalidate.Params{Path: sip.ContentPath},
 		).Get(ctx, &ffvalidateResult)
@@ -407,7 +405,7 @@ func (w *PreprocessingWorkflow) Execute(
 	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Validate SIP file formats")
 	var validateFilesResult activities.ValidateFilesResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.ValidateFilesName,
 		&activities.ValidateFilesParams{SIP: sip},
 	).Get(ctx, &validateFilesResult)
@@ -439,7 +437,7 @@ func (w *PreprocessingWorkflow) Execute(
 	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Validate SIP metadata")
 	var validateMetadata xmlvalidate.Result
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		xmlvalidate.Name,
 		&xmlvalidate.Params{
 			XMLPath: sip.ManifestPath,
@@ -484,7 +482,7 @@ func (w *PreprocessingWorkflow) Execute(
 		task = result.NewTask(temporalsdk_workflow.Now(ctx), "Validate logical metadata")
 		var validateLMD activities.ValidatePREMISResult
 		e = temporalsdk_workflow.ExecuteActivity(
-			withFilesysActOpts(ctx),
+			withFilesystemActivityOpts(ctx),
 			activities.ValidatePREMISName,
 			activities.ValidatePREMISParams{Path: sip.LogicalMDPath},
 		).Get(ctx, &validateLMD)
@@ -544,7 +542,7 @@ func (w *PreprocessingWorkflow) Execute(
 	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Restructure SIP")
 	var transformSIP activities.TransformSIPResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.TransformSIPName,
 		&activities.TransformSIPParams{SIP: sip},
 	).Get(ctx, &transformSIP)
@@ -564,7 +562,7 @@ func (w *PreprocessingWorkflow) Execute(
 	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Create identifier.json")
 	var writeIDFile activities.WriteIdentifierFileResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.WriteIdentifierFileName,
 		&activities.WriteIdentifierFileParams{PIP: transformSIP.PIP},
 	).Get(ctx, &writeIDFile)
@@ -587,7 +585,7 @@ func (w *PreprocessingWorkflow) Execute(
 	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Bag SIP")
 	var createBag bagcreate.Result
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		bagcreate.Name,
 		&bagcreate.Params{SourcePath: localPath},
 	).Get(ctx, &createBag)
@@ -606,34 +604,11 @@ func (w *PreprocessingWorkflow) Execute(
 	return result, nil
 }
 
-func withLocalActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
-	return temporalsdk_workflow.WithLocalActivityOptions(
-		ctx,
-		temporalsdk_workflow.LocalActivityOptions{
-			StartToCloseTimeout: time.Second * 10,
-			RetryPolicy: &temporalsdk_temporal.RetryPolicy{
-				InitialInterval:    time.Second,
-				BackoffCoefficient: 2,
-				MaximumAttempts:    3,
-			},
-		},
-	)
-}
-
-func withFilesysActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
-	return temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
-		StartToCloseTimeout: time.Hour * 2,
-		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
-			MaximumAttempts: 1,
-		},
-	})
-}
-
 // createAPISImportTask submits metadata to APIS, waits for analysis, and records
 // the resulting custom metadata for the AIS poststorage workflow. It returns
 // false when processing should stop after recording the failure in the workflow
 // result.
-func (w *PreprocessingWorkflow) createAPISImportTask(
+func (w *Preprocessing) createAPISImportTask(
 	ctx temporalsdk_workflow.Context,
 	result *childwf.PreprocessingResult,
 	sip sip.SIP,
@@ -762,7 +737,7 @@ func (w *PreprocessingWorkflow) createAPISImportTask(
 // waitForAPISDecision asks the parent workflow for a decision. It returns the
 // selected decision and false when processing should stop after recording the
 // failure in the workflow result.
-func (w *PreprocessingWorkflow) waitForAPISDecision(
+func (w *Preprocessing) waitForAPISDecision(
 	ctx temporalsdk_workflow.Context,
 	result *childwf.PreprocessingResult,
 	task *childwf.Task,
@@ -855,7 +830,7 @@ func (w *PreprocessingWorkflow) waitForAPISDecision(
 	}
 }
 
-func (w *PreprocessingWorkflow) extractSIP(
+func (w *Preprocessing) extractSIP(
 	ctx temporalsdk_workflow.Context,
 	result *childwf.PreprocessingResult,
 	path string,
@@ -866,7 +841,7 @@ func (w *PreprocessingWorkflow) extractSIP(
 	task := result.NewTask(temporalsdk_workflow.Now(ctx), "Extract SIP")
 	var archiveExtract archiveextract.Result
 	e := temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		archiveextract.Name,
 		&archiveextract.Params{SourcePath: path},
 	).Get(ctx, &archiveExtract)
@@ -900,7 +875,7 @@ func (w *PreprocessingWorkflow) extractSIP(
 		return archiveExtract.ExtractPath
 	}
 
-	result.RelativePath, e = filepath.Rel(w.sharedPath, archiveExtract.ExtractPath)
+	result.RelativePath, e = filepath.Rel(w.cfg.SharedPath, archiveExtract.ExtractPath)
 	if e != nil {
 		logger.Error("System error", "message", fmt.Errorf("extract SIP: set relative path: %w", e))
 		result.SystemError(
@@ -927,7 +902,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 	// Add PREMIS objects.
 	var addPREMISObjects activities.AddPREMISObjectsResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.AddPREMISObjectsName,
 		&activities.AddPREMISObjectsParams{
 			SIP:            sip,
@@ -946,7 +921,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 
 	var addPREMISEvent activities.AddPREMISEventResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.AddPREMISEventName,
 		&activities.AddPREMISEventParams{
 			PREMISFilePath: path,
@@ -968,7 +943,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 	)
 
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.AddPREMISEventName,
 		&activities.AddPREMISEventParams{
 			PREMISFilePath: path,
@@ -987,7 +962,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 		// Add PREMIS events for the disallowed file format check (SIP types
 		// only).
 		e = temporalsdk_workflow.ExecuteActivity(
-			withFilesysActOpts(ctx),
+			withFilesystemActivityOpts(ctx),
 			activities.AddPREMISEventName,
 			&activities.AddPREMISEventParams{
 				PREMISFilePath: path,
@@ -1005,7 +980,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 
 	// Add PREMIS events for file format validation.
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.AddPREMISValidationEventName,
 		&activities.AddPREMISValidationEventParams{
 			SIP:            sip,
@@ -1024,7 +999,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 
 	// Add PREMIS events for metadata validation.
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.AddPREMISEventName,
 		&activities.AddPREMISEventParams{
 			PREMISFilePath: path,
@@ -1042,7 +1017,7 @@ func writePREMISFile(ctx temporalsdk_workflow.Context, sip sip.SIP) error {
 	// Add Enduro PREMIS agent.
 	var addPREMISEnduroAgent activities.AddPREMISAgentResult
 	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesysActOpts(ctx),
+		withFilesystemActivityOpts(ctx),
 		activities.AddPREMISAgentName,
 		&activities.AddPREMISAgentParams{
 			PREMISFilePath: path,

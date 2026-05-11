@@ -9,12 +9,16 @@ import (
 	"ariga.io/sqlcomment"
 	"entgo.io/ent/dialect/sql"
 	"github.com/artefactual-sdps/temporal-activities/archiveextract"
+	"github.com/artefactual-sdps/temporal-activities/archivezip"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
+	"github.com/artefactual-sdps/temporal-activities/bucketupload"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
+	"github.com/artefactual-sdps/temporal-activities/removepaths"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"github.com/go-logr/logr"
 	"github.com/jonboulle/clockwork"
+	"go.artefactual.dev/tools/bucket"
 	"go.artefactual.dev/tools/clientauth"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -22,8 +26,12 @@ import (
 	temporalsdk_interceptor "go.temporal.io/sdk/interceptor"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
+	"gocloud.dev/blob"
+	_ "gocloud.dev/blob/fileblob"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fformat"
@@ -31,20 +39,21 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 	entclient "github.com/artefactual-sdps/preprocessing-sfa/internal/persistence/ent/client"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence/ent/db"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflow"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflows"
 )
 
 const Name = "preprocessing-worker"
 
 type Main struct {
 	logger         logr.Logger
-	cfg            config.Configuration
+	cfg            config.Config
 	temporalWorker temporalsdk_worker.Worker
 	temporalClient temporalsdk_client.Client
 	dbClient       *db.Client
+	bucket         *blob.Bucket
 }
 
-func NewMain(logger logr.Logger, cfg config.Configuration) *Main {
+func NewMain(logger logr.Logger, cfg config.Config) *Main {
 	return &Main{
 		logger: logger,
 		cfg:    cfg,
@@ -55,7 +64,7 @@ func (m *Main) Run(ctx context.Context) error {
 	c, err := temporalsdk_client.Dial(temporalsdk_client.Options{
 		HostPort:  m.cfg.Temporal.Address,
 		Namespace: m.cfg.Temporal.Namespace,
-		Logger:    temporal.Logger(m.logger.WithName("preprocessing-temporal")),
+		Logger:    temporal.Logger(m.logger.WithName("temporal")),
 	})
 	if err != nil {
 		m.logger.Error(err, "Unable to create Temporal client.")
@@ -63,18 +72,21 @@ func (m *Main) Run(ctx context.Context) error {
 	}
 	m.temporalClient = c
 
-	w := temporalsdk_worker.New(m.temporalClient, m.cfg.Temporal.TaskQueue, temporalsdk_worker.Options{
+	w := temporalsdk_worker.New(m.temporalClient, m.cfg.Worker.TaskQueue, temporalsdk_worker.Options{
 		EnableSessionWorker:               true,
 		MaxConcurrentSessionExecutionSize: m.cfg.Worker.MaxConcurrentSessions,
 		Interceptors: []temporalsdk_interceptor.WorkerInterceptor{
-			temporal.NewLoggerInterceptor(m.logger.WithName(Name)),
+			temporal.NewLoggerInterceptor(m.logger),
 		},
 	})
 	m.temporalWorker = w
 
 	var psvc persistence.Service
-	if m.cfg.CheckDuplicates {
-		sqlDB, err := persistence.Open(m.cfg.Persistence.Driver, m.cfg.Persistence.DSN)
+	if m.cfg.Preprocessing.CheckDuplicates {
+		sqlDB, err := persistence.Open(
+			m.cfg.Preprocessing.Persistence.Driver,
+			m.cfg.Preprocessing.Persistence.DSN,
+		)
 		if err != nil {
 			m.logger.Error(err, "Error initializing database pool.")
 			return err
@@ -82,7 +94,7 @@ func (m *Main) Run(ctx context.Context) error {
 		m.dbClient = db.NewClient(
 			db.Driver(
 				sqlcomment.NewDriver(
-					sql.OpenDB(m.cfg.Persistence.Driver, sqlDB),
+					sql.OpenDB(m.cfg.Preprocessing.Persistence.Driver, sqlDB),
 					sqlcomment.WithDriverVerTag(),
 					sqlcomment.WithTags(sqlcomment.Tags{
 						sqlcomment.KeyApplication: Name,
@@ -90,7 +102,7 @@ func (m *Main) Run(ctx context.Context) error {
 				),
 			),
 		)
-		if m.cfg.Persistence.Migrate {
+		if m.cfg.Preprocessing.Persistence.Migrate {
 			err = m.dbClient.Schema.Create(ctx)
 			if err != nil {
 				m.logger.Error(err, "Error migrating database.")
@@ -100,7 +112,7 @@ func (m *Main) Run(ctx context.Context) error {
 		psvc = entclient.New(m.dbClient)
 	}
 
-	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.FileValidate.VeraPDF.Path)
+	veraPDFValidator := fvalidate.NewVeraPDFValidator(m.cfg.Preprocessing.FileValidate.VeraPDF.Path)
 
 	// Set up APIS client.
 	var apisClient apis.Client
@@ -121,105 +133,22 @@ func (m *Main) Run(ctx context.Context) error {
 		}
 	}
 
-	w.RegisterWorkflowWithOptions(
-		workflow.NewPreprocessingWorkflow(psvc, m.cfg.SharedPath, m.cfg.CheckDuplicates, m.cfg.APIS.Enabled).Execute,
-		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Temporal.WorkflowName},
-	)
+	amssClient, err := amss.NewPooledClient(m.cfg.Poststorage.AMSS)
+	if err != nil {
+		return fmt.Errorf("unable to create AMSS client: %w", err)
+	}
 
-	w.RegisterActivityWithOptions(
-		activities.NewChecksumSIP().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.ChecksumSIPName},
-	)
-	w.RegisterActivityWithOptions(
-		archiveextract.New(archiveextract.Config{}).Execute,
-		temporalsdk_activity.RegisterOptions{Name: archiveextract.Name},
-	)
-	w.RegisterActivityWithOptions(
-		bagvalidate.New(nil).Execute,
-		temporalsdk_activity.RegisterOptions{Name: bagvalidate.Name},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewUnbag().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.UnbagName},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewIdentifySIP().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.IdentifySIPName},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewValidateStructure().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.ValidateStructureName},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewValidateSIPName().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.ValidateSIPNameName},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewVerifyManifest().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.VerifyManifestName},
-	)
-	w.RegisterActivityWithOptions(
-		ffvalidate.New(m.cfg.FileFormat).Execute,
-		temporalsdk_activity.RegisterOptions{Name: ffvalidate.Name},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewValidateFiles(
-			fformat.NewSiegfriedEmbed(),
-			veraPDFValidator,
-		).Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFilesName},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewAddPREMISObjects(rand.Reader).Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISObjectsName},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewAddPREMISEvent().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISEventName},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewAddPREMISAgent().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISAgentName},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewAddPREMISValidationEvent(
-			clockwork.NewRealClock(),
-			rand.Reader,
-			veraPDFValidator,
-		).Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISValidationEventName},
-	)
-	w.RegisterActivityWithOptions(
-		xmlvalidate.New(xmlvalidate.NewXMLLintValidator()).Execute,
-		temporalsdk_activity.RegisterOptions{Name: xmlvalidate.Name},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewValidatePREMIS(xmlvalidate.NewXMLLintValidator()).Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.ValidatePREMISName},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewTransformSIP().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
-	)
-	w.RegisterActivityWithOptions(
-		activities.NewWriteIdentifierFile().Execute,
-		temporalsdk_activity.RegisterOptions{Name: activities.WriteIdentifierFileName},
-	)
-	w.RegisterActivityWithOptions(
-		apis.NewCreateImportTaskActivity(apisClient).Execute,
-		temporalsdk_activity.RegisterOptions{Name: apis.CreateImportTaskActivityName},
-	)
-	w.RegisterActivityWithOptions(
-		apis.NewPollImportTaskStatusActivity(apisClient, m.cfg.APIS.PollInterval).Execute,
-		temporalsdk_activity.RegisterOptions{Name: apis.PollImportTaskStatusActivityName},
-	)
-	w.RegisterActivityWithOptions(
-		bagcreate.New(m.cfg.Bagit).Execute,
-		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
-	)
+	b, err := bucket.NewWithConfig(ctx, &m.cfg.Poststorage.Bucket)
+	if err != nil {
+		return fmt.Errorf("unable to open poststorage bucket: %w", err)
+	}
+	m.bucket = b
+
+	m.registerPreprocessingWorkflow(psvc, apisClient, veraPDFValidator)
+	m.registerPoststorageWorkflow(amssClient, m.bucket)
 
 	if err := w.Start(); err != nil {
-		m.logger.Error(err, "Preprocessing worker failed to start.")
+		m.logger.Error(err, "Worker failed to start.")
 		return err
 	}
 
@@ -237,6 +166,12 @@ func (m *Main) Close() error {
 		m.temporalClient.Close()
 	}
 
+	if m.bucket != nil {
+		if err := m.bucket.Close(); err != nil {
+			e = errors.Join(e, fmt.Errorf("couldn't close poststorage bucket: %v", err))
+		}
+	}
+
 	if m.dbClient != nil {
 		if err := m.dbClient.Close(); err != nil {
 			e = errors.Join(e, fmt.Errorf("couldn't close database client: %v", err))
@@ -244,4 +179,143 @@ func (m *Main) Close() error {
 	}
 
 	return e
+}
+
+func (m *Main) registerPreprocessingWorkflow(
+	psvc persistence.Service,
+	apisClient apis.Client,
+	veraPDFValidator fvalidate.Validator,
+) {
+	m.temporalWorker.RegisterWorkflowWithOptions(
+		workflows.NewPreprocessing(psvc, m.cfg.Preprocessing, m.cfg.APIS.Enabled).Execute,
+		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Preprocessing.WorkflowName},
+	)
+
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewChecksumSIP().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ChecksumSIPName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		archiveextract.New(archiveextract.Config{}).Execute,
+		temporalsdk_activity.RegisterOptions{Name: archiveextract.Name},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		bagvalidate.New(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: bagvalidate.Name},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewUnbag().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.UnbagName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewIdentifySIP().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.IdentifySIPName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewValidateStructure().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateStructureName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewValidateSIPName().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateSIPNameName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewVerifyManifest().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.VerifyManifestName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		ffvalidate.New(m.cfg.Preprocessing.FileFormat).Execute,
+		temporalsdk_activity.RegisterOptions{Name: ffvalidate.Name},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewValidateFiles(
+			fformat.NewSiegfriedEmbed(),
+			veraPDFValidator,
+		).Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidateFilesName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewAddPREMISObjects(rand.Reader).Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISObjectsName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewAddPREMISEvent().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISEventName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewAddPREMISAgent().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISAgentName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewAddPREMISValidationEvent(
+			clockwork.NewRealClock(),
+			rand.Reader,
+			veraPDFValidator,
+		).Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.AddPREMISValidationEventName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		xmlvalidate.New(xmlvalidate.NewXMLLintValidator()).Execute,
+		temporalsdk_activity.RegisterOptions{Name: xmlvalidate.Name},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewValidatePREMIS(xmlvalidate.NewXMLLintValidator()).Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.ValidatePREMISName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewTransformSIP().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.TransformSIPName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		activities.NewWriteIdentifierFile().Execute,
+		temporalsdk_activity.RegisterOptions{Name: activities.WriteIdentifierFileName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		apis.NewCreateImportTaskActivity(apisClient).Execute,
+		temporalsdk_activity.RegisterOptions{Name: apis.CreateImportTaskActivityName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		apis.NewPollImportTaskStatusActivity(apisClient, m.cfg.APIS.PollInterval).Execute,
+		temporalsdk_activity.RegisterOptions{Name: apis.PollImportTaskStatusActivityName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		bagcreate.New(m.cfg.Preprocessing.BagCreate).Execute,
+		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
+	)
+}
+
+func (m *Main) registerPoststorageWorkflow(amssClient amss.Client, b *blob.Bucket) {
+	m.temporalWorker.RegisterWorkflowWithOptions(
+		workflows.NewPoststorage(m.cfg.Poststorage).Execute,
+		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Poststorage.WorkflowName},
+	)
+
+	m.temporalWorker.RegisterActivityWithOptions(
+		ais.NewGetAIPPathActivity(amssClient).Execute,
+		temporalsdk_activity.RegisterOptions{Name: ais.GetAIPPathActivityName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		ais.NewFetchActivity(amssClient).Execute,
+		temporalsdk_activity.RegisterOptions{Name: ais.FetchActivityName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		ais.NewParseActivity().Execute,
+		temporalsdk_activity.RegisterOptions{Name: ais.ParseActivityName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		ais.NewCombineMDActivity().Execute,
+		temporalsdk_activity.RegisterOptions{Name: ais.CombineMDActivityName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		archivezip.New().Execute,
+		temporalsdk_activity.RegisterOptions{Name: archivezip.Name},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		bucketupload.New(b).Execute,
+		temporalsdk_activity.RegisterOptions{Name: bucketupload.Name},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		removepaths.New().Execute,
+		temporalsdk_activity.RegisterOptions{Name: removepaths.Name},
+	)
 }

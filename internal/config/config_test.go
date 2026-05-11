@@ -5,35 +5,70 @@ import (
 	"time"
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
+	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
+	"go.artefactual.dev/tools/bucket"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
 )
 
 const testConfig = `# Config
 debug = true
 verbosity = 2
-sharedPath = "/home/preprocessing/shared"
-checkDuplicates = true
-[persistence]
-dsn = "file:/path/to/fake.db"
-driver = "sqlite3"
-migrate = true
 [temporal]
 address = "host:port"
 namespace = "default"
-taskQueue = "preprocessing"
-workflowName = "preprocessing"
 [worker]
 maxConcurrentSessions = 1
-[bagit]
+taskQueue = "sfa-enduro"
+[preprocessing]
+workflowName = "preprocessing"
+sharedPath = "/home/preprocessing/shared"
+checkDuplicates = true
+[preprocessing.persistence]
+dsn = "file:/path/to/fake.db"
+driver = "sqlite3"
+migrate = true
+[preprocessing.bagCreate]
 checksumAlgorithm = "md5"
+[preprocessing.fileFormat]
+allowlistPath = "/home/preprocessing/.config/allowed_file_formats.csv"
+[preprocessing.filevalidate.verapdf]
+path = "/opt/verapdf/verapdf"
+[poststorage]
+workflowName = "poststorage"
+workingDir = "/tmp"
+[poststorage.amss]
+url = "http://amss.example.test"
+user = "test"
+key = "test"
+[poststorage.bucket]
+endpoint = "http://minio.example.test:9000"
+pathStyle = true
+accessKey = "minio"
+secretKey = "minio123"
+region = "us-west-1"
+bucket = "ais"
 [apis]
 enabled = true
 url = "http://apis.example.test"
+`
+
+const validPoststorageConfig = `
+[poststorage]
+workflowName = "poststorage"
+workingDir = "/tmp"
+[poststorage.amss]
+url = "http://amss.example.test"
+user = "test"
+key = "test"
+[poststorage.bucket]
+url = "file:///tmp/ais"
 `
 
 func TestConfig(t *testing.T) {
@@ -44,7 +79,7 @@ func TestConfig(t *testing.T) {
 		configFile      string
 		toml            string
 		wantFound       bool
-		wantCfg         config.Configuration
+		wantCfg         config.Config
 		wantErr         string
 		wantErrContains string
 	}
@@ -55,117 +90,184 @@ func TestConfig(t *testing.T) {
 			configFile: "preprocessing.toml",
 			toml:       testConfig,
 			wantFound:  true,
-			wantCfg: config.Configuration{
-				Debug:           true,
-				Verbosity:       2,
-				SharedPath:      "/home/preprocessing/shared",
-				CheckDuplicates: true,
-				Persistence: persistence.Config{
-					DSN:     "file:/path/to/fake.db",
-					Driver:  "sqlite3",
-					Migrate: true,
-				},
-				Temporal: config.Temporal{
-					Address:      "host:port",
-					Namespace:    "default",
-					TaskQueue:    "preprocessing",
-					WorkflowName: "preprocessing",
+			wantCfg: config.Config{
+				Debug:     true,
+				Verbosity: 2,
+				Temporal: config.TemporalConfig{
+					Address:   "host:port",
+					Namespace: "default",
 				},
 				Worker: config.WorkerConfig{
 					MaxConcurrentSessions: 1,
-				},
-				Bagit: bagcreate.Config{
-					ChecksumAlgorithm: "md5",
+					TaskQueue:             "sfa-enduro",
 				},
 				APIS: apis.Config{
 					Enabled:      true,
 					URL:          "http://apis.example.test",
 					Timeout:      apis.DefaultTimeout,
 					PollInterval: apis.DefaultPollInterval,
+				},
+				Preprocessing: config.PreprocessingConfig{
+					WorkflowName:    "preprocessing",
+					SharedPath:      "/home/preprocessing/shared",
+					CheckDuplicates: true,
+					Persistence: persistence.Config{
+						DSN:     "file:/path/to/fake.db",
+						Driver:  "sqlite3",
+						Migrate: true,
+					},
+					BagCreate: bagcreate.Config{
+						ChecksumAlgorithm: "md5",
+					},
+					FileFormat: ffvalidate.Config{
+						AllowlistPath: "/home/preprocessing/.config/allowed_file_formats.csv",
+					},
+					FileValidate: fvalidate.Config{
+						VeraPDF: fvalidate.VeraPDFConfig{
+							Path: "/opt/verapdf/verapdf",
+						},
+					},
+				},
+				Poststorage: config.PoststorageConfig{
+					WorkflowName: "poststorage",
+					WorkingDir:   "/tmp",
+					AMSS: amss.Config{
+						URL:  "http://amss.example.test",
+						User: "test",
+						Key:  "test",
+					},
+					Bucket: bucket.Config{
+						Endpoint:  "http://minio.example.test:9000",
+						PathStyle: true,
+						AccessKey: "minio",
+						SecretKey: "minio123",
+						Region:    "us-west-1",
+						Bucket:    "ais",
+					},
 				},
 			},
 		},
 		{
 			name:       "Errors when configuration values are not valid",
 			configFile: "preprocessing.toml",
-			wantFound:  true,
+			toml: `# override default values to trigger validation errors
+[temporal]
+namespace = ""
+`,
+			wantFound: true,
 			wantErr: `invalid configuration
-SharedPath: missing required value
-Temporal.TaskQueue: missing required value
-Temporal.WorkflowName: missing required value`,
+Temporal.Address: missing required value
+Temporal.Namespace: missing required value
+Worker.TaskQueue: missing required value
+Preprocessing.SharedPath: missing required value
+Preprocessing.WorkflowName: missing required value
+Poststorage.WorkflowName: missing required value
+Poststorage.WorkingDir: missing required value
+Poststorage.AMSS.URL: missing required value
+Poststorage.AMSS.User: missing required value
+Poststorage.AMSS.Key: missing required value
+Poststorage.Bucket.Bucket: missing required value`,
 		},
 		{
 			name:       "Errors when MaxConcurrentSessions is less than 1",
 			configFile: "preprocessing.toml",
 			toml: `# Config
-sharedPath = "/home/preprocessing/shared"
 [temporal]
-taskQueue = "preprocessing"
-workflowName = "preprocessing"
+address = "host:port"
 [worker]
 maxConcurrentSessions = -1
-`,
+taskQueue = "sfa-enduro"
+[preprocessing]
+workflowName = "preprocessing"
+sharedPath = "/home/preprocessing/shared"
+` + validPoststorageConfig,
 			wantFound: true,
 			wantErr: `invalid configuration
 Worker.MaxConcurrentSessions: -1 is less than the minimum value (1)`,
 		},
 		{
-			name:       "Errors when bagit checksumAlgorithm is invalid",
+			name:       "Errors when bagcreate checksumAlgorithm is invalid",
 			configFile: "preprocessing.toml",
 			toml: `# Config
-sharedPath = "/home/preprocessing/shared"
 [temporal]
-taskQueue = "preprocessing"
+address = "host:port"
+[worker]
+taskQueue = "sfa-enduro"
+[preprocessing]
 workflowName = "preprocessing"
-[bagit]
+sharedPath = "/home/preprocessing/shared"
+[preprocessing.bagCreate]
 checksumAlgorithm = "unknown"
-`,
+` + validPoststorageConfig,
 			wantFound: true,
 			wantErr: `invalid configuration
-Bagit.ChecksumAlgorithm: invalid value "unknown", must be one of (md5, sha1, sha256, sha512)`,
+Preprocessing.BagCreate: ChecksumAlgorithm: invalid value "unknown", must be one of (md5, sha1, sha256, sha512)`,
 		},
 		{
 			name:       "Errors when persistence configuration is missing",
 			configFile: "preprocessing.toml",
 			toml: `# Config
+[temporal]
+address = "host:port"
+[worker]
+taskQueue = "sfa-enduro"
+[preprocessing]
+workflowName = "preprocessing"
 sharedPath = "/home/preprocessing/shared"
 checkDuplicates = true
-[temporal]
-taskQueue = "preprocessing"
-workflowName = "preprocessing"
-`,
+` + validPoststorageConfig,
 			wantFound: true,
 			wantErr: `invalid configuration
-Persistence.DSN: missing required value
-Persistence.Driver: missing required value`,
+Preprocessing.Persistence.DSN: missing required value
+Preprocessing.Persistence.Driver: missing required value`,
 		},
 		{
 			name:       "Loads APIS defaults when only URL is configured",
 			configFile: "preprocessing.toml",
 			toml: `# Config
-sharedPath = "/home/preprocessing/shared"
 [temporal]
-taskQueue = "preprocessing"
+address = "host:port"
+[worker]
+taskQueue = "sfa-enduro"
+[preprocessing]
 workflowName = "preprocessing"
+sharedPath = "/home/preprocessing/shared"
 [apis]
 enabled = true
 url = "http://apis.example.test"
-`,
+` + validPoststorageConfig,
 			wantFound: true,
-			wantCfg: config.Configuration{
-				SharedPath: "/home/preprocessing/shared",
-				Temporal: config.Temporal{
-					TaskQueue:    "preprocessing",
-					WorkflowName: "preprocessing",
+			wantCfg: config.Config{
+				Temporal: config.TemporalConfig{
+					Address:   "host:port",
+					Namespace: "default",
 				},
 				Worker: config.WorkerConfig{
 					MaxConcurrentSessions: 1,
+					TaskQueue:             "sfa-enduro",
 				},
 				APIS: apis.Config{
 					Enabled:      true,
 					URL:          "http://apis.example.test",
 					Timeout:      apis.DefaultTimeout,
 					PollInterval: apis.DefaultPollInterval,
+				},
+				Preprocessing: config.PreprocessingConfig{
+					WorkflowName: "preprocessing",
+					SharedPath:   "/home/preprocessing/shared",
+					BagCreate: bagcreate.Config{
+						ChecksumAlgorithm: "sha512",
+					},
+				},
+				Poststorage: config.PoststorageConfig{
+					WorkflowName: "poststorage",
+					WorkingDir:   "/tmp",
+					AMSS: amss.Config{
+						URL:  "http://amss.example.test",
+						User: "test",
+						Key:  "test",
+					},
+					Bucket: bucket.Config{URL: "file:///tmp/ais"},
 				},
 			},
 		},
@@ -173,13 +275,16 @@ url = "http://apis.example.test"
 			name:       "Errors when APIS URL is missing",
 			configFile: "preprocessing.toml",
 			toml: `# Config
-sharedPath = "/home/preprocessing/shared"
 [temporal]
-taskQueue = "preprocessing"
+address = "host:port"
+[worker]
+taskQueue = "sfa-enduro"
+[preprocessing]
 workflowName = "preprocessing"
+sharedPath = "/home/preprocessing/shared"
 [apis]
 enabled = true
-`,
+` + validPoststorageConfig,
 			wantFound: true,
 			wantErr: `invalid configuration
 APIS.URL: missing required value`,
@@ -188,15 +293,18 @@ APIS.URL: missing required value`,
 			name:       "Errors when APIS timeout is invalid",
 			configFile: "preprocessing.toml",
 			toml: `# Config
-sharedPath = "/home/preprocessing/shared"
 [temporal]
-taskQueue = "preprocessing"
+address = "host:port"
+[worker]
+taskQueue = "sfa-enduro"
+[preprocessing]
 workflowName = "preprocessing"
+sharedPath = "/home/preprocessing/shared"
 [apis]
 enabled = true
 url = "http://apis.example.test"
 timeout = "-1s"
-`,
+` + validPoststorageConfig,
 			wantFound: true,
 			wantErr: `invalid configuration
 APIS.Timeout: value -1s is less than 0`,
@@ -205,15 +313,18 @@ APIS.Timeout: value -1s is less than 0`,
 			name:       "Errors when APIS poll interval is invalid",
 			configFile: "preprocessing.toml",
 			toml: `# Config
-sharedPath = "/home/preprocessing/shared"
 [temporal]
-taskQueue = "preprocessing"
+address = "host:port"
+[worker]
+taskQueue = "sfa-enduro"
+[preprocessing]
 workflowName = "preprocessing"
+sharedPath = "/home/preprocessing/shared"
 [apis]
 enabled = true
 url = "http://apis.example.test"
 pollInterval = "-1s"
-`,
+` + validPoststorageConfig,
 			wantFound: true,
 			wantErr: `invalid configuration
 APIS.PollInterval: value -1s is less than or equal to 0`,
@@ -222,26 +333,29 @@ APIS.PollInterval: value -1s is less than or equal to 0`,
 			name:       "Loads explicit APIS timeout and poll interval",
 			configFile: "preprocessing.toml",
 			toml: `# Config
-sharedPath = "/home/preprocessing/shared"
 [temporal]
-taskQueue = "preprocessing"
+address = "host:port"
+[worker]
+taskQueue = "sfa-enduro"
+[preprocessing]
 workflowName = "preprocessing"
+sharedPath = "/home/preprocessing/shared"
 [apis]
 enabled = true
 url = "http://apis.example.test"
 timeout = "45s"
 pollInterval = "2m"
 token = "mock-token"
-`,
+` + validPoststorageConfig,
 			wantFound: true,
-			wantCfg: config.Configuration{
-				SharedPath: "/home/preprocessing/shared",
-				Temporal: config.Temporal{
-					TaskQueue:    "preprocessing",
-					WorkflowName: "preprocessing",
+			wantCfg: config.Config{
+				Temporal: config.TemporalConfig{
+					Address:   "host:port",
+					Namespace: "default",
 				},
 				Worker: config.WorkerConfig{
 					MaxConcurrentSessions: 1,
+					TaskQueue:             "sfa-enduro",
 				},
 				APIS: apis.Config{
 					Enabled:      true,
@@ -249,6 +363,23 @@ token = "mock-token"
 					Timeout:      45 * time.Second,
 					PollInterval: 2 * time.Minute,
 					Token:        "mock-token",
+				},
+				Preprocessing: config.PreprocessingConfig{
+					WorkflowName: "preprocessing",
+					SharedPath:   "/home/preprocessing/shared",
+					BagCreate: bagcreate.Config{
+						ChecksumAlgorithm: "sha512",
+					},
+				},
+				Poststorage: config.PoststorageConfig{
+					WorkflowName: "poststorage",
+					WorkingDir:   "/tmp",
+					AMSS: amss.Config{
+						URL:  "http://amss.example.test",
+						User: "test",
+						Key:  "test",
+					},
+					Bucket: bucket.Config{URL: "file:///tmp/ais"},
 				},
 			},
 		},
@@ -281,7 +412,7 @@ token = "mock-token"
 				configFile = tmpDir.Join(tc.configFile)
 			}
 
-			var c config.Configuration
+			var c config.Config
 			found, configFileUsed, err := config.Read(&c, configFile)
 			if tc.wantErr != "" {
 				assert.Equal(t, found, tc.wantFound)

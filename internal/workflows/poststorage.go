@@ -1,4 +1,4 @@
-package ais
+package workflows
 
 import (
 	"errors"
@@ -11,30 +11,28 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/archivezip"
 	"github.com/artefactual-sdps/temporal-activities/bucketupload"
 	"github.com/artefactual-sdps/temporal-activities/removepaths"
-	temporalsdk_activity "go.temporal.io/sdk/activity"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
-	temporalsdk_worker "go.temporal.io/sdk/worker"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
-	"gocloud.dev/blob"
 
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 )
 
-type Workflow struct {
-	config Config
+type Poststorage struct {
+	cfg config.PoststorageConfig
 }
 
-func NewWorkflow(config Config) *Workflow {
-	return &Workflow{config: config}
+func NewPoststorage(cfg config.PoststorageConfig) *Poststorage {
+	return &Poststorage{cfg: cfg}
 }
 
-func (w *Workflow) Execute(
+func (w *Poststorage) Execute(
 	ctx temporalsdk_workflow.Context,
 	params *childwf.PostStorageParams,
 ) (r *childwf.PostStorageResult, e error) {
 	logger := temporalsdk_workflow.GetLogger(ctx)
-	logger.Debug("AIS workflow running!", "params", params)
+	logger.Debug("Poststorage workflow running!", "params", params)
 
 	if data, ok := params.CustomMetadata[apis.CustomMetadataKey]; ok {
 		var metadata apis.CustomMetadata
@@ -49,10 +47,10 @@ func (w *Workflow) Execute(
 	}
 
 	defer func() {
-		logger.Debug("AIS workflow finished!", "result", r, "error", e)
+		logger.Debug("Poststorage workflow finished!", "result", r, "error", e)
 	}()
 
-	var getAIPPathResult GetAIPPathActivityResult
+	var getAIPPathResult ais.GetAIPPathActivityResult
 	err := temporalsdk_workflow.ExecuteActivity(
 		temporalsdk_workflow.WithActivityOptions(
 			ctx,
@@ -66,8 +64,8 @@ func (w *Workflow) Execute(
 				},
 			},
 		),
-		GetAIPPathActivityName,
-		&GetAIPPathActivityParams{
+		ais.GetAIPPathActivityName,
+		&ais.GetAIPPathActivityParams{
 			AIPUUID: params.AIPUUID,
 		},
 	).Get(ctx, &getAIPPathResult)
@@ -82,7 +80,6 @@ func (w *Workflow) Execute(
 
 		activityOpts := temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
 			StartToCloseTimeout: time.Minute,
-			TaskQueue:           w.config.Temporal.TaskQueue,
 		})
 		for attempt := 1; attempt <= maxAttempts; attempt++ {
 			sessCtx, err := temporalsdk_workflow.CreateSession(activityOpts, &temporalsdk_workflow.SessionOptions{
@@ -129,7 +126,7 @@ func (w *Workflow) Execute(
 	return &childwf.PostStorageResult{}, nil
 }
 
-func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aipPath string) (e error) {
+func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aipPath string) (e error) {
 	removePaths := []string{}
 
 	defer func() {
@@ -149,17 +146,17 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 	// In case the AIP is compressed, remove its UUID and the possible
 	// extension from the directory/file name, and append the UUID back.
 	aipDirName := strings.Split(filepath.Base(aipPath), aipUUID)[0] + aipUUID
-	localDir := filepath.Join(w.config.WorkingDir, fmt.Sprintf("search-md_%s", aipDirName))
+	localDir := filepath.Join(w.cfg.WorkingDir, fmt.Sprintf("search-md_%s", aipDirName))
 	metsName := fmt.Sprintf("METS.%s.xml", aipUUID)
 	metsPath := filepath.Join(localDir, metsName)
 
 	removePaths = append(removePaths, localDir)
 
-	var fetchMETSResult FetchActivityResult
+	var fetchMETSResult ais.FetchActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withActivityOptsForLongLivedRequest(ctx),
-		FetchActivityName,
-		&FetchActivityParams{
+		ais.FetchActivityName,
+		&ais.FetchActivityParams{
 			AIPUUID:      aipUUID,
 			RelativePath: fmt.Sprintf("%s/data/%s", aipDirName, metsName),
 			Destination:  metsPath,
@@ -169,11 +166,11 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 		return e
 	}
 
-	var parseResult ParseActivityResult
+	var parseResult ais.ParseActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesystemActivityOpts(ctx),
-		ParseActivityName,
-		&ParseActivityParams{METSPath: metsPath},
+		ais.ParseActivityName,
+		&ais.ParseActivityParams{METSPath: metsPath},
 	).Get(ctx, &parseResult)
 	if e != nil {
 		return e
@@ -190,11 +187,11 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 
 	metadataPath := filepath.Join(localDir, filepath.Base(metadataRelPath))
 
-	var fetchMetadataResult FetchActivityResult
+	var fetchMetadataResult ais.FetchActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withActivityOptsForLongLivedRequest(ctx),
-		FetchActivityName,
-		&FetchActivityParams{
+		ais.FetchActivityName,
+		&ais.FetchActivityParams{
 			AIPUUID:      aipUUID,
 			RelativePath: fmt.Sprintf("%s/data/%s", aipDirName, metadataRelPath),
 			Destination:  metadataPath,
@@ -204,11 +201,11 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 		return e
 	}
 
-	var combineMDResult CombineMDActivityResult
+	var combineMDResult ais.CombineMDActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withFilesystemActivityOpts(ctx),
-		CombineMDActivityName,
-		&CombineMDActivityParams{
+		ais.CombineMDActivityName,
+		&ais.CombineMDActivityParams{
 			AreldaPath: metadataPath,
 			METSPath:   metsPath,
 			LocalDir:   localDir,
@@ -241,42 +238,4 @@ func (w *Workflow) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, aip
 	}
 
 	return nil
-}
-
-func RegisterWorkflow(w temporalsdk_worker.Worker, config Config) {
-	w.RegisterWorkflowWithOptions(
-		NewWorkflow(config).Execute,
-		temporalsdk_workflow.RegisterOptions{Name: config.Temporal.WorkflowName},
-	)
-}
-
-func RegisterActivities(r temporalsdk_worker.ActivityRegistry, amssClient amss.Client, bucket *blob.Bucket) {
-	r.RegisterActivityWithOptions(
-		NewGetAIPPathActivity(amssClient).Execute,
-		temporalsdk_activity.RegisterOptions{Name: GetAIPPathActivityName},
-	)
-	r.RegisterActivityWithOptions(
-		NewFetchActivity(amssClient).Execute,
-		temporalsdk_activity.RegisterOptions{Name: FetchActivityName},
-	)
-	r.RegisterActivityWithOptions(
-		NewParseActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: ParseActivityName},
-	)
-	r.RegisterActivityWithOptions(
-		NewCombineMDActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: CombineMDActivityName},
-	)
-	r.RegisterActivityWithOptions(
-		archivezip.New().Execute,
-		temporalsdk_activity.RegisterOptions{Name: archivezip.Name},
-	)
-	r.RegisterActivityWithOptions(
-		bucketupload.New(bucket).Execute,
-		temporalsdk_activity.RegisterOptions{Name: bucketupload.Name},
-	)
-	r.RegisterActivityWithOptions(
-		removepaths.New().Execute,
-		temporalsdk_activity.RegisterOptions{Name: removepaths.Name},
-	)
 }

@@ -9,8 +9,9 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/spf13/viper"
+	"go.artefactual.dev/tools/bucket"
 
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/fvalidate"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/persistence"
@@ -20,7 +21,7 @@ type ConfigurationValidator interface {
 	Validate() error
 }
 
-type Configuration struct {
+type Config struct {
 	// Debug toggles human readable logs or JSON logs (default).
 	Debug bool
 
@@ -28,6 +29,75 @@ type Configuration struct {
 	// logging only critical messages and each higher number increasing the
 	// number of messages logged.
 	Verbosity int
+
+	// Temporal configures the Temporal client.
+	Temporal TemporalConfig
+
+	// Worker configures the Temporal worker.
+	Worker WorkerConfig
+
+	// Preprocessing configures the preprocessing workflow.
+	Preprocessing PreprocessingConfig
+
+	// Poststorage configures the poststorage workflow.
+	Poststorage PoststorageConfig
+
+	// APIS configures the APIS client shared by workflows.
+	APIS apis.Config
+}
+
+type TemporalConfig struct {
+	// Address is the Temporal server host and port (required).
+	Address string
+
+	// Namespace is the Temporal client namespace (default: "default").
+	Namespace string
+}
+
+func (c TemporalConfig) Validate() error {
+	var errs error
+
+	if c.Address == "" {
+		errs = errors.Join(errs, errRequired("Temporal.Address"))
+	}
+	if c.Namespace == "" {
+		errs = errors.Join(errs, errRequired("Temporal.Namespace"))
+	}
+
+	return errs
+}
+
+type WorkerConfig struct {
+	// MaxConcurrentSessions limits the number of workflow sessions the worker
+	// can handle simultaneously (default: 1).
+	MaxConcurrentSessions int
+
+	// TaskQueue is the Temporal task queue from which the worker will pull
+	// tasks (required).
+	TaskQueue string
+}
+
+func (c WorkerConfig) Validate() error {
+	var errs error
+
+	if c.TaskQueue == "" {
+		errs = errors.Join(errs, errRequired("Worker.TaskQueue"))
+	}
+
+	// Verify that MaxConcurrentSessions is >= 1.
+	if c.MaxConcurrentSessions < 1 {
+		errs = errors.Join(errs, fmt.Errorf(
+			"Worker.MaxConcurrentSessions: %d is less than the minimum value (1)",
+			c.MaxConcurrentSessions,
+		))
+	}
+
+	return errs
+}
+
+type PreprocessingConfig struct {
+	// WorkflowName is the preprocessing Temporal workflow name (required).
+	WorkflowName string
 
 	// SharedPath is a file path that both Preprocessing and Enduro can access
 	// (required).
@@ -43,81 +113,87 @@ type Configuration struct {
 	// preprocessing workflow.
 	CheckDuplicates bool
 
-	Persistence  persistence.Config
-	Temporal     Temporal
-	Worker       WorkerConfig
-	Bagit        bagcreate.Config
-	APIS         apis.Config
-	AIS          ais.Config
+	Persistence persistence.Config
+	BagCreate   bagcreate.Config
+
 	FileFormat   ffvalidate.Config
 	FileValidate fvalidate.Config
 }
 
-type Temporal struct {
-	// Address is the Temporal server host and port (default: "localhost:7233").
-	Address string
-
-	// Namespace is the Temporal namespace the preprocessing worker should run
-	// in (default: "default").
-	Namespace string
-
-	// TaskQueue is the Temporal task queue from which the preprocessing worker
-	// will pull tasks (required).
-	TaskQueue string
-
-	// WorkflowName is the name of the preprocessing Temporal workflow
-	// (required).
-	WorkflowName string
-}
-
-type WorkerConfig struct {
-	// MaxConcurrentSessions limits the number of workflow sessions the
-	// preprocessing worker can handle simultaneously (default: 1).
-	MaxConcurrentSessions int
-}
-
-func (c Configuration) Validate() error {
+func (c PreprocessingConfig) Validate() error {
 	var errs error
 
-	// Verify that the required fields have values.
 	if c.SharedPath == "" {
-		errs = errors.Join(errs, errRequired("SharedPath"))
+		errs = errors.Join(errs, errRequired("Preprocessing.SharedPath"))
 	}
-	if c.Temporal.TaskQueue == "" {
-		errs = errors.Join(errs, errRequired("Temporal.TaskQueue"))
-	}
-	if c.Temporal.WorkflowName == "" {
-		errs = errors.Join(errs, errRequired("Temporal.WorkflowName"))
+	if c.WorkflowName == "" {
+		errs = errors.Join(errs, errRequired("Preprocessing.WorkflowName"))
 	}
 
-	// Verify that MaxConcurrentSessions is >= 1.
-	if c.Worker.MaxConcurrentSessions < 1 {
-		errs = errors.Join(errs, fmt.Errorf(
-			"Worker.MaxConcurrentSessions: %d is less than the minimum value (1)",
-			c.Worker.MaxConcurrentSessions,
-		))
-	}
-
-	if err := c.Bagit.Validate(); err != nil {
-		errs = errors.Join(errs, fmt.Errorf("Bagit.%v", err))
-	}
-	if err := c.APIS.Validate(); err != nil {
-		errs = errors.Join(errs, err)
+	if err := c.BagCreate.Validate(); err != nil {
+		errs = errors.Join(errs, fmt.Errorf("Preprocessing.BagCreate: %v", err))
 	}
 
 	if c.CheckDuplicates {
 		if c.Persistence.DSN == "" {
-			errs = errors.Join(errs, errRequired("Persistence.DSN"))
+			errs = errors.Join(errs, errRequired("Preprocessing.Persistence.DSN"))
 		}
 		if c.Persistence.Driver == "" {
-			errs = errors.Join(errs, errRequired("Persistence.Driver"))
+			errs = errors.Join(errs, errRequired("Preprocessing.Persistence.Driver"))
 		}
 	}
 
 	return errs
 }
 
-func Read(config *Configuration, configFile string) (found bool, configFileUsed string, err error) {
+type PoststorageConfig struct {
+	// WorkflowName is the poststorage Temporal workflow name (required).
+	WorkflowName string
+
+	// WorkingDir is used to prepare AIS metadata bundles before upload
+	// (required).
+	WorkingDir string
+
+	AMSS   amss.Config
+	Bucket bucket.Config
+}
+
+func (c PoststorageConfig) Validate() error {
+	var errs error
+
+	if c.WorkflowName == "" {
+		errs = errors.Join(errs, errRequired("Poststorage.WorkflowName"))
+	}
+	if c.WorkingDir == "" {
+		errs = errors.Join(errs, errRequired("Poststorage.WorkingDir"))
+	}
+	if c.AMSS.URL == "" {
+		errs = errors.Join(errs, errRequired("Poststorage.AMSS.URL"))
+	}
+	if c.AMSS.User == "" {
+		errs = errors.Join(errs, errRequired("Poststorage.AMSS.User"))
+	}
+	if c.AMSS.Key == "" {
+		errs = errors.Join(errs, errRequired("Poststorage.AMSS.Key"))
+	}
+	if c.Bucket.URL == "" && c.Bucket.Bucket == "" {
+		errs = errors.Join(errs, errRequired("Poststorage.Bucket.Bucket"))
+	}
+
+	return errs
+}
+
+func (c Config) Validate() error {
+	return errors.Join(
+		c.Temporal.Validate(),
+		c.Worker.Validate(),
+		c.Preprocessing.Validate(),
+		c.Poststorage.Validate(),
+		c.APIS.Validate(),
+	)
+}
+
+func Read(config *Config, configFile string) (found bool, configFileUsed string, err error) {
 	v := viper.New()
 
 	v.AddConfigPath(".")
@@ -131,7 +207,9 @@ func Read(config *Configuration, configFile string) (found bool, configFileUsed 
 	// Defaults.
 	v.SetDefault("APIS.Timeout", apis.DefaultTimeout)
 	v.SetDefault("APIS.PollInterval", apis.DefaultPollInterval)
+	v.SetDefault("Temporal.Namespace", "default")
 	v.SetDefault("Worker.MaxConcurrentSessions", 1)
+	v.SetDefault("Preprocessing.BagCreate.ChecksumAlgorithm", "sha512")
 
 	if configFile != "" {
 		// Viper will not return a viper.ConfigFileNotFoundError error when

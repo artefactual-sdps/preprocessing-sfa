@@ -1,4 +1,4 @@
-package workflow_test
+package workflows_test
 
 import (
 	"encoding/json"
@@ -33,7 +33,7 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/pips"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/premis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflow"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflows"
 )
 
 const (
@@ -260,17 +260,17 @@ type PreprocessingTestSuite struct {
 	temporalsdk_testsuite.WorkflowTestSuite
 
 	env      *temporalsdk_testsuite.TestWorkflowEnvironment
-	workflow *workflow.PreprocessingWorkflow
+	workflow *workflows.Preprocessing
 	testDir  string
 	sipPath  string
 }
 
-func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
+func (s *PreprocessingTestSuite) SetupTest(cfg *config.Config) {
 	s.env = s.NewTestWorkflowEnvironment()
 	s.env.SetStartTime(testTime)
 	s.env.SetWorkerOptions(temporalsdk_worker.Options{EnableSessionWorker: true})
 	s.testDir = s.T().TempDir()
-	cfg.SharedPath = s.testDir
+	cfg.Preprocessing.SharedPath = s.testDir
 
 	sp := filepath.Join(s.testDir, relPath)
 	if err := os.MkdirAll(sp, os.FileMode(0o700)); err != nil {
@@ -360,11 +360,11 @@ func (s *PreprocessingTestSuite) SetupTest(cfg *config.Configuration) {
 		temporalsdk_activity.RegisterOptions{Name: apis.PollImportTaskStatusActivityName},
 	)
 	s.env.RegisterActivityWithOptions(
-		bagcreate.New(cfg.Bagit).Execute,
+		bagcreate.New(cfg.Preprocessing.BagCreate).Execute,
 		temporalsdk_activity.RegisterOptions{Name: bagcreate.Name},
 	)
 
-	s.workflow = workflow.NewPreprocessingWorkflow(nil, s.testDir, cfg.CheckDuplicates, cfg.APIS.Enabled)
+	s.workflow = workflows.NewPreprocessing(nil, cfg.Preprocessing, cfg.APIS.Enabled)
 	s.env.RegisterWorkflow(s.workflow.Execute)
 }
 
@@ -749,9 +749,9 @@ func (s *PreprocessingTestSuite) executeAsChildWithHumanReview(
 					apisTaskID,
 				),
 				Options: []string{
-					workflow.DecisionOptionCancelIngest,
-					workflow.DecisionOptionContinueOverwrite,
-					workflow.DecisionOptionContinueAppend,
+					workflows.DecisionOptionCancelIngest,
+					workflows.DecisionOptionContinueOverwrite,
+					workflows.DecisionOptionContinueAppend,
 				},
 			},
 			request,
@@ -781,9 +781,11 @@ func (s *PreprocessingTestSuite) executeAsChildWithHumanReview(
 }
 
 func (s *PreprocessingTestSuite) TestSuccess() {
-	s.SetupTest(&config.Configuration{
-		CheckDuplicates: true,
-		APIS:            apis.Config{Enabled: true},
+	s.SetupTest(&config.Config{
+		APIS: apis.Config{Enabled: true},
+		Preprocessing: config.PreprocessingConfig{
+			CheckDuplicates: true,
+		},
 	})
 	s.writeBagitTxt(s.sipPath)
 
@@ -828,7 +830,7 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 }
 
 func (s *PreprocessingTestSuite) TestIdentifySIPFailure() {
-	s.SetupTest(&config.Configuration{})
+	s.SetupTest(&config.Config{})
 
 	extractPath := filepath.Join(filepath.Dir(s.sipPath), fsutil.BaseNoExt(filepath.Base(sipName)))
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
@@ -894,7 +896,7 @@ Enduro could not identify the package type. Please ensure that your SIP matches 
 }
 
 func (s *PreprocessingTestSuite) TestValidationError() {
-	s.SetupTest(&config.Configuration{})
+	s.SetupTest(&config.Config{})
 
 	extractPath := filepath.Join(filepath.Dir(s.sipPath), fsutil.BaseNoExt(filepath.Base(sipName)))
 	expectedSIP := s.bornDigitalSIP(extractPath)
@@ -1118,7 +1120,7 @@ Please ensure all metadata files are present and well-formed.`,
 }
 
 func (s *PreprocessingTestSuite) TestSystemError() {
-	s.SetupTest(&config.Configuration{})
+	s.SetupTest(&config.Config{})
 
 	// Mock activities.
 	s.env.OnActivity(
@@ -1168,11 +1170,11 @@ func (s *PreprocessingTestSuite) TestSystemError() {
 }
 
 func (s *PreprocessingTestSuite) TestExtractionError() {
-	cfg := &config.Configuration{}
+	cfg := &config.Config{}
 	s.SetupTest(cfg)
 
 	sessionCtx := mock.AnythingOfType("*context.timerCtx")
-	extractPath := filepath.Join(cfg.SharedPath, "extract-123456")
+	extractPath := filepath.Join(cfg.Preprocessing.SharedPath, "extract-123456")
 
 	// Mock activities.
 	s.env.OnActivity(
@@ -1245,9 +1247,11 @@ Enduro could not identify the package type. Please ensure that your SIP matches 
 }
 
 func (s *PreprocessingTestSuite) TestHumanReviewContinueAndOverwrite() {
-	s.SetupTest(&config.Configuration{
-		CheckDuplicates: true,
-		APIS:            apis.Config{Enabled: true},
+	s.SetupTest(&config.Config{
+		APIS: apis.Config{Enabled: true},
+		Preprocessing: config.PreprocessingConfig{
+			CheckDuplicates: true,
+		},
 	})
 	s.writeBagitTxt(s.sipPath)
 
@@ -1261,7 +1265,7 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndOverwrite() {
 			SIPName:      sipName,
 		},
 		childwf.DecisionResponse{
-			Option: workflow.DecisionOptionContinueOverwrite,
+			Option: workflows.DecisionOptionContinueOverwrite,
 		},
 	)
 
@@ -1271,14 +1275,14 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndOverwrite() {
 	s.Equal(
 		&childwf.PreprocessingResult{
 			Outcome:        childwf.OutcomeSuccess,
-			CustomMetadata: apisCustomMetadata(apisTaskID, workflow.DecisionOptionContinueOverwrite),
+			CustomMetadata: apisCustomMetadata(apisTaskID, workflows.DecisionOptionContinueOverwrite),
 			RelativePath:   updatedRelPath,
 			Tasks: apisTasks(
 				apisTaskID,
 				fmt.Sprintf(
 					"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
 					apisTaskID,
-					workflow.DecisionOptionContinueOverwrite,
+					workflows.DecisionOptionContinueOverwrite,
 				),
 				childwf.TaskOutcomeSuccess,
 				true,
@@ -1289,9 +1293,11 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndOverwrite() {
 }
 
 func (s *PreprocessingTestSuite) TestHumanReviewContinueAndAppend() {
-	s.SetupTest(&config.Configuration{
-		CheckDuplicates: true,
-		APIS:            apis.Config{Enabled: true},
+	s.SetupTest(&config.Config{
+		APIS: apis.Config{Enabled: true},
+		Preprocessing: config.PreprocessingConfig{
+			CheckDuplicates: true,
+		},
 	})
 	s.writeBagitTxt(s.sipPath)
 
@@ -1305,7 +1311,7 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndAppend() {
 			SIPName:      sipName,
 		},
 		childwf.DecisionResponse{
-			Option: workflow.DecisionOptionContinueAppend,
+			Option: workflows.DecisionOptionContinueAppend,
 		},
 	)
 
@@ -1315,14 +1321,14 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndAppend() {
 	s.Equal(
 		&childwf.PreprocessingResult{
 			Outcome:        childwf.OutcomeSuccess,
-			CustomMetadata: apisCustomMetadata(apisTaskID, workflow.DecisionOptionContinueAppend),
+			CustomMetadata: apisCustomMetadata(apisTaskID, workflows.DecisionOptionContinueAppend),
 			RelativePath:   updatedRelPath,
 			Tasks: apisTasks(
 				apisTaskID,
 				fmt.Sprintf(
 					"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
 					apisTaskID,
-					workflow.DecisionOptionContinueAppend,
+					workflows.DecisionOptionContinueAppend,
 				),
 				childwf.TaskOutcomeSuccess,
 				true,
@@ -1333,9 +1339,11 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndAppend() {
 }
 
 func (s *PreprocessingTestSuite) TestHumanReviewCancelIngest() {
-	s.SetupTest(&config.Configuration{
-		CheckDuplicates: true,
-		APIS:            apis.Config{Enabled: true},
+	s.SetupTest(&config.Config{
+		APIS: apis.Config{Enabled: true},
+		Preprocessing: config.PreprocessingConfig{
+			CheckDuplicates: true,
+		},
 	})
 	s.writeBagitTxt(s.sipPath)
 
@@ -1348,7 +1356,7 @@ func (s *PreprocessingTestSuite) TestHumanReviewCancelIngest() {
 			SIPName:      sipName,
 		},
 		childwf.DecisionResponse{
-			Option: workflow.DecisionOptionCancelIngest,
+			Option: workflows.DecisionOptionCancelIngest,
 		},
 	)
 
@@ -1376,9 +1384,11 @@ APIS detected metadata conflicts for import task ID %q and ingest was canceled b
 }
 
 func (s *PreprocessingTestSuite) TestHumanReviewInvalidOption() {
-	s.SetupTest(&config.Configuration{
-		CheckDuplicates: true,
-		APIS:            apis.Config{Enabled: true},
+	s.SetupTest(&config.Config{
+		APIS: apis.Config{Enabled: true},
+		Preprocessing: config.PreprocessingConfig{
+			CheckDuplicates: true,
+		},
 	})
 	s.writeBagitTxt(s.sipPath)
 
