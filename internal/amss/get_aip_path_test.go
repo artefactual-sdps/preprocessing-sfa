@@ -1,4 +1,4 @@
-package ais_test
+package amss_test
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"gotest.tools/v3/assert"
 
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	fake_amss "github.com/artefactual-sdps/preprocessing-sfa/internal/amss/fake"
 )
 
@@ -19,25 +19,25 @@ func TestGetAIPPathActivity(t *testing.T) {
 
 	type test struct {
 		name       string
-		params     *ais.GetAIPPathActivityParams
+		params     *amss.GetAIPPathActivityParams
 		mockExpect func(m *fake_amss.MockClient)
-		want       *ais.GetAIPPathActivityResult
+		want       *amss.GetAIPPathActivityResult
 		wantErr    string
 	}
 	for _, tt := range []test{
 		{
 			name: "success",
-			params: &ais.GetAIPPathActivityParams{
+			params: &amss.GetAIPPathActivityParams{
 				AIPUUID: "test-uuid",
 			},
 			mockExpect: func(m *fake_amss.MockClient) {
 				m.EXPECT().GetAIPPath(mockutil.Context(), "test-uuid").Return("test/path/METS.xml", nil)
 			},
-			want: &ais.GetAIPPathActivityResult{Path: "test/path/METS.xml"},
+			want: &amss.GetAIPPathActivityResult{Path: "test/path/METS.xml"},
 		},
 		{
 			name: "error",
-			params: &ais.GetAIPPathActivityParams{
+			params: &amss.GetAIPPathActivityParams{
 				AIPUUID: "test-uuid",
 			},
 			mockExpect: func(m *fake_amss.MockClient) {
@@ -59,11 +59,11 @@ func TestGetAIPPathActivity(t *testing.T) {
 			ts := &temporalsdk_testsuite.WorkflowTestSuite{}
 			env := ts.NewTestActivityEnvironment()
 			env.RegisterActivityWithOptions(
-				ais.NewGetAIPPathActivity(mockClient).Execute,
-				temporalsdk_activity.RegisterOptions{Name: ais.GetAIPPathActivityName},
+				amss.NewGetAIPPathActivity(mockClient).Execute,
+				temporalsdk_activity.RegisterOptions{Name: amss.GetAIPPathActivityName},
 			)
 
-			future, err := env.ExecuteActivity(ais.GetAIPPathActivityName, tt.params)
+			future, err := env.ExecuteActivity(amss.GetAIPPathActivityName, tt.params)
 			if tt.wantErr != "" {
 				if err == nil {
 					t.Errorf("error is nil, expecting: %q", tt.wantErr)
@@ -75,7 +75,7 @@ func TestGetAIPPathActivity(t *testing.T) {
 			}
 			assert.NilError(t, err)
 
-			var got ais.GetAIPPathActivityResult
+			var got amss.GetAIPPathActivityResult
 			future.Get(&got)
 			assert.DeepEqual(t, &got, tt.want)
 		})

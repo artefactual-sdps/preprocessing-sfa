@@ -605,9 +605,8 @@ func (w *Preprocessing) Execute(
 }
 
 // createAPISImportTask submits metadata to APIS, waits for analysis, and records
-// the resulting custom metadata for the AIS poststorage workflow. It returns
-// false when processing should stop after recording the failure in the workflow
-// result.
+// the resulting custom metadata for the poststorage workflow. It returns false
+// when processing should stop after recording the failure in the workflow result.
 func (w *Preprocessing) createAPISImportTask(
 	ctx temporalsdk_workflow.Context,
 	result *childwf.PreprocessingResult,

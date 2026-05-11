@@ -9,7 +9,6 @@ import (
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/spf13/viper"
-	"go.artefactual.dev/tools/bucket"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
@@ -150,12 +149,10 @@ type PoststorageConfig struct {
 	// WorkflowName is the poststorage Temporal workflow name (required).
 	WorkflowName string
 
-	// WorkingDir is used to prepare AIS metadata bundles before upload
-	// (required).
+	// WorkingDir is used to download the METS file (required).
 	WorkingDir string
 
-	AMSS   amss.Config
-	Bucket bucket.Config
+	AMSS amss.Config
 }
 
 func (c PoststorageConfig) Validate() error {
@@ -175,9 +172,6 @@ func (c PoststorageConfig) Validate() error {
 	}
 	if c.AMSS.Key == "" {
 		errs = errors.Join(errs, errRequired("Poststorage.AMSS.Key"))
-	}
-	if c.Bucket.URL == "" && c.Bucket.Bucket == "" {
-		errs = errors.Join(errs, errRequired("Poststorage.Bucket.Bucket"))
 	}
 
 	return errs

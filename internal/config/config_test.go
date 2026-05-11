@@ -6,7 +6,6 @@ import (
 
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
-	"go.artefactual.dev/tools/bucket"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 
@@ -47,13 +46,6 @@ workingDir = "/tmp"
 url = "http://amss.example.test"
 user = "test"
 key = "test"
-[poststorage.bucket]
-endpoint = "http://minio.example.test:9000"
-pathStyle = true
-accessKey = "minio"
-secretKey = "minio123"
-region = "us-west-1"
-bucket = "ais"
 [apis]
 enabled = true
 url = "http://apis.example.test"
@@ -67,8 +59,6 @@ workingDir = "/tmp"
 url = "http://amss.example.test"
 user = "test"
 key = "test"
-[poststorage.bucket]
-url = "file:///tmp/ais"
 `
 
 func TestConfig(t *testing.T) {
@@ -136,14 +126,6 @@ func TestConfig(t *testing.T) {
 						User: "test",
 						Key:  "test",
 					},
-					Bucket: bucket.Config{
-						Endpoint:  "http://minio.example.test:9000",
-						PathStyle: true,
-						AccessKey: "minio",
-						SecretKey: "minio123",
-						Region:    "us-west-1",
-						Bucket:    "ais",
-					},
 				},
 			},
 		},
@@ -165,8 +147,7 @@ Poststorage.WorkflowName: missing required value
 Poststorage.WorkingDir: missing required value
 Poststorage.AMSS.URL: missing required value
 Poststorage.AMSS.User: missing required value
-Poststorage.AMSS.Key: missing required value
-Poststorage.Bucket.Bucket: missing required value`,
+Poststorage.AMSS.Key: missing required value`,
 		},
 		{
 			name:       "Errors when MaxConcurrentSessions is less than 1",
@@ -267,7 +248,6 @@ url = "http://apis.example.test"
 						User: "test",
 						Key:  "test",
 					},
-					Bucket: bucket.Config{URL: "file:///tmp/ais"},
 				},
 			},
 		},
@@ -379,7 +359,6 @@ token = "mock-token"
 						User: "test",
 						Key:  "test",
 					},
-					Bucket: bucket.Config{URL: "file:///tmp/ais"},
 				},
 			},
 		},

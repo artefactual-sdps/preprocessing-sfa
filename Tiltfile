@@ -36,7 +36,6 @@ k8s_resource(
   labels=["SFA"],
   trigger_mode=trigger_mode,
 )
-k8s_resource("minio-ais-bucket", labels=["SFA"])
 k8s_resource("mysql-create-prep-database", labels=["SFA"])
 k8s_resource(
   "mysql-recreate-prep-database",

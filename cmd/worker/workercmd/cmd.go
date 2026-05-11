@@ -9,16 +9,13 @@ import (
 	"ariga.io/sqlcomment"
 	"entgo.io/ent/dialect/sql"
 	"github.com/artefactual-sdps/temporal-activities/archiveextract"
-	"github.com/artefactual-sdps/temporal-activities/archivezip"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/artefactual-sdps/temporal-activities/bagvalidate"
-	"github.com/artefactual-sdps/temporal-activities/bucketupload"
 	"github.com/artefactual-sdps/temporal-activities/ffvalidate"
 	"github.com/artefactual-sdps/temporal-activities/removepaths"
 	"github.com/artefactual-sdps/temporal-activities/xmlvalidate"
 	"github.com/go-logr/logr"
 	"github.com/jonboulle/clockwork"
-	"go.artefactual.dev/tools/bucket"
 	"go.artefactual.dev/tools/clientauth"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_activity "go.temporal.io/sdk/activity"
@@ -26,11 +23,9 @@ import (
 	temporalsdk_interceptor "go.temporal.io/sdk/interceptor"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
-	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/activities"
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
@@ -50,7 +45,6 @@ type Main struct {
 	temporalWorker temporalsdk_worker.Worker
 	temporalClient temporalsdk_client.Client
 	dbClient       *db.Client
-	bucket         *blob.Bucket
 }
 
 func NewMain(logger logr.Logger, cfg config.Config) *Main {
@@ -138,14 +132,8 @@ func (m *Main) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to create AMSS client: %w", err)
 	}
 
-	b, err := bucket.NewWithConfig(ctx, &m.cfg.Poststorage.Bucket)
-	if err != nil {
-		return fmt.Errorf("unable to open poststorage bucket: %w", err)
-	}
-	m.bucket = b
-
 	m.registerPreprocessingWorkflow(psvc, apisClient, veraPDFValidator)
-	m.registerPoststorageWorkflow(amssClient, m.bucket)
+	m.registerPoststorageWorkflow(amssClient)
 
 	if err := w.Start(); err != nil {
 		m.logger.Error(err, "Worker failed to start.")
@@ -164,12 +152,6 @@ func (m *Main) Close() error {
 
 	if m.temporalClient != nil {
 		m.temporalClient.Close()
-	}
-
-	if m.bucket != nil {
-		if err := m.bucket.Close(); err != nil {
-			e = errors.Join(e, fmt.Errorf("couldn't close poststorage bucket: %v", err))
-		}
 	}
 
 	if m.dbClient != nil {
@@ -284,35 +266,19 @@ func (m *Main) registerPreprocessingWorkflow(
 	)
 }
 
-func (m *Main) registerPoststorageWorkflow(amssClient amss.Client, b *blob.Bucket) {
+func (m *Main) registerPoststorageWorkflow(amssClient amss.Client) {
 	m.temporalWorker.RegisterWorkflowWithOptions(
 		workflows.NewPoststorage(m.cfg.Poststorage).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Poststorage.WorkflowName},
 	)
 
 	m.temporalWorker.RegisterActivityWithOptions(
-		ais.NewGetAIPPathActivity(amssClient).Execute,
-		temporalsdk_activity.RegisterOptions{Name: ais.GetAIPPathActivityName},
+		amss.NewGetAIPPathActivity(amssClient).Execute,
+		temporalsdk_activity.RegisterOptions{Name: amss.GetAIPPathActivityName},
 	)
 	m.temporalWorker.RegisterActivityWithOptions(
-		ais.NewFetchActivity(amssClient).Execute,
-		temporalsdk_activity.RegisterOptions{Name: ais.FetchActivityName},
-	)
-	m.temporalWorker.RegisterActivityWithOptions(
-		ais.NewParseActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: ais.ParseActivityName},
-	)
-	m.temporalWorker.RegisterActivityWithOptions(
-		ais.NewCombineMDActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: ais.CombineMDActivityName},
-	)
-	m.temporalWorker.RegisterActivityWithOptions(
-		archivezip.New().Execute,
-		temporalsdk_activity.RegisterOptions{Name: archivezip.Name},
-	)
-	m.temporalWorker.RegisterActivityWithOptions(
-		bucketupload.New(b).Execute,
-		temporalsdk_activity.RegisterOptions{Name: bucketupload.Name},
+		amss.NewFetchActivity(amssClient).Execute,
+		temporalsdk_activity.RegisterOptions{Name: amss.FetchActivityName},
 	)
 	m.temporalWorker.RegisterActivityWithOptions(
 		removepaths.New().Execute,

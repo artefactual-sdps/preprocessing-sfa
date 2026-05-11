@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/artefactual-sdps/enduro/pkg/childwf"
-	"github.com/artefactual-sdps/temporal-activities/archivezip"
-	"github.com/artefactual-sdps/temporal-activities/bucketupload"
 	"github.com/artefactual-sdps/temporal-activities/removepaths"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -16,7 +14,7 @@ import (
 	temporalsdk_testsuite "go.temporal.io/sdk/testsuite"
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/workflows"
@@ -38,28 +36,12 @@ func (s *TestSuite) setup(cfg *config.PoststorageConfig) {
 	cfg.WorkingDir = s.testDir
 
 	s.env.RegisterActivityWithOptions(
-		ais.NewGetAIPPathActivity(nil).Execute,
-		temporalsdk_activity.RegisterOptions{Name: ais.GetAIPPathActivityName},
+		amss.NewGetAIPPathActivity(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: amss.GetAIPPathActivityName},
 	)
 	s.env.RegisterActivityWithOptions(
-		ais.NewFetchActivity(nil).Execute,
-		temporalsdk_activity.RegisterOptions{Name: ais.FetchActivityName},
-	)
-	s.env.RegisterActivityWithOptions(
-		ais.NewParseActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: ais.ParseActivityName},
-	)
-	s.env.RegisterActivityWithOptions(
-		ais.NewCombineMDActivity().Execute,
-		temporalsdk_activity.RegisterOptions{Name: ais.CombineMDActivityName},
-	)
-	s.env.RegisterActivityWithOptions(
-		archivezip.New().Execute,
-		temporalsdk_activity.RegisterOptions{Name: archivezip.Name},
-	)
-	s.env.RegisterActivityWithOptions(
-		bucketupload.New(nil).Execute,
-		temporalsdk_activity.RegisterOptions{Name: bucketupload.Name},
+		amss.NewFetchActivity(nil).Execute,
+		temporalsdk_activity.RegisterOptions{Name: amss.FetchActivityName},
 	)
 	s.env.RegisterActivityWithOptions(
 		removepaths.New().Execute,
@@ -108,11 +90,11 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 
 	// Mock activities.
 	s.env.OnActivity(
-		ais.GetAIPPathActivityName,
+		amss.GetAIPPathActivityName,
 		mock.AnythingOfType("*context.timerCtx"),
-		&ais.GetAIPPathActivityParams{AIPUUID: aipUUID},
+		&amss.GetAIPPathActivityParams{AIPUUID: aipUUID},
 	).Return(
-		&ais.GetAIPPathActivityResult{
+		&amss.GetAIPPathActivityResult{
 			Path: "9390/594f/84c2/457d/bd6a/618f/21f7/c954/test-9390594f-84c2-457d-bd6a-618f21f7c954.zip",
 		}, nil,
 	)
@@ -122,65 +104,14 @@ func (s *TestSuite) mockActivitiesSuccess(aipUUID string) {
 	metsName := fmt.Sprintf("METS.%s.xml", aipUUID)
 	metsPath := filepath.Join(localDir, metsName)
 	s.env.OnActivity(
-		ais.FetchActivityName,
+		amss.FetchActivityName,
 		sessionCtx,
-		&ais.FetchActivityParams{
+		&amss.FetchActivityParams{
 			AIPUUID:      aipUUID,
 			RelativePath: fmt.Sprintf("%s/data/%s", aipName, metsName),
 			Destination:  metsPath,
 		},
 	).Return(
-		&ais.FetchActivityResult{}, nil,
-	)
-
-	mdRelPath := "objects/header/metadata.xml"
-	s.env.OnActivity(
-		ais.ParseActivityName,
-		sessionCtx,
-		&ais.ParseActivityParams{METSPath: metsPath},
-	).Return(
-		&ais.ParseActivityResult{MetadataRelPath: mdRelPath}, nil,
-	)
-
-	areldaPath := filepath.Join(localDir, "metadata.xml")
-	s.env.OnActivity(
-		ais.FetchActivityName,
-		sessionCtx,
-		&ais.FetchActivityParams{
-			AIPUUID:      aipUUID,
-			RelativePath: fmt.Sprintf("%s/data/%s", aipName, mdRelPath),
-			Destination:  areldaPath,
-		},
-	).Return(
-		&ais.FetchActivityResult{}, nil,
-	)
-
-	s.env.OnActivity(
-		ais.CombineMDActivityName,
-		sessionCtx,
-		ais.CombineMDActivityParams{
-			AreldaPath: areldaPath,
-			METSPath:   metsPath,
-			LocalDir:   localDir,
-		},
-	).Return(
-		&ais.CombineMDActivityResult{Path: filepath.Join(localDir, "AIS_1000_893_3251903")}, nil,
-	)
-
-	zipPath := localDir + ".zip"
-	s.env.OnActivity(
-		archivezip.Name,
-		sessionCtx,
-		&archivezip.Params{SourceDir: localDir},
-	).Return(
-		&archivezip.Result{Path: zipPath}, nil,
-	)
-
-	s.env.OnActivity(
-		bucketupload.Name,
-		sessionCtx,
-		&bucketupload.Params{Path: zipPath},
-	).Return(
-		&bucketupload.Result{Key: searchMDName + ".zip"}, nil,
+		&amss.FetchActivityResult{}, nil,
 	)
 }

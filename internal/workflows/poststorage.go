@@ -8,13 +8,11 @@ import (
 	"time"
 
 	"github.com/artefactual-sdps/enduro/pkg/childwf"
-	"github.com/artefactual-sdps/temporal-activities/archivezip"
-	"github.com/artefactual-sdps/temporal-activities/bucketupload"
 	"github.com/artefactual-sdps/temporal-activities/removepaths"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/ais"
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 )
@@ -50,7 +48,7 @@ func (w *Poststorage) Execute(
 		logger.Debug("Poststorage workflow finished!", "result", r, "error", e)
 	}()
 
-	var getAIPPathResult ais.GetAIPPathActivityResult
+	var getAIPPathResult amss.GetAIPPathActivityResult
 	err := temporalsdk_workflow.ExecuteActivity(
 		temporalsdk_workflow.WithActivityOptions(
 			ctx,
@@ -64,8 +62,8 @@ func (w *Poststorage) Execute(
 				},
 			},
 		),
-		ais.GetAIPPathActivityName,
-		&ais.GetAIPPathActivityParams{
+		amss.GetAIPPathActivityName,
+		&amss.GetAIPPathActivityParams{
 			AIPUUID: params.AIPUUID,
 		},
 	).Get(ctx, &getAIPPathResult)
@@ -152,87 +150,16 @@ func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID, 
 
 	removePaths = append(removePaths, localDir)
 
-	var fetchMETSResult ais.FetchActivityResult
+	var fetchMETSResult amss.FetchActivityResult
 	e = temporalsdk_workflow.ExecuteActivity(
 		withActivityOptsForLongLivedRequest(ctx),
-		ais.FetchActivityName,
-		&ais.FetchActivityParams{
+		amss.FetchActivityName,
+		&amss.FetchActivityParams{
 			AIPUUID:      aipUUID,
 			RelativePath: fmt.Sprintf("%s/data/%s", aipDirName, metsName),
 			Destination:  metsPath,
 		},
 	).Get(ctx, &fetchMETSResult)
-	if e != nil {
-		return e
-	}
-
-	var parseResult ais.ParseActivityResult
-	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesystemActivityOpts(ctx),
-		ais.ParseActivityName,
-		&ais.ParseActivityParams{METSPath: metsPath},
-	).Get(ctx, &parseResult)
-	if e != nil {
-		return e
-	}
-
-	var metadataRelPath string
-	if parseResult.UpdatedAreldaMetadataRelPath != "" {
-		metadataRelPath = parseResult.UpdatedAreldaMetadataRelPath
-	} else if parseResult.MetadataRelPath != "" {
-		metadataRelPath = parseResult.MetadataRelPath
-	} else {
-		return errors.New("UpdatedAreldaMetadata.xml and metadata.xml files not found in METS")
-	}
-
-	metadataPath := filepath.Join(localDir, filepath.Base(metadataRelPath))
-
-	var fetchMetadataResult ais.FetchActivityResult
-	e = temporalsdk_workflow.ExecuteActivity(
-		withActivityOptsForLongLivedRequest(ctx),
-		ais.FetchActivityName,
-		&ais.FetchActivityParams{
-			AIPUUID:      aipUUID,
-			RelativePath: fmt.Sprintf("%s/data/%s", aipDirName, metadataRelPath),
-			Destination:  metadataPath,
-		},
-	).Get(ctx, &fetchMetadataResult)
-	if e != nil {
-		return e
-	}
-
-	var combineMDResult ais.CombineMDActivityResult
-	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesystemActivityOpts(ctx),
-		ais.CombineMDActivityName,
-		&ais.CombineMDActivityParams{
-			AreldaPath: metadataPath,
-			METSPath:   metsPath,
-			LocalDir:   localDir,
-		},
-	).Get(ctx, &combineMDResult)
-	if e != nil {
-		return e
-	}
-
-	var zipResult archivezip.Result
-	e = temporalsdk_workflow.ExecuteActivity(
-		withFilesystemActivityOpts(ctx),
-		archivezip.Name,
-		&archivezip.Params{SourceDir: localDir},
-	).Get(ctx, &zipResult)
-	if e != nil {
-		return e
-	}
-
-	removePaths = append(removePaths, zipResult.Path)
-
-	var uploadResult bucketupload.Result
-	e = temporalsdk_workflow.ExecuteActivity(
-		withActivityOptsForLongLivedRequest(ctx),
-		bucketupload.Name,
-		&bucketupload.Params{Path: zipResult.Path},
-	).Get(ctx, &uploadResult)
 	if e != nil {
 		return e
 	}

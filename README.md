@@ -1,8 +1,9 @@
 # preprocessing-sfa
 
-**preprocessing-sfa** provides two Enduro child workflows for SFA SIPs: a
-preprocessing child workflow and an AIS poststorage child workflow. The worker
-binary starts one Temporal worker that registers both child workflows.
+preprocessing-sfa provides two Enduro child workflows for SFA: a
+preprocessing workflow that validates SFA SIPs, communicates with APIS, and
+restructures each SIP for preservation; and a poststorage workflow that
+downloads the AIP METS file from storage and completes the APIS integration.
 
 - [Configuration](#configuration)
 - [Local environment](#local-environment)
@@ -51,21 +52,13 @@ allowlistPath = "/home/preprocessing/.config/allowed_file_formats.csv"
 path = "/opt/verapdf/verapdf"
 
 [poststorage]
-workflowName = "ais"
+workflowName = "poststorage"
 workingDir = "/tmp"
 
 [poststorage.amss]
 url = "http://ambox.enduro-sdps:64081"
 user = "test"
 key = "test"
-
-[poststorage.bucket]
-endpoint = "http://minio.enduro-sdps:9000"
-pathStyle = true
-accessKey = "minio"
-secretKey = "minio123"
-region = "us-west-1"
-bucket = "ais"
 
 [apis]
 enabled = true
@@ -107,7 +100,7 @@ sharedPath = "/home/enduro/preprocessing"
 type = "poststorage"
 namespace = "default"
 taskQueue = "sfa-enduro"
-workflowName = "ais"
+workflowName = "poststorage"
 ```
 
 ## Local environment
@@ -475,26 +468,6 @@ file) also uses a number of other more general Enduro
 * `bagvalidate`
 * `ffvalidate`
 * `xmlvalidate`
-
-The AIS poststorage child workflow uses one custom workflow activity maintained
-in this repository:
-
-#### Create AIS metadata bundle
-
-Extracts all relevant metadata from the SIP and resulting AIP and delivers it to
-the AIS for synchronization.
-
-##### Steps
-
-* Generate a new XML document that combines the contents of the two source files
-  (the SIP `metadata.xml` or `UpdatedAreldaMetadata.xml` file, and the AIP METS
-  file)
-* ZIP the generated file and deposit it in an `ais` MinIO bucket
-
-##### Success criteria
-
-* Metadata bundle is successfully generated and deposited
-* AIS is able to receive and ingest the metadata
 
 [Enduro development manual]: https://enduro.readthedocs.io/dev-manual/devel/
 [go]: https://go.dev/doc/install

@@ -83,7 +83,7 @@ integration issues.
 
 - local development against a running HTTP API
 - Tilt/Kubernetes environment testing
-- manual workflow testing for APIS-related preprocessing and AIS behavior
+- manual workflow testing for APIS-related preprocessing/poststorage
 - lightweight client integration testing
 
 ## What This Mock Is Not For

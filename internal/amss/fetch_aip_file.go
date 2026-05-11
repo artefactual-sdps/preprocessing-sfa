@@ -1,4 +1,4 @@
-package ais
+package amss
 
 import (
 	"context"
@@ -7,11 +7,9 @@ import (
 	"path/filepath"
 
 	"go.artefactual.dev/tools/temporal"
-
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 )
 
-const FetchActivityName = "fetch-amss-file"
+const FetchActivityName = "fetch-aip-file"
 
 type (
 	FetchActivityParams struct {
@@ -21,11 +19,11 @@ type (
 	}
 	FetchActivityResult struct{}
 	FetchActivity       struct {
-		amssClient amss.Client
+		amssClient Client
 	}
 )
 
-func NewFetchActivity(amssClient amss.Client) *FetchActivity {
+func NewFetchActivity(amssClient Client) *FetchActivity {
 	return &FetchActivity{amssClient: amssClient}
 }
 

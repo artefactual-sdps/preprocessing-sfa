@@ -1,16 +1,12 @@
-package ais
+package amss
 
-import (
-	"context"
-
-	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
-)
+import "context"
 
 const GetAIPPathActivityName = "get-aip-path"
 
 type (
 	GetAIPPathActivity struct {
-		amssClient amss.Client
+		amssClient Client
 	}
 	GetAIPPathActivityParams struct {
 		AIPUUID string
@@ -20,7 +16,7 @@ type (
 	}
 )
 
-func NewGetAIPPathActivity(amssClient amss.Client) *GetAIPPathActivity {
+func NewGetAIPPathActivity(amssClient Client) *GetAIPPathActivity {
 	return &GetAIPPathActivity{amssClient: amssClient}
 }
 
