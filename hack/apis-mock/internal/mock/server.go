@@ -155,8 +155,8 @@ func (h *Handler) APIImporttasksIDImportrunsPost(
 	if task.status != gen.ImportTaskStatusAnalysiert {
 		return badRequest("cannot create import run before analysis has finished"), nil
 	}
-	if task.analysisResult != gen.AnalysisResultAlleNeu && task.analysisResult != gen.AnalysisResultAlleGleich {
-		return badRequest("cannot create import run for this analysis result"), nil
+	if task.analysisResult == gen.AnalysisResultFehler {
+		return badRequest("cannot create import run for failed analysis result"), nil
 	}
 	if task.runID != "" {
 		return badRequest("cannot create a second import run for the same task"), nil

@@ -105,6 +105,32 @@ func TestConflictTaskCanBeCancelled(t *testing.T) {
 	})
 }
 
+func TestConflictTaskCanStartImportRunAfterDecision(t *testing.T) {
+	ctx := t.Context()
+	h := mock.NewHandler()
+
+	taskID := createTask(t, ctx, h, "metadata-mock-konflikte.xml", "dev@example.com")
+	_ = getTaskStatus(t, ctx, h, taskID)
+	_ = getTaskStatus(t, ctx, h, taskID)
+	status := getTaskStatus(t, ctx, h, taskID)
+	assert.DeepEqual(t, status, &gen.ImportTaskStatusResponse{
+		Status:         gen.ImportTaskStatusAnalysiert,
+		AnalysisResult: gen.NewOptNilAnalysisResult(gen.AnalysisResultKonflikte),
+	})
+
+	runID := createRun(t, ctx, h, taskID, "METS.xml", gen.ImportBehaviourTypeOverwriteAndAppend)
+	status = getTaskStatus(t, ctx, h, taskID)
+	assert.DeepEqual(t, status, &gen.ImportTaskStatusResponse{
+		Status:         gen.ImportTaskStatusWirdImportiert,
+		AnalysisResult: gen.NewOptNilAnalysisResult(gen.AnalysisResultKonflikte),
+	})
+
+	runStatus := getImportRunStatus(t, ctx, h, taskID, runID)
+	assert.DeepEqual(t, runStatus, &gen.ImportRunStatusResponse{
+		Status: gen.ImportStatusStarted,
+	})
+}
+
 func TestImportFailureIsSurfacedThroughTaskStatus(t *testing.T) {
 	ctx := t.Context()
 	h := mock.NewHandler()
