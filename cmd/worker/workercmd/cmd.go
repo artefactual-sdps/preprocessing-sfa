@@ -274,6 +274,10 @@ func (m *Main) registerPoststorageWorkflow(packages *ssclient.PackagesService) {
 	)
 
 	m.temporalWorker.RegisterActivityWithOptions(
+		amss.NewGetAIPPathActivity(packages).Execute,
+		temporalsdk_activity.RegisterOptions{Name: amss.GetAIPPathActivityName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
 		amss.NewFetchActivity(packages).Execute,
 		temporalsdk_activity.RegisterOptions{Name: amss.FetchActivityName},
 	)

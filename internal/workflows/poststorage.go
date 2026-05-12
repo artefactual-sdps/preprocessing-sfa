@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/artefactual-sdps/enduro/pkg/childwf"
@@ -53,6 +54,29 @@ func (w *Poststorage) Execute(
 		)
 	}
 
+	var getAIPPathResult amss.GetAIPPathActivityResult
+	err = temporalsdk_workflow.ExecuteActivity(
+		temporalsdk_workflow.WithActivityOptions(
+			ctx,
+			temporalsdk_workflow.ActivityOptions{
+				ScheduleToCloseTimeout: 10 * time.Minute,
+				RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+					InitialInterval:    15 * time.Second,
+					BackoffCoefficient: 2,
+					MaximumInterval:    time.Minute,
+					MaximumAttempts:    5,
+				},
+			},
+		),
+		amss.GetAIPPathActivityName,
+		&amss.GetAIPPathActivityParams{
+			AIPUUID: aipUUID,
+		},
+	).Get(ctx, &getAIPPathResult)
+	if err != nil {
+		return nil, err
+	}
+
 	// Activities running within a session.
 	{
 		var sessErr error
@@ -70,7 +94,7 @@ func (w *Poststorage) Execute(
 				return nil, fmt.Errorf("error creating session: %v", err)
 			}
 
-			sessErr = w.SessionHandler(sessCtx, aipUUID)
+			sessErr = w.SessionHandler(sessCtx, aipUUID, getAIPPathResult.Path)
 
 			// We want to retry the session if it has been canceled as a result
 			// of losing the worker but not otherwise. This scenario seems to be
@@ -106,7 +130,7 @@ func (w *Poststorage) Execute(
 	return &childwf.PostStorageResult{}, nil
 }
 
-func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID uuid.UUID) (e error) {
+func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID uuid.UUID, aipPath string) (e error) {
 	removePaths := []string{}
 
 	defer func() {
@@ -123,8 +147,11 @@ func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID u
 		temporalsdk_workflow.CompleteSession(ctx)
 	}()
 
+	// In case the AIP is compressed, remove its UUID and the possible
+	// extension from the directory/file name, and append the UUID back.
 	aipUUIDString := aipUUID.String()
-	localDir := filepath.Join(w.cfg.WorkingDir, aipUUIDString)
+	aipDirName := strings.Split(filepath.Base(aipPath), aipUUIDString)[0] + aipUUIDString
+	localDir := filepath.Join(w.cfg.WorkingDir, fmt.Sprintf("search-md_%s", aipDirName))
 	metsName := fmt.Sprintf("METS.%s.xml", aipUUIDString)
 	metsPath := filepath.Join(localDir, metsName)
 
@@ -136,7 +163,7 @@ func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID u
 		amss.FetchActivityName,
 		&amss.FetchActivityParams{
 			AIPUUID:      aipUUID,
-			RelativePath: fmt.Sprintf("%s/data/%s", aipUUIDString, metsName),
+			RelativePath: fmt.Sprintf("%s/data/%s", aipDirName, metsName),
 			Destination:  metsPath,
 		},
 	).Get(ctx, &fetchMETSResult)
