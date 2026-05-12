@@ -13,7 +13,7 @@ import (
 
 func TestTaskStatusDrivesAnalysisAndImportLifecycle(t *testing.T) {
 	ctx := t.Context()
-	h := mock.NewHandler()
+	h := newHandler()
 
 	taskID := createTask(t, ctx, h, "metadata.xml", "dev@example.com")
 	status := getTaskStatus(t, ctx, h, taskID)
@@ -65,9 +65,9 @@ func TestTaskStatusDrivesAnalysisAndImportLifecycle(t *testing.T) {
 
 func TestConflictTaskCanBeCancelled(t *testing.T) {
 	ctx := t.Context()
-	h := mock.NewHandler()
+	h := mock.NewHandler(gen.AnalysisResultKonflikte, gen.ImportResultErfolgreich)
 
-	taskID := createTask(t, ctx, h, "metadata-mock-konflikte.xml", "dev@example.com")
+	taskID := createTask(t, ctx, h, "metadata.xml", "dev@example.com")
 	_ = getTaskStatus(t, ctx, h, taskID)
 	_ = getTaskStatus(t, ctx, h, taskID)
 	status := getTaskStatus(t, ctx, h, taskID)
@@ -107,9 +107,9 @@ func TestConflictTaskCanBeCancelled(t *testing.T) {
 
 func TestConflictTaskCanStartImportRunAfterDecision(t *testing.T) {
 	ctx := t.Context()
-	h := mock.NewHandler()
+	h := mock.NewHandler(gen.AnalysisResultKonflikte, gen.ImportResultErfolgreich)
 
-	taskID := createTask(t, ctx, h, "metadata-mock-konflikte.xml", "dev@example.com")
+	taskID := createTask(t, ctx, h, "metadata.xml", "dev@example.com")
 	_ = getTaskStatus(t, ctx, h, taskID)
 	_ = getTaskStatus(t, ctx, h, taskID)
 	status := getTaskStatus(t, ctx, h, taskID)
@@ -133,13 +133,13 @@ func TestConflictTaskCanStartImportRunAfterDecision(t *testing.T) {
 
 func TestImportFailureIsSurfacedThroughTaskStatus(t *testing.T) {
 	ctx := t.Context()
-	h := mock.NewHandler()
+	h := mock.NewHandler(gen.AnalysisResultAlleNeu, gen.ImportResultFehler)
 
 	taskID := createTask(t, ctx, h, "metadata.xml", "dev@example.com")
 	_ = getTaskStatus(t, ctx, h, taskID)
 	_ = getTaskStatus(t, ctx, h, taskID)
 	_ = getTaskStatus(t, ctx, h, taskID)
-	runID := createRun(t, ctx, h, taskID, "METS-mock-import-fehler.xml", "")
+	runID := createRun(t, ctx, h, taskID, "METS.xml", "")
 	_ = getTaskStatus(t, ctx, h, taskID)
 	_ = getTaskStatus(t, ctx, h, taskID)
 	status := getTaskStatus(t, ctx, h, taskID)
@@ -156,9 +156,49 @@ func TestImportFailureIsSurfacedThroughTaskStatus(t *testing.T) {
 	})
 }
 
+func TestDefaultResultsCanBeConfigured(t *testing.T) {
+	ctx := t.Context()
+	h := mock.NewHandler(gen.AnalysisResultAlleGleich, gen.ImportResultFehler)
+
+	taskID := createTask(t, ctx, h, "metadata.xml", "dev@example.com")
+	_ = getTaskStatus(t, ctx, h, taskID)
+	_ = getTaskStatus(t, ctx, h, taskID)
+	_ = getTaskStatus(t, ctx, h, taskID)
+	runID := createRun(t, ctx, h, taskID, "METS.xml", "")
+	_ = getTaskStatus(t, ctx, h, taskID)
+	status := getTaskStatus(t, ctx, h, taskID)
+	assert.DeepEqual(t, status, &gen.ImportTaskStatusResponse{
+		Status:         gen.ImportTaskStatusImportiert,
+		AnalysisResult: gen.NewOptNilAnalysisResult(gen.AnalysisResultAlleGleich),
+		ImportResult:   gen.NewOptNilImportResult(gen.ImportResultFehler),
+	})
+
+	runStatus := getImportRunStatus(t, ctx, h, taskID, runID)
+	assert.DeepEqual(t, runStatus, &gen.ImportRunStatusResponse{
+		Status:       gen.ImportStatusFailed,
+		ImportResult: gen.NewOptNilImportResult(gen.ImportResultFehler),
+	})
+}
+
+func TestConfiguredResultParsing(t *testing.T) {
+	analysisResult, err := mock.ParseAnalysisResult(" Konflikte ")
+	assert.NilError(t, err)
+	assert.Equal(t, analysisResult, gen.AnalysisResultKonflikte)
+
+	importResult, err := mock.ParseImportResult("Fehler")
+	assert.NilError(t, err)
+	assert.Equal(t, importResult, gen.ImportResultFehler)
+
+	_, err = mock.ParseAnalysisResult("missing")
+	assert.ErrorContains(t, err, `invalid value: "missing"`)
+
+	_, err = mock.ParseImportResult("missing")
+	assert.ErrorContains(t, err, `invalid value: "missing"`)
+}
+
 func TestPatchUnknownTaskReturnsNotFound(t *testing.T) {
 	ctx := t.Context()
-	h := mock.NewHandler()
+	h := newHandler()
 
 	res, err := h.APIImporttasksIDCancelPost(
 		ctx,
@@ -175,7 +215,7 @@ func TestPatchUnknownTaskReturnsNotFound(t *testing.T) {
 
 func TestStatusUnknownTaskReturnsNotFound(t *testing.T) {
 	ctx := t.Context()
-	h := mock.NewHandler()
+	h := newHandler()
 
 	res, err := h.APIImporttasksIDStatusGet(ctx, gen.APIImporttasksIDStatusGetParams{ID: "missing"})
 	assert.NilError(t, err)
@@ -195,6 +235,10 @@ func TestSecurityHandlerTokenValidation(t *testing.T) {
 
 	_, err = sec.HandleSmart(ctx, gen.APIHealthzGetOperation, gen.Smart{Token: "wrong"})
 	assert.Error(t, err, "invalid bearer token")
+}
+
+func newHandler() *mock.Handler {
+	return mock.NewHandler(mock.DefaultAnalysisResult, mock.DefaultImportResult)
 }
 
 func createTask(t *testing.T, ctx context.Context, h *mock.Handler, filename, username string) string {

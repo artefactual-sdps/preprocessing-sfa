@@ -22,7 +22,17 @@ custom_build(
 docker_build(ref="apis-mock:dev", context="hack/apis-mock")
 
 # Kubernetes manifests
-k8s_yaml(kustomize("hack/kube"))
+kube_objects = decode_yaml_stream(kustomize("hack/kube"))
+for obj in kube_objects:
+  if (
+    obj.get("kind") == "Deployment" and
+    obj.get("metadata", {}).get("name") == "apis-mock"
+  ):
+    env = obj["spec"]["template"]["spec"]["containers"][0]["env"]
+    env[0]["value"] = os.environ.get("MOCK_ANALYSIS_RESULT") or env[0]["value"]
+    env[1]["value"] = os.environ.get("MOCK_IMPORT_RESULT") or env[1]["value"]
+
+k8s_yaml(encode_yaml_stream(kube_objects))
 
 # Tilt resources
 k8s_resource(

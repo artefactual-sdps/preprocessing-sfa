@@ -17,6 +17,11 @@ spec:
       containers:
         - name: apis-mock
           image: apis-mock:dev
+          env:
+            - name: MOCK_ANALYSIS_RESULT
+              value: AlleNeu
+            - name: MOCK_IMPORT_RESULT
+              value: Erfolgreich
           ports:
             - containerPort: 8080
           resources: {}

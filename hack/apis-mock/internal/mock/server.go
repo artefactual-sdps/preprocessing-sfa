@@ -11,6 +11,11 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/hack/apis-mock/internal/gen"
 )
 
+const (
+	DefaultAnalysisResult = gen.AnalysisResultAlleNeu
+	DefaultImportResult   = gen.ImportResultErfolgreich
+)
+
 // Security implements the APIS authentication scheme for the generated server.
 type Security struct {
 	token string
@@ -33,17 +38,17 @@ func (s *Security) HandleSmart(ctx context.Context, _ gen.OperationName, t gen.S
 // Handler keeps just enough state to reproduce the APIS workflow:
 // analysis, optional cancellation, and one import run.
 type Handler struct {
-	mu       sync.Mutex
-	nextTask int
-	nextRun  int
-	tasks    map[string]*taskState
+	mu             sync.Mutex
+	nextTask       int
+	nextRun        int
+	tasks          map[string]*taskState
+	analysisResult gen.AnalysisResult
+	importResult   gen.ImportResult
 }
 
 // taskState stores the minimal in-memory state for an APIS import task.
 type taskState struct {
 	id             string
-	name           string
-	createdBy      string
 	createdAt      time.Time
 	status         gen.ImportTaskStatus
 	analysisPolls  int
@@ -56,12 +61,15 @@ type taskState struct {
 }
 
 // NewHandler returns the in-memory APIS mock handler.
-func NewHandler() *Handler {
-	return &Handler{tasks: make(map[string]*taskState)}
+func NewHandler(analysisResult gen.AnalysisResult, importResult gen.ImportResult) *Handler {
+	return &Handler{
+		tasks:          make(map[string]*taskState),
+		analysisResult: analysisResult,
+		importResult:   importResult,
+	}
 }
 
-// APIHealthzGet is left unimplemented because the preprocessing
-// integration work only depends on the import-task endpoints.
+// APIHealthzGet returns the minimal health response needed for local checks.
 func (h *Handler) APIHealthzGet(_ context.Context) (gen.APIHealthzGetRes, error) {
 	return &gen.APIHealthzGetOK{Status: "OK"}, nil
 }
@@ -71,7 +79,7 @@ func (h *Handler) APIHealthzGet(_ context.Context) (gen.APIHealthzGetRes, error)
 // lifecycle until the terminal result becomes visible.
 func (h *Handler) APIImporttasksPost(
 	_ context.Context,
-	req gen.OptAPIImporttasksPostReq,
+	_ gen.OptAPIImporttasksPostReq,
 ) (gen.APIImporttasksPostRes, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -82,16 +90,8 @@ func (h *Handler) APIImporttasksPost(
 		id:             taskID,
 		createdAt:      time.Now().UTC(),
 		status:         gen.ImportTaskStatusNeu,
-		analysisResult: gen.AnalysisResultAlleNeu,
-		importResult:   gen.ImportResultErfolgreich,
-	}
-
-	if r, ok := req.Get(); ok {
-		task.name = r.File.Name
-		task.createdBy = r.Username
-		if result, ok := analysisResultFromName(r.File.Name); ok {
-			task.analysisResult = result
-		}
+		analysisResult: h.analysisResult,
+		importResult:   h.importResult,
 	}
 
 	h.tasks[taskID] = task
@@ -136,7 +136,7 @@ func (h *Handler) APIImporttasksIDCancelPost(
 // on the task status endpoint exposes the import lifecycle.
 func (h *Handler) APIImporttasksIDImportrunsPost(
 	_ context.Context,
-	req gen.OptAPIImporttasksIDImportrunsPostReq,
+	_ gen.OptAPIImporttasksIDImportrunsPostReq,
 	params gen.APIImporttasksIDImportrunsPostParams,
 ) (gen.APIImporttasksIDImportrunsPostRes, error) {
 	h.mu.Lock()
@@ -167,12 +167,7 @@ func (h *Handler) APIImporttasksIDImportrunsPost(
 	task.runID = runID
 	task.status = gen.ImportTaskStatusWirdImportiert
 	task.importPolls = 0
-	task.importResult = gen.ImportResultErfolgreich
-	if r, ok := req.Get(); ok {
-		if result, ok := importResultFromName(r.File.Name); ok {
-			task.importResult = result
-		}
-	}
+	task.importResult = h.importResult
 
 	return &gen.CreateImportRunResponse{
 		ImportRunId: runID,
@@ -309,32 +304,18 @@ func badRequest(detail string) *gen.APIImporttasksIDImportrunsPostBadRequest {
 	}
 }
 
-// analysisResultFromName maps filename markers to analysis outcomes for manual and
-// automated development scenarios.
-func analysisResultFromName(value string) (gen.AnalysisResult, bool) {
-	switch {
-	case strings.Contains(value, "mock-fehler"):
-		return gen.AnalysisResultFehler, true
-	case strings.Contains(value, "mock-konflikte"):
-		return gen.AnalysisResultKonflikte, true
-	case strings.Contains(value, "mock-allegleich"):
-		return gen.AnalysisResultAlleGleich, true
-	case strings.Contains(value, "mock-alleneu"):
-		return gen.AnalysisResultAlleNeu, true
-	default:
-		return "", false
-	}
+// ParseAnalysisResult parses a configured analysis result.
+func ParseAnalysisResult(value string) (gen.AnalysisResult, error) {
+	var result gen.AnalysisResult
+	err := result.UnmarshalText([]byte(strings.TrimSpace(value)))
+
+	return result, err
 }
 
-// importResultFromName maps filename markers to import outcomes for manual and
-// automated development scenarios.
-func importResultFromName(value string) (gen.ImportResult, bool) {
-	switch {
-	case strings.Contains(value, "mock-import-fehler"):
-		return gen.ImportResultFehler, true
-	case strings.Contains(value, "mock-import-erfolgreich"):
-		return gen.ImportResultErfolgreich, true
-	default:
-		return "", false
-	}
+// ParseImportResult parses a configured import result.
+func ParseImportResult(value string) (gen.ImportResult, error) {
+	var result gen.ImportResult
+	err := result.UnmarshalText([]byte(strings.TrimSpace(value)))
+
+	return result, err
 }

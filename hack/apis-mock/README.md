@@ -72,8 +72,8 @@ The mock is intentionally small:
 - one in-memory task record per `POST /api/ImportTasks`
 - one optional import run per task
 - `GET /api/ImportTasks/{id}/status` is the only endpoint that advances state
-- the default path is the happy path, and request hints override it when a test
-  or manual run needs a conflict or failure
+- terminal analysis and import results are configured with environment
+  variables
 
 That shape keeps the implementation easy to read and easy to tweak for local
 development, while still matching the workflow semantics described in the APIS
@@ -118,8 +118,7 @@ go run ./cmd/mockapi
 Server listens on `:8080` by default.
 
 The generated security model expects a bearer token on all endpoints. The
-health endpoint is intentionally not implemented because the current
-integration work only needs the import-task endpoints.
+health endpoint returns a minimal `OK` response.
 
 ## Build binary
 
@@ -132,24 +131,44 @@ go build -o bin/mockapi ./cmd/mockapi
 ```bash
 docker build -t apis-mock:latest .
 docker run --rm -p 8080:8080 apis-mock:latest
+docker run --rm -p 8080:8080 \
+  -e MOCK_ANALYSIS_RESULT=Konflikte \
+  -e MOCK_IMPORT_RESULT=Fehler \
+  apis-mock:latest
 ```
 
 ## Mock tuning switches
 
 - `MOCK_AUTH_TOKEN=some-token` -> expected bearer token (default: `mock-token`)
 - `PORT=9090` -> change listening port
+- `MOCK_ANALYSIS_RESULT=Konflikte` -> terminal `analysisResult` assigned to
+  new import tasks (fallback if unset: `AlleNeu`; valid values: `AlleNeu`,
+  `AlleGleich`, `Konflikte`, `Fehler`)
+- `MOCK_IMPORT_RESULT=Fehler` -> terminal `importResult` assigned to import
+  runs (fallback if unset: `Erfolgreich`; valid values: `Erfolgreich`,
+  `Fehler`)
+
+The configured result values apply to every task and import run created during
+the mock server process.
+
+The result variables are also read by the Tilt-managed Kubernetes Deployment.
+Add them to the repo-local `.tilt.env` to change the mock behavior in a Tilt
+environment:
+
+```bash
+MOCK_ANALYSIS_RESULT=Konflikte
+MOCK_IMPORT_RESULT=Fehler
+```
 
 ## What Is Intentionally Simplified
 
 - all state is in memory and is lost on restart
 - task and import statuses advance in a short deterministic sequence when polled
 - auth is a single bearer-token equality check against `MOCK_AUTH_TOKEN`
-- `/api/Healthz` is intentionally not implemented
+- `/api/Healthz` returns a minimal `OK` response
 - percentages and document counts are omitted because the current integration
   only cares about statuses and terminal results
 - only the APIS behaviors currently needed by preprocessing-sfa are modeled
-- request hints are taken from uploaded filenames so individual scenarios can
-  be forced without changing config or restarting the mock
 
 ## Notes on behavior
 
@@ -172,17 +191,6 @@ docker run --rm -p 8080:8080 apis-mock:latest
 - Analysis results `Konflikte` and `Fehler` stop the flow before import,
   matching the current workflow expectations.
 - Cancelling a task after analysis keeps the completed `analysisResult` visible.
-- The mock accepts request hints in uploaded filenames to force per-request
-  outcomes without restarting.
-  The checks are simple substring matches, so use the lowercase markers
-  exactly as shown:
-  - `mock-alleneu`, `mock-allegleich`, `mock-konflikte`, `mock-fehler`. These
-  substrings must be put in the metadata.xml file name, and only apply to the
-  analysis results. The filename is passed to the `/api/ImportTasks/ POST`
-  endpoint.
-  - `mock-import-erfolgreich`, `mock-import-fehler`. These substrings must be
-  put in the METS file name, and only apply to the importRun results. The
-  filename is passed to the `/api/ImportTasks/{id}/importRuns/ POST` endpoint.
 
 ## Example Flows
 
@@ -197,15 +205,10 @@ curl \
   http://localhost:8080/api/ImportTasks
 ```
 
-Create a task that ends in a metadata conflict:
+Run with a metadata conflict result:
 
 ```bash
-curl \
-  -H 'Authorization: Bearer mock-token' \
-  -F 'file=@metadata.xml;filename=metadata-mock-konflikte.xml' \
-  -F 'sipType=BornDigitalSIP' \
-  -F 'username=archivist@example.com' \
-  http://localhost:8080/api/ImportTasks
+MOCK_ANALYSIS_RESULT=Konflikte go run ./cmd/mockapi
 ```
 
 Poll task status:
@@ -216,12 +219,8 @@ curl \
   http://localhost:8080/api/ImportTasks/task-000001/status
 ```
 
-Start an import run that will fail:
+Run with a failed import result:
 
 ```bash
-curl \
-  -H 'Authorization: Bearer mock-token' \
-  -F 'file=@METS.xml;filename=METS-mock-import-fehler.xml' \
-  -F 'importBehaviour=AppendOnly' \
-  http://localhost:8080/api/ImportTasks/task-000001/importRuns
+MOCK_IMPORT_RESULT=Fehler go run ./cmd/mockapi
 ```

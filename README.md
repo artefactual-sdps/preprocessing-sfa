@@ -126,6 +126,15 @@ starting, stopping, and clearing the environment, are documented in Enduro.
 This repository can also provide local overrides through its own `.tilt.env`
 file, including settings such as `TRIGGER_MODE_AUTO`.
 
+The local APIS mock uses happy path terminal results by default. Set these
+values in this repository's `.tilt.env` to exercise APIS conflict or failure
+flows:
+
+```bash
+MOCK_ANALYSIS_RESULT=AlleNeu      # AlleNeu, AlleGleich, Konflikte, Fehler
+MOCK_IMPORT_RESULT=Erfolgreich    # Erfolgreich, Fehler
+```
+
 ### Requirements for development
 
 While we run the services inside a Kubernetes cluster we recomend installing
