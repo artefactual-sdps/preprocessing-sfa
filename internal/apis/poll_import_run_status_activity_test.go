@@ -33,6 +33,13 @@ func TestPollImportRunStatusActivity(t *testing.T) {
 					gomock.Any(),
 					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000001"},
 				).Return(
+					&apisgen.ImportTaskStatusResponse{Status: apisgen.ImportTaskStatusAnalysiert},
+					nil,
+				)
+				m.APIImporttasksIDStatusGet(
+					gomock.Any(),
+					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000001"},
+				).Return(
 					&apisgen.ImportTaskStatusResponse{Status: apisgen.ImportTaskStatusWirdImportiert},
 					nil,
 				)
@@ -133,11 +140,11 @@ func TestPollImportRunStatusActivity(t *testing.T) {
 					gomock.Any(),
 					apisgen.APIImporttasksIDStatusGetParams{ID: "task-000007"},
 				).Return(
-					&apisgen.ImportTaskStatusResponse{Status: apisgen.ImportTaskStatusAnalysiert},
+					&apisgen.ImportTaskStatusResponse{Status: apisgen.ImportTaskStatusInAnalyse},
 					nil,
 				)
 			},
-			wantErr: "unexpected APIS import task status during import: Analysiert",
+			wantErr: "unexpected APIS import task status during import: InAnalyse",
 		},
 		{
 			name:   "returns error when import result is missing",

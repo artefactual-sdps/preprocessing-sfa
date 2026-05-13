@@ -101,12 +101,11 @@ func (a *PollImportRunStatusActivity) Execute(
 
 func importComplete(status *gen.ImportTaskStatusResponse) (bool, error) {
 	switch status.Status {
-	case gen.ImportTaskStatusWirdImportiert:
+	case gen.ImportTaskStatusAnalysiert, gen.ImportTaskStatusWirdImportiert:
 		return false, nil
 	case gen.ImportTaskStatusImportiert:
 		return true, nil
-	case gen.ImportTaskStatusNeu, gen.ImportTaskStatusInAnalyse, gen.ImportTaskStatusAnalysiert,
-		gen.ImportTaskStatusAbgebrochen:
+	case gen.ImportTaskStatusNeu, gen.ImportTaskStatusInAnalyse, gen.ImportTaskStatusAbgebrochen:
 		return false, temporal.NewNonRetryableError(fmt.Errorf(
 			"unexpected APIS import task status during import: %s", status.Status,
 		))
