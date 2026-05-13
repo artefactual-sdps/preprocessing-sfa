@@ -1330,46 +1330,6 @@ func (s *HealthStatusResult) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes ImportBehaviourType as json.
-func (s ImportBehaviourType) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes ImportBehaviourType from json.
-func (s *ImportBehaviourType) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ImportBehaviourType to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch ImportBehaviourType(v) {
-	case ImportBehaviourTypeOverwriteAndAppend:
-		*s = ImportBehaviourTypeOverwriteAndAppend
-	case ImportBehaviourTypeAppendOnly:
-		*s = ImportBehaviourTypeAppendOnly
-	default:
-		*s = ImportBehaviourType(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s ImportBehaviourType) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ImportBehaviourType) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes ImportResult as json.
 func (s ImportResult) Encode(e *jx.Encoder) {
 	e.Str(string(s))
@@ -1873,39 +1833,6 @@ func (s *OptFloat64) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes ImportBehaviourType as json.
-func (o OptImportBehaviourType) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	e.Str(string(o.Value))
-}
-
-// Decode decodes ImportBehaviourType from json.
-func (o *OptImportBehaviourType) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptImportBehaviourType to nil")
-	}
-	o.Set = true
-	if err := o.Value.Decode(d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptImportBehaviourType) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptImportBehaviourType) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes AnalysisResult as json.
 func (o OptNilAnalysisResult) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -2371,50 +2298,6 @@ func (s ProblemDetailsAdditional) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *ProblemDetailsAdditional) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes SipType as json.
-func (s SipType) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes SipType from json.
-func (s *SipType) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode SipType to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch SipType(v) {
-	case SipTypeDigitizedAIP:
-		*s = SipTypeDigitizedAIP
-	case SipTypeDigitizedSIP:
-		*s = SipTypeDigitizedSIP
-	case SipTypeBornDigitalAIP:
-		*s = SipTypeBornDigitalAIP
-	case SipTypeBornDigitalSIP:
-		*s = SipTypeBornDigitalSIP
-	default:
-		*s = SipType(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s SipType) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *SipType) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

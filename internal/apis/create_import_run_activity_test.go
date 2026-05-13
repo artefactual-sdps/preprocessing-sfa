@@ -73,8 +73,9 @@ func TestCreateImportRunActivity(t *testing.T) {
 		{
 			name: "returns bad request error",
 			params: apis.CreateImportRunParams{
-				TaskID:   "task-000003",
-				METSPath: metsPath,
+				TaskID:          "task-000003",
+				METSPath:        metsPath,
+				ImportBehaviour: apisgen.ImportBehaviourTypeAppendOnly,
 			},
 			expect: func(t *testing.T, m *fake_apis.MockClientMockRecorder) {
 				t.Helper()
@@ -90,8 +91,9 @@ func TestCreateImportRunActivity(t *testing.T) {
 		{
 			name: "returns not found error",
 			params: apis.CreateImportRunParams{
-				TaskID:   "task-000004",
-				METSPath: metsPath,
+				TaskID:          "task-000004",
+				METSPath:        metsPath,
+				ImportBehaviour: apisgen.ImportBehaviourTypeAppendOnly,
 			},
 			expect: func(t *testing.T, m *fake_apis.MockClientMockRecorder) {
 				t.Helper()
@@ -107,8 +109,9 @@ func TestCreateImportRunActivity(t *testing.T) {
 		{
 			name: "returns unauthorized error",
 			params: apis.CreateImportRunParams{
-				TaskID:   "task-000005",
-				METSPath: metsPath,
+				TaskID:          "task-000005",
+				METSPath:        metsPath,
+				ImportBehaviour: apisgen.ImportBehaviourTypeAppendOnly,
 			},
 			expect: func(t *testing.T, m *fake_apis.MockClientMockRecorder) {
 				t.Helper()
@@ -124,8 +127,9 @@ func TestCreateImportRunActivity(t *testing.T) {
 		{
 			name: "returns unsupported media type error",
 			params: apis.CreateImportRunParams{
-				TaskID:   "task-000006",
-				METSPath: metsPath,
+				TaskID:          "task-000006",
+				METSPath:        metsPath,
+				ImportBehaviour: apisgen.ImportBehaviourTypeAppendOnly,
 			},
 			expect: func(t *testing.T, m *fake_apis.MockClientMockRecorder) {
 				t.Helper()
@@ -141,8 +145,9 @@ func TestCreateImportRunActivity(t *testing.T) {
 		{
 			name: "returns client error",
 			params: apis.CreateImportRunParams{
-				TaskID:   "task-000007",
-				METSPath: metsPath,
+				TaskID:          "task-000007",
+				METSPath:        metsPath,
+				ImportBehaviour: apisgen.ImportBehaviourTypeAppendOnly,
 			},
 			expect: func(t *testing.T, m *fake_apis.MockClientMockRecorder) {
 				t.Helper()
@@ -154,8 +159,9 @@ func TestCreateImportRunActivity(t *testing.T) {
 		{
 			name: "returns missing run ID error",
 			params: apis.CreateImportRunParams{
-				TaskID:   "task-000008",
-				METSPath: metsPath,
+				TaskID:          "task-000008",
+				METSPath:        metsPath,
+				ImportBehaviour: apisgen.ImportBehaviourTypeAppendOnly,
 			},
 			expect: func(t *testing.T, m *fake_apis.MockClientMockRecorder) {
 				t.Helper()

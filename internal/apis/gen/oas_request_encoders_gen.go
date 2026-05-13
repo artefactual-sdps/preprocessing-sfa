@@ -68,9 +68,7 @@ func encodeAPIImporttasksIDImportrunsPostRequest(
 	}
 	request := req.Value
 
-	q := uri.NewFormEncoder(map[string]string{
-		"importBehaviour": "application/json; charset=utf-8",
-	})
+	q := uri.NewFormEncoder(map[string]string{})
 	{
 		// Encode "importBehaviour" form field.
 		cfg := uri.QueryParameterEncodingConfig{
@@ -79,13 +77,10 @@ func encodeAPIImporttasksIDImportrunsPostRequest(
 			Explode: true,
 		}
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			var enc jx.Encoder
-			func(e *jx.Encoder) {
-				if request.ImportBehaviour.Set {
-					request.ImportBehaviour.Encode(e)
-				}
-			}(&enc)
-			return e.EncodeValue(string(enc.Bytes()))
+			if val, ok := request.ImportBehaviour.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
 		}); err != nil {
 			return errors.Wrap(err, "encode query")
 		}
@@ -127,9 +122,7 @@ func encodeAPIImporttasksPostRequest(
 	}
 	request := req.Value
 
-	q := uri.NewFormEncoder(map[string]string{
-		"sipType": "application/json; charset=utf-8",
-	})
+	q := uri.NewFormEncoder(map[string]string{})
 	{
 		// Encode "sipType" form field.
 		cfg := uri.QueryParameterEncodingConfig{
@@ -138,11 +131,7 @@ func encodeAPIImporttasksPostRequest(
 			Explode: true,
 		}
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			var enc jx.Encoder
-			func(e *jx.Encoder) {
-				request.SipType.Encode(e)
-			}(&enc)
-			return e.EncodeValue(string(enc.Bytes()))
+			return e.EncodeValue(conv.StringToString(string(request.SipType)))
 		}); err != nil {
 			return errors.Wrap(err, "encode query")
 		}

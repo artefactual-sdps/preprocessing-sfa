@@ -94,11 +94,7 @@
                     "format": "binary"
                   },
                   "importBehaviour": {
-                    "allOf": [
-                      {
-                        "$ref": "#/components/schemas/ImportBehaviourType"
-                      }
-                    ],
+                    "$ref": "#/components/schemas/ImportBehaviourType",
                     "description": "What kind of behaviour should be applied when importing the data,\r\ne.g. OverwriteAndAppend or AppendOnly.\r\n\r\n\r\nEnum values:\r\n- `OverwriteAndAppend`\r\n- `AppendOnly`",
                     "x-enumDescriptions": [
                       "",
@@ -252,11 +248,7 @@
                     "format": "binary"
                   },
                   "sipType": {
-                    "allOf": [
-                      {
-                        "$ref": "#/components/schemas/SipType"
-                      }
-                    ],
+                    "$ref": "#/components/schemas/SipType",
                     "description": "The source or type of the import, e.g. \"MigrationAccession\", \"MigrationDigitalisation\", \"Accession\" or \"Digitalisation\".\r\nThis is required for processing reasons.\r\n\r\n\r\nEnum values:\r\n- `DigitizedAIP`\r\n- `DigitizedSIP`\r\n- `BornDigitalAIP`\r\n- `BornDigitalSIP`",
                     "x-enumDescriptions": [
                       "",

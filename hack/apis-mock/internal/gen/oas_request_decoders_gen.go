@@ -198,19 +198,24 @@ func (s *Server) decodeAPIImporttasksIDImportrunsPostRequest(r *http.Request) (
 				}
 				if err := q.HasParam(cfg); err == nil {
 					if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-						val, err := d.DecodeValue()
-						if err != nil {
-							return err
-						}
-						if err := func(d *jx.Decoder) error {
-							optForm.ImportBehaviour.Reset()
-							if err := optForm.ImportBehaviour.Decode(d); err != nil {
+						var optFormDotImportBehaviourVal ImportBehaviourType
+						if err := func() error {
+							val, err := d.DecodeValue()
+							if err != nil {
 								return err
 							}
+
+							c, err := conv.ToString(val)
+							if err != nil {
+								return err
+							}
+
+							optFormDotImportBehaviourVal = ImportBehaviourType(c)
 							return nil
-						}(jx.DecodeStr(val)); err != nil {
+						}(); err != nil {
 							return err
 						}
+						optForm.ImportBehaviour.SetTo(optFormDotImportBehaviourVal)
 						return nil
 					}); err != nil {
 						return req, rawBody, close, errors.Wrap(err, "decode \"importBehaviour\"")
@@ -355,14 +360,13 @@ func (s *Server) decodeAPIImporttasksPostRequest(r *http.Request) (
 						if err != nil {
 							return err
 						}
-						if err := func(d *jx.Decoder) error {
-							if err := optForm.SipType.Decode(d); err != nil {
-								return err
-							}
-							return nil
-						}(jx.DecodeStr(val)); err != nil {
+
+						c, err := conv.ToString(val)
+						if err != nil {
 							return err
 						}
+
+						optForm.SipType = SipType(c)
 						return nil
 					}); err != nil {
 						return req, rawBody, close, errors.Wrap(err, "decode \"sipType\"")
