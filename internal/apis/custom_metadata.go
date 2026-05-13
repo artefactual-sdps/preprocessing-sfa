@@ -3,9 +3,16 @@ package apis
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis/gen"
 )
 
-const CustomMetadataKey = "apis"
+const (
+	CustomMetadataKey               = "apis"
+	DecisionOptionCancelIngest      = "Cancel ingest"
+	DecisionOptionContinueOverwrite = "Continue and overwrite"
+	DecisionOptionContinueAppend    = "Continue and append"
+)
 
 type CustomMetadata struct {
 	ImportTaskID string `json:"importTaskId"`
@@ -37,4 +44,17 @@ func (m *CustomMetadata) Unmarshal(data []byte) error {
 	}
 
 	return nil
+}
+
+func (m CustomMetadata) ImportBehaviour() (gen.ImportBehaviourType, error) {
+	switch m.Decision {
+	case "", DecisionOptionContinueAppend:
+		return gen.ImportBehaviourTypeAppendOnly, nil
+	case DecisionOptionContinueOverwrite:
+		return gen.ImportBehaviourTypeOverwriteAndAppend, nil
+	case DecisionOptionCancelIngest:
+		return "", fmt.Errorf("APIS import task %q was canceled during preprocessing", m.ImportTaskID)
+	default:
+		return "", fmt.Errorf("unsupported APIS decision %q for import task %q", m.Decision, m.ImportTaskID)
+	}
 }

@@ -28,12 +28,6 @@ import (
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/sip"
 )
 
-const (
-	DecisionOptionCancelIngest      = "Cancel ingest"
-	DecisionOptionContinueOverwrite = "Continue and overwrite"
-	DecisionOptionContinueAppend    = "Continue and append"
-)
-
 type Preprocessing struct {
 	psvc        persistence.Service
 	cfg         config.PreprocessingConfig
@@ -628,7 +622,7 @@ func (w *Preprocessing) createAPISImportTask(
 		apis.CreateImportTaskActivityName,
 		&apis.CreateImportTaskParams{
 			SIP:      sip,
-			Username: "preprocessing-sfa", // TODO: Use real username.
+			Username: "sfa-enduro", // TODO: Use real username.
 		},
 	).Get(ctx, &createAPISImportTask)
 	if err != nil {
@@ -769,9 +763,9 @@ func (w *Preprocessing) waitForAPISDecision(
 				taskID,
 			),
 			Options: []string{
-				DecisionOptionCancelIngest,
-				DecisionOptionContinueOverwrite,
-				DecisionOptionContinueAppend,
+				apis.DecisionOptionCancelIngest,
+				apis.DecisionOptionContinueOverwrite,
+				apis.DecisionOptionContinueAppend,
 			},
 		},
 	).Get(ctx, nil)
@@ -792,7 +786,7 @@ func (w *Preprocessing) waitForAPISDecision(
 	temporalsdk_workflow.GetSignalChannel(ctx, childwf.DecisionResponseSignalName).Receive(ctx, &decision)
 
 	switch decision.Option {
-	case DecisionOptionContinueOverwrite, DecisionOptionContinueAppend:
+	case apis.DecisionOptionContinueOverwrite, apis.DecisionOptionContinueAppend:
 		task.Succeed(
 			temporalsdk_workflow.Now(ctx),
 			"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
@@ -800,7 +794,7 @@ func (w *Preprocessing) waitForAPISDecision(
 			decision.Option,
 		)
 		return decision.Option, true
-	case DecisionOptionCancelIngest:
+	case apis.DecisionOptionCancelIngest:
 		// TODO: Add and use canceled as workflow outcome.
 		result.ValidationError(
 			temporalsdk_workflow.Now(ctx),

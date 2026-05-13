@@ -564,7 +564,7 @@ func (s *PreprocessingTestSuite) preAPISActivities(ar apisgen.AnalysisResult) (s
 		sessionCtx,
 		&apis.CreateImportTaskParams{
 			SIP:      expectedSIP,
-			Username: "preprocessing-sfa",
+			Username: "sfa-enduro",
 		},
 	).Return(
 		&apis.CreateImportTaskResult{TaskID: apisTaskID}, nil,
@@ -749,9 +749,9 @@ func (s *PreprocessingTestSuite) executeAsChildWithHumanReview(
 					apisTaskID,
 				),
 				Options: []string{
-					workflows.DecisionOptionCancelIngest,
-					workflows.DecisionOptionContinueOverwrite,
-					workflows.DecisionOptionContinueAppend,
+					apis.DecisionOptionCancelIngest,
+					apis.DecisionOptionContinueOverwrite,
+					apis.DecisionOptionContinueAppend,
 				},
 			},
 			request,
@@ -1265,7 +1265,7 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndOverwrite() {
 			SIPName:      sipName,
 		},
 		childwf.DecisionResponse{
-			Option: workflows.DecisionOptionContinueOverwrite,
+			Option: apis.DecisionOptionContinueOverwrite,
 		},
 	)
 
@@ -1275,14 +1275,14 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndOverwrite() {
 	s.Equal(
 		&childwf.PreprocessingResult{
 			Outcome:        childwf.OutcomeSuccess,
-			CustomMetadata: apisCustomMetadata(apisTaskID, workflows.DecisionOptionContinueOverwrite),
+			CustomMetadata: apisCustomMetadata(apisTaskID, apis.DecisionOptionContinueOverwrite),
 			RelativePath:   updatedRelPath,
 			Tasks: apisTasks(
 				apisTaskID,
 				fmt.Sprintf(
 					"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
 					apisTaskID,
-					workflows.DecisionOptionContinueOverwrite,
+					apis.DecisionOptionContinueOverwrite,
 				),
 				childwf.TaskOutcomeSuccess,
 				true,
@@ -1311,7 +1311,7 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndAppend() {
 			SIPName:      sipName,
 		},
 		childwf.DecisionResponse{
-			Option: workflows.DecisionOptionContinueAppend,
+			Option: apis.DecisionOptionContinueAppend,
 		},
 	)
 
@@ -1321,14 +1321,14 @@ func (s *PreprocessingTestSuite) TestHumanReviewContinueAndAppend() {
 	s.Equal(
 		&childwf.PreprocessingResult{
 			Outcome:        childwf.OutcomeSuccess,
-			CustomMetadata: apisCustomMetadata(apisTaskID, workflows.DecisionOptionContinueAppend),
+			CustomMetadata: apisCustomMetadata(apisTaskID, apis.DecisionOptionContinueAppend),
 			RelativePath:   updatedRelPath,
 			Tasks: apisTasks(
 				apisTaskID,
 				fmt.Sprintf(
 					"APIS detected metadata conflicts for import task ID %q but ingest was continued with user decision %q.",
 					apisTaskID,
-					workflows.DecisionOptionContinueAppend,
+					apis.DecisionOptionContinueAppend,
 				),
 				childwf.TaskOutcomeSuccess,
 				true,
@@ -1356,7 +1356,7 @@ func (s *PreprocessingTestSuite) TestHumanReviewCancelIngest() {
 			SIPName:      sipName,
 		},
 		childwf.DecisionResponse{
-			Option: workflows.DecisionOptionCancelIngest,
+			Option: apis.DecisionOptionCancelIngest,
 		},
 	)
 

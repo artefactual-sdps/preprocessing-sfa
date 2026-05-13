@@ -15,21 +15,27 @@ import (
 
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/amss"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/apis"
+	apisgen "github.com/artefactual-sdps/preprocessing-sfa/internal/apis/gen"
 	"github.com/artefactual-sdps/preprocessing-sfa/internal/config"
 )
 
 type Poststorage struct {
-	cfg config.PoststorageConfig
+	cfg         config.PoststorageConfig
+	apisEnabled bool
 }
 
-func NewPoststorage(cfg config.PoststorageConfig) *Poststorage {
-	return &Poststorage{cfg: cfg}
+func NewPoststorage(cfg config.PoststorageConfig, apisEnabled bool) *Poststorage {
+	return &Poststorage{
+		cfg:         cfg,
+		apisEnabled: apisEnabled,
+	}
 }
 
 func (w *Poststorage) Execute(
 	ctx temporalsdk_workflow.Context,
 	params *childwf.PostStorageParams,
 ) (r *childwf.PostStorageResult, e error) {
+	r = &childwf.PostStorageResult{}
 	logger := temporalsdk_workflow.GetLogger(ctx)
 	logger.Debug("Poststorage workflow running!", "params", params)
 
@@ -37,42 +43,16 @@ func (w *Poststorage) Execute(
 		logger.Debug("Poststorage workflow finished!", "result", r, "error", e)
 	}()
 
+	if !w.apisEnabled {
+		return r, nil
+	}
+
 	aipUUID, err := uuid.Parse(params.AIPUUID)
 	if err != nil {
 		return nil, fmt.Errorf("parse AIP UUID: %v", err)
 	}
 
-	if data, ok := params.CustomMetadata[apis.CustomMetadataKey]; ok {
-		var metadata apis.CustomMetadata
-		if err := metadata.Unmarshal(data); err != nil {
-			return nil, err
-		}
-		logger.Info(
-			"Received APIS custom metadata.",
-			"importTaskID", metadata.ImportTaskID,
-			"decision", metadata.Decision,
-		)
-	}
-
-	var getAIPPathResult amss.GetAIPPathActivityResult
-	err = temporalsdk_workflow.ExecuteActivity(
-		temporalsdk_workflow.WithActivityOptions(
-			ctx,
-			temporalsdk_workflow.ActivityOptions{
-				ScheduleToCloseTimeout: 10 * time.Minute,
-				RetryPolicy: &temporalsdk_temporal.RetryPolicy{
-					InitialInterval:    15 * time.Second,
-					BackoffCoefficient: 2,
-					MaximumInterval:    time.Minute,
-					MaximumAttempts:    5,
-				},
-			},
-		),
-		amss.GetAIPPathActivityName,
-		&amss.GetAIPPathActivityParams{
-			AIPUUID: aipUUID,
-		},
-	).Get(ctx, &getAIPPathResult)
+	apisMetadata, err := getApisMetadata(params.CustomMetadata)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +74,7 @@ func (w *Poststorage) Execute(
 				return nil, fmt.Errorf("error creating session: %v", err)
 			}
 
-			sessErr = w.SessionHandler(sessCtx, aipUUID, getAIPPathResult.Path)
+			sessErr = w.SessionHandler(sessCtx, r, aipUUID, apisMetadata)
 
 			// We want to retry the session if it has been canceled as a result
 			// of losing the worker but not otherwise. This scenario seems to be
@@ -127,10 +107,16 @@ func (w *Poststorage) Execute(
 		}
 	}
 
-	return &childwf.PostStorageResult{}, nil
+	return r, nil
 }
 
-func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID uuid.UUID, aipPath string) (e error) {
+func (w *Poststorage) SessionHandler(
+	ctx temporalsdk_workflow.Context,
+	result *childwf.PostStorageResult,
+	aipUUID uuid.UUID,
+	apisMetadata apis.CustomMetadata,
+) (e error) {
+	logger := temporalsdk_workflow.GetLogger(ctx)
 	removePaths := []string{}
 
 	defer func() {
@@ -147,14 +133,44 @@ func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID u
 		temporalsdk_workflow.CompleteSession(ctx)
 	}()
 
+	task := result.NewTask(temporalsdk_workflow.Now(ctx), "Download AIP METS")
+	var getAIPPathResult amss.GetAIPPathActivityResult
+	e = temporalsdk_workflow.ExecuteActivity(
+		temporalsdk_workflow.WithActivityOptions(
+			ctx,
+			temporalsdk_workflow.ActivityOptions{
+				ScheduleToCloseTimeout: 15 * time.Minute,
+				RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+					InitialInterval:    15 * time.Second,
+					BackoffCoefficient: 2,
+					MaximumInterval:    time.Minute,
+					MaximumAttempts:    5,
+				},
+			},
+		),
+		amss.GetAIPPathActivityName,
+		&amss.GetAIPPathActivityParams{
+			AIPUUID: aipUUID,
+		},
+	).Get(ctx, &getAIPPathResult)
+	if e != nil {
+		logger.Error("System error", "message", e.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
+			"AIP METS download has failed.",
+			"The AIP is stored, but the poststorage workflow failed to get the AIP path. Please try again, or ask a system administrator to investigate.",
+		)
+		return nil
+	}
+
 	// In case the AIP is compressed, remove its UUID and the possible
 	// extension from the directory/file name, and append the UUID back.
 	aipUUIDString := aipUUID.String()
-	aipDirName := strings.Split(filepath.Base(aipPath), aipUUIDString)[0] + aipUUIDString
-	localDir := filepath.Join(w.cfg.WorkingDir, fmt.Sprintf("search-md_%s", aipDirName))
+	aipDirName := strings.Split(filepath.Base(getAIPPathResult.Path), aipUUIDString)[0] + aipUUIDString
+	localDir := filepath.Join(w.cfg.WorkingDir, aipUUIDString)
 	metsName := fmt.Sprintf("METS.%s.xml", aipUUIDString)
 	metsPath := filepath.Join(localDir, metsName)
-
 	removePaths = append(removePaths, localDir)
 
 	var fetchMETSResult amss.FetchActivityResult
@@ -168,8 +184,122 @@ func (w *Poststorage) SessionHandler(ctx temporalsdk_workflow.Context, aipUUID u
 		},
 	).Get(ctx, &fetchMETSResult)
 	if e != nil {
-		return e
+		logger.Error("System error", "message", e.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
+			"AIP METS download has failed.",
+			"The AIP is stored, but the poststorage workflow failed while downloading the AIP METS file. Please try again, or ask a system administrator to investigate.",
+		)
+		return nil
+	}
+	task.Succeed(temporalsdk_workflow.Now(ctx), "AIP METS downloaded")
+
+	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Submit AIP METS to APIS")
+	importBehaviour, err := apisMetadata.ImportBehaviour()
+	if err != nil {
+		logger.Error("System error", "message", err.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
+			"AIP METS submission to APIS has failed.",
+			"The AIP is stored, but the post-storage workflow failed while preparing to deliver the AIP METS file to APIS for AIS import. Please try again, or ask a system administrator to investigate.",
+		)
+		return nil
 	}
 
-	return nil
+	var createImportRun apis.CreateImportRunResult
+	err = temporalsdk_workflow.ExecuteActivity(
+		withAPISActivityOpts(ctx),
+		apis.CreateImportRunActivityName,
+		&apis.CreateImportRunParams{
+			TaskID:          apisMetadata.ImportTaskID,
+			METSPath:        metsPath,
+			ImportBehaviour: importBehaviour,
+			Username:        "sfa-enduro", // TODO: Use real username.
+		},
+	).Get(ctx, &createImportRun)
+	if err != nil {
+		logger.Error("System error", "message", err.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
+			"AIP METS submission to APIS has failed.",
+			"The AIP is stored, but the post-storage workflow failed while delivering the AIP METS file to APIS for AIS import. Please try again, or ask a system administrator to investigate.",
+		)
+		return nil
+	}
+	task.Succeed(
+		temporalsdk_workflow.Now(ctx),
+		"Submitted AIP METS to APIS with import task ID %q and import run ID %q",
+		apisMetadata.ImportTaskID,
+		createImportRun.RunID,
+	)
+
+	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Wait for APIS import")
+	var pollImportRunStatus apis.PollImportRunStatusResult
+	err = temporalsdk_workflow.ExecuteActivity(
+		withAPISPollActivityOpts(ctx),
+		apis.PollImportRunStatusActivityName,
+		&apis.PollImportRunStatusParams{TaskID: apisMetadata.ImportTaskID},
+	).Get(ctx, &pollImportRunStatus)
+	if err != nil {
+		logger.Error("System error", "message", err.Error())
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
+			"APIS import status check has failed.",
+			"The AIP is stored, but the post-storage workflow failed while checking whether APIS imported the AIP METS file for AIS. Please try again, or ask a system administrator to investigate.",
+		)
+		return nil
+	}
+
+	switch pollImportRunStatus.ImportResult {
+	case apisgen.ImportResultErfolgreich:
+		task.Succeed(
+			temporalsdk_workflow.Now(ctx),
+			"APIS import completed for import task ID %q with result %q",
+			apisMetadata.ImportTaskID,
+			pollImportRunStatus.ImportResult,
+		)
+		return nil
+	case apisgen.ImportResultFehler:
+		logger.Error(
+			"System error",
+			"message",
+			fmt.Sprintf("APIS import failed for task %q", apisMetadata.ImportTaskID),
+		)
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
+			"APIS import has failed.",
+			"The AIP is stored, but APIS reported an error while importing the AIP METS file into AIS. Please try again, or ask a system administrator to investigate.",
+		)
+		return nil
+	default:
+		logger.Error("System error", "message", fmt.Errorf(
+			"unexpected APIS import result %q for task %q",
+			pollImportRunStatus.ImportResult,
+			apisMetadata.ImportTaskID,
+		))
+		result.SystemError(
+			temporalsdk_workflow.Now(ctx),
+			task,
+			"APIS import has failed.",
+			"The AIP is stored, but APIS returned an unexpected import result while processing the AIP METS file. Please ask a system administrator to investigate.",
+		)
+		return nil
+	}
+}
+
+func getApisMetadata(data childwf.CustomMetadata) (apis.CustomMetadata, error) {
+	customMetadata, ok := data[apis.CustomMetadataKey]
+	if !ok {
+		return apis.CustomMetadata{}, fmt.Errorf("APIS custom metadata is required when APIS integration is enabled")
+	}
+	var apisMetadata apis.CustomMetadata
+	if err := apisMetadata.Unmarshal(customMetadata); err != nil {
+		return apis.CustomMetadata{}, err
+	}
+	return apisMetadata, nil
 }

@@ -134,7 +134,7 @@ func (m *Main) Run(ctx context.Context) error {
 	}
 
 	m.registerPreprocessingWorkflow(psvc, apisClient, veraPDFValidator)
-	m.registerPoststorageWorkflow(ssClient.Packages())
+	m.registerPoststorageWorkflow(ssClient.Packages(), apisClient)
 
 	if err := w.Start(); err != nil {
 		m.logger.Error(err, "Worker failed to start.")
@@ -267,9 +267,9 @@ func (m *Main) registerPreprocessingWorkflow(
 	)
 }
 
-func (m *Main) registerPoststorageWorkflow(packages *ssclient.PackagesService) {
+func (m *Main) registerPoststorageWorkflow(packages *ssclient.PackagesService, apisClient apis.Client) {
 	m.temporalWorker.RegisterWorkflowWithOptions(
-		workflows.NewPoststorage(m.cfg.Poststorage).Execute,
+		workflows.NewPoststorage(m.cfg.Poststorage, m.cfg.APIS.Enabled).Execute,
 		temporalsdk_workflow.RegisterOptions{Name: m.cfg.Poststorage.WorkflowName},
 	)
 
@@ -284,5 +284,13 @@ func (m *Main) registerPoststorageWorkflow(packages *ssclient.PackagesService) {
 	m.temporalWorker.RegisterActivityWithOptions(
 		removepaths.New().Execute,
 		temporalsdk_activity.RegisterOptions{Name: removepaths.Name},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		apis.NewCreateImportRunActivity(apisClient).Execute,
+		temporalsdk_activity.RegisterOptions{Name: apis.CreateImportRunActivityName},
+	)
+	m.temporalWorker.RegisterActivityWithOptions(
+		apis.NewPollImportRunStatusActivity(apisClient, m.cfg.APIS.PollInterval).Execute,
+		temporalsdk_activity.RegisterOptions{Name: apis.PollImportRunStatusActivityName},
 	)
 }

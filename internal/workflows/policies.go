@@ -51,3 +51,26 @@ func withFilesystemActivityOpts(ctx temporalsdk_workflow.Context) temporalsdk_wo
 		},
 	})
 }
+
+func withAPISActivityOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
+	return temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
+		StartToCloseTimeout: time.Hour,
+		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+			InitialInterval:    time.Second * 5,
+			BackoffCoefficient: 2,
+			MaximumAttempts:    3,
+		},
+	})
+}
+
+func withAPISPollActivityOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {
+	return temporalsdk_workflow.WithActivityOptions(ctx, temporalsdk_workflow.ActivityOptions{
+		StartToCloseTimeout: time.Hour * 24,
+		HeartbeatTimeout:    time.Minute,
+		RetryPolicy: &temporalsdk_temporal.RetryPolicy{
+			InitialInterval:    time.Second * 5,
+			BackoffCoefficient: 2,
+			MaximumAttempts:    3,
+		},
+	})
+}
