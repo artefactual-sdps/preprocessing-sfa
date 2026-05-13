@@ -125,7 +125,7 @@ func encodeAPIImporttasksIDImportrunsPostResponse(response APIImporttasksIDImpor
 		return nil
 
 	case *APIImporttasksIDImportrunsPostBadRequest:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(400)
 		span.SetStatus(codes.Error, http.StatusText(400))
 
@@ -138,7 +138,7 @@ func encodeAPIImporttasksIDImportrunsPostResponse(response APIImporttasksIDImpor
 		return nil
 
 	case *APIImporttasksIDImportrunsPostUnauthorized:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(401)
 		span.SetStatus(codes.Error, http.StatusText(401))
 
@@ -151,7 +151,7 @@ func encodeAPIImporttasksIDImportrunsPostResponse(response APIImporttasksIDImpor
 		return nil
 
 	case *APIImporttasksIDImportrunsPostNotFound:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(404)
 		span.SetStatus(codes.Error, http.StatusText(404))
 
@@ -164,7 +164,7 @@ func encodeAPIImporttasksIDImportrunsPostResponse(response APIImporttasksIDImpor
 		return nil
 
 	case *APIImporttasksIDImportrunsPostUnsupportedMediaType:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(415)
 		span.SetStatus(codes.Error, http.StatusText(415))
 

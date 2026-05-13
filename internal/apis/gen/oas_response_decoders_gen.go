@@ -300,7 +300,7 @@ func decodeAPIImporttasksIDImportrunsPostResponse(resp *http.Response) (res APII
 			return res, errors.Wrap(err, "parse media type")
 		}
 		switch {
-		case ct == "application/json":
+		case ct == "application/problem+json":
 			buf, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return res, err
@@ -335,7 +335,7 @@ func decodeAPIImporttasksIDImportrunsPostResponse(resp *http.Response) (res APII
 			return res, errors.Wrap(err, "parse media type")
 		}
 		switch {
-		case ct == "application/json":
+		case ct == "application/problem+json":
 			buf, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return res, err
@@ -370,7 +370,7 @@ func decodeAPIImporttasksIDImportrunsPostResponse(resp *http.Response) (res APII
 			return res, errors.Wrap(err, "parse media type")
 		}
 		switch {
-		case ct == "application/json":
+		case ct == "application/problem+json":
 			buf, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return res, err
@@ -405,7 +405,7 @@ func decodeAPIImporttasksIDImportrunsPostResponse(resp *http.Response) (res APII
 			return res, errors.Wrap(err, "parse media type")
 		}
 		switch {
-		case ct == "application/json":
+		case ct == "application/problem+json":
 			buf, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return res, err
