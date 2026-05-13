@@ -17,7 +17,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/mattn/go-sqlite3 v1.14.34
-	github.com/ogen-go/ogen v1.20.0
+	github.com/ogen-go/ogen v1.20.3
 	github.com/richardlehane/siegfried v1.11.4
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
@@ -53,7 +53,7 @@ require (
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
-	github.com/fatih/color v1.18.0 // indirect
+	github.com/fatih/color v1.19.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-faster/yaml v0.4.6 // indirect
@@ -77,7 +77,7 @@ require (
 	github.com/klauspost/compress v1.18.2 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/kluctl/go-embed-python v0.0.0-3.12.3-20240415-1 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mholt/archives v0.1.5 // indirect
 	github.com/microsoft/kiota-abstractions-go v1.9.4 // indirect
