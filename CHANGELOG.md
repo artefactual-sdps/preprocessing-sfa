@@ -8,7 +8,7 @@ requests.
 
 ## [Unreleased]
 
-## [0.19.0] - 2025-05-14
+## [0.19.0] - 2026-05-14
 
 ### Added
 
@@ -23,7 +23,7 @@ requests.
 
 - AIS search metadata bundle creation and storage ([#174])
 
-## [0.18.0] - 2025-05-01
+## [0.18.0] - 2026-05-01
 
 ### Added
 
@@ -34,7 +34,7 @@ requests.
 
 - Allow disabling timeout for APIS client ([#173])
 
-## [0.17.0] - 2025-03-27
+## [0.17.0] - 2026-03-27
 
 ### Added
 
