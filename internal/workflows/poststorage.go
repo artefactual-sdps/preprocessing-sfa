@@ -231,9 +231,10 @@ func (w *Poststorage) SessionHandler(
 	}
 	task.Succeed(
 		temporalsdk_workflow.Now(ctx),
-		"Submitted AIP METS to APIS with import task ID %q and import run ID %q",
+		"Submitted AIP METS to APIS with import task ID %q, import run ID %q, and import behaviour %q",
 		apisMetadata.ImportTaskID,
 		createImportRun.RunID,
+		importBehaviour,
 	)
 
 	task = result.NewTask(temporalsdk_workflow.Now(ctx), "Wait for APIS import")

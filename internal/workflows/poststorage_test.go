@@ -201,9 +201,10 @@ func (s *TestSuite) TestSuccess() {
 				{
 					Name: "Submit AIP METS to APIS",
 					Message: fmt.Sprintf(
-						`Submitted AIP METS to APIS with import task ID %q and import run ID %q`,
+						`Submitted AIP METS to APIS with import task ID %q, import run ID %q, and import behaviour %q`,
 						poststorageImportTaskID,
 						poststorageImportRunID,
+						apisgen.ImportBehaviourTypeOverwriteAndAppend,
 					),
 					Outcome:     childwf.TaskOutcomeSuccess,
 					StartedAt:   poststorageTestTime,
@@ -321,9 +322,10 @@ func (s *TestSuite) TestAPISImportFailure() {
 				{
 					Name: "Submit AIP METS to APIS",
 					Message: fmt.Sprintf(
-						`Submitted AIP METS to APIS with import task ID %q and import run ID %q`,
+						`Submitted AIP METS to APIS with import task ID %q, import run ID %q, and import behaviour %q`,
 						poststorageImportTaskID,
 						poststorageImportRunID,
+						apisgen.ImportBehaviourTypeAppendOnly,
 					),
 					Outcome:     childwf.TaskOutcomeSuccess,
 					StartedAt:   poststorageTestTime,
