@@ -8,6 +8,21 @@ requests.
 
 ## [Unreleased]
 
+## [0.19.0] - 2025-05-14
+
+### Added
+
+- Carry APIS metadata to poststorage workflow ([#174])
+- Add APIS import run delivery to poststorage ([#174])
+
+### Changed
+
+- Simplify worker and workflows config ([#202])
+
+### Removed
+
+- AIS search metadata bundle creation and storage ([#174])
+
 ## [0.18.0] - 2025-05-01
 
 ### Added
@@ -162,7 +177,8 @@ requests.
 
 Initial release.
 
-[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.18.0...HEAD
+[unreleased]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.15.0...v0.16.0
@@ -181,6 +197,8 @@ Initial release.
 [0.3.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/artefactual-sdps/preprocessing-sfa/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/artefactual-sdps/preprocessing-sfa/releases/tag/v0.1.0
+[#202]: https://github.com/artefactual-sdps/preprocessing-sfa/pull/202
+[#174]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/174
 [#173]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/173
 [#171]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/171
 [#169]: https://github.com/artefactual-sdps/preprocessing-sfa/issues/169
